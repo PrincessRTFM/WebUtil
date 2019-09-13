@@ -1,0 +1,25 @@
+ol.zeroindex {
+	counter-reset: zero-index-counter -1;
+}
+ol.zeroindex li {
+	counter-increment: zero-index-counter;
+	list-style-type: none;
+}
+
+ol.zeroindex li::before {
+	content: counter(zero-index-counter) ". ";
+	float: left;
+	padding-right: 10px;
+}
+
+ol.zeroindex.colon li::before {
+	content: counter(zero-index-counter) ": ";
+}
+
+ol.zeroindex.paren li::before {
+	content: counter(zero-index-counter) ") ";
+}
+
+ol.zeroindex.dash li::before, ol.zeroindex.hyphen li::before {
+	content: counter(zero-index-counter) " - ";
+}
