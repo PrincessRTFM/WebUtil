@@ -68,7 +68,7 @@ class Power {
 		return !!this._types[type || ""];
 	}
 	toString() {
-		return `${this.category} who <span class="ability">${this.ability}</span>`;
+		return `${this.category} who ${this.ability}`.replace(/<span class="[a-z\s]+">/gu, '').replace(/<\/span>/gu, '');
 	}
 }
 
