@@ -65,7 +65,7 @@ class Power {
 		return text;
 	}
 	hasType(type) {
-		return !!this.powerTypes[type || ""];
+		return !!this._types[type || ""];
 	}
 	toString() {
 		return `${this.category} who <span class="ability">${this.ability}</span>`;
