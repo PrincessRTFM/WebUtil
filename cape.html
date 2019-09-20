@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>RCG v2.0.0</title>
+		<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/ui-darkness/jquery-ui.css">
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="js/cape.core.js"></script>
+		<script type="text/javascript" src="js/cape.lib.js"></script>
+		<script type="text/javascript" src="js/cape.js"></script>
+		<style type="text/css">
+			body {
+				height: calc(100vh - 16px);
+				margin: 0;
+				padding: 8px;
+				background-color: black;
+				color: #d0d0d0;
+				text-align: center;
+			}
+			a:link {
+				color: #a9a9a9;
+			}
+			a:visited {
+				color: #8a8a8a;
+			}
+			#header {
+				font-size: 3.7em;
+			}
+			#power {
+				opacity: 0;
+				margin: 37px;
+			}
+			#power > h3 {
+				font-size: 2.3em;
+			}
+			#power > h4 {
+				font-size: 1.8em;
+			}
+			#power > h3, #power > h4 {
+				margin: 17px;
+			}
+			#footer {
+				font-size: 1.55em;
+				margin: 7px;
+			}
+			#buttons {
+				font-size: 1.2em;
+			}
+			#reroll, #tweak {
+				font-size: 1.1em;
+			}
+			#credit {
+				position: fixed;
+				bottom: 3px;
+				left: 3px;
+				font-size: 1.1em;
+			}
+			#category {
+				color: #ffcdcd;
+			}
+			#ability {
+				color: #bbffcc;
+			}
+			.detail {
+				color: #a3f9ff;
+			}
+		</style>
+	</head>
+	<body>
+		<h1 id="header">You are a...</h1>
+		<div id="power">
+			<h3 id="category">(PLACEHOLDER - you shouldn't even see this)</h3>
+			<h4>who</h4>
+			<h3 id="ability">(PLACEHOLDER - you shouldn't even see this)</h3>
+		</div>
+		<div id="footer">Don't like this one?</div>
+		<div id="buttons">
+			<button id="reroll">Roll a new one!</button>
+			or
+			<button id="tweak">Retry this one!</button>
+		</div>
+		<address id="credit">
+			Written by <a href="https://github.com/PrincessRTFM">Lilith Song</a> (<a href="https://reddit.com/user/PrincessRTFM">u/PrincessRTFM</a>) for <a href="https://reddit.com/user/edmandias">u/edmandias</a>.
+			Got ideas for more powers? Let me know on the <a href="https://github.com/PrincessRTFM/WebUtil/issues/2">dedicated thread</a> for those!
+		</address>
+	</body>
+</html>
