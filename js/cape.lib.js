@@ -54,7 +54,7 @@ const POWERS = [
 	}),
 	new Power('shaker', 'makes objects move slower when approaching them, and faster when moving away'),
 	new Power('master shaker thinker', 'temporarily makes themselves more intelligent by making those around them less so'),
-	new Power('shaker', 'decreases the speed of anything within {#range} metres/yards that they feel threatened by, to a minimum of {#speed} kph', {
+	new Power('shaker', 'decreases the speed of anything within {#range} metres/yards that they feel threatened by, to a minimum of {#speed} {#unit}', {
 		range: [
 			'five',
 			'ten',
@@ -69,6 +69,10 @@ const POWERS = [
 			'seven',
 			'eight',
 			'ten',
+		],
+		unit: [
+			'mph',
+			'kph',
 		],
 	}),
 	new Power('breaker shaker', 'creates things by drawing - the more intricate and detailed, the more {#bonus} the result', {

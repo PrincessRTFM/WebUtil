@@ -24,23 +24,25 @@
 				color: #8a8a8a;
 			}
 			#header {
-				font-size: 3.7em;
+				font-size: 2.9em;
+				margin-top: 5px;
+				margin-bottom: 7px;
 			}
 			#power {
 				opacity: 0;
-				margin: 37px;
+				margin: 9px;
 			}
 			#power > h3 {
-				font-size: 2.3em;
+				font-size: 2.1em;
 			}
 			#power > h4 {
 				font-size: 1.8em;
 			}
 			#power > h3, #power > h4 {
-				margin: 17px;
+				margin: 11px;
 			}
 			#footer {
-				font-size: 1.55em;
+				font-size: 1.5em;
 				margin: 7px;
 			}
 			#buttons {
@@ -49,11 +51,24 @@
 			#reroll, #tweak {
 				font-size: 1.1em;
 			}
-			#credit {
+			address {
 				position: fixed;
-				bottom: 3px;
-				left: 3px;
+				top: 3px;
 				font-size: 1.1em;
+				opacity: 0.6;
+				-moz-transition: opacity .3s ease-out;
+				-webkit-transition: opacity .3s ease-out;
+				-o-transition: opacity .3s ease-out;
+				transition: opacity .3s ease-out;
+			}
+			address:hover {
+				opacity: 1;
+			}
+			#credit {
+				left: 3px;
+			}
+			#contribute {
+				right: 3px;
 			}
 			#category {
 				color: #ffcdcd;
@@ -63,6 +78,18 @@
 			}
 			.detail {
 				color: #a3f9ff;
+			}
+			#filters {
+				margin: 12px;
+				margin-top: 40px;
+			}
+			#filters > .filterline > label {
+				width: 100px;
+				margin: 4px 2px;
+			}
+			#filters > p {
+				font-size: 1.3em;
+				margin: 2px;
 			}
 		</style>
 	</head>
@@ -79,9 +106,40 @@
 			or
 			<button id="tweak">Retry this one!</button>
 		</div>
+		<div id="filters">
+			<p>Only powers that are at least one of these types will be shown.</p>
+			<div class="filterline">
+				<label for="filter-mover">mover</label><input type="checkbox" id="filter-mover" checked="checked" />
+				<label for="filter-shaker">shaker</label><input type="checkbox" id="filter-shaker" checked="checked" />
+				<label for="filter-brute">brute</label><input type="checkbox" id="filter-brute" checked="checked" />
+				<label for="filter-breaker">breaker</label><input type="checkbox" id="filter-breaker" checked="checked" />
+			</div>
+			<div class="filterline">
+				<label for="filter-master">master</label><input type="checkbox" id="filter-master" checked="checked" />
+				<label for="filter-tinker">tinker</label><input type="checkbox" id="filter-tinker" checked="checked" />
+				<label for="filter-blaster">blaster</label><input type="checkbox" id="filter-blaster" checked="checked" />
+				<label for="filter-thinker">thinker</label><input type="checkbox" id="filter-thinker" checked="checked" />
+			</div>
+			<div class="filterline">
+				<label for="filter-striker">striker</label><input type="checkbox" id="filter-striker" checked="checked" />
+				<label for="filter-changer">changer</label><input type="checkbox" id="filter-changer" checked="checked" />
+				<label for="filter-trump">trump</label><input type="checkbox" id="filter-trump" checked="checked" />
+				<label for="filter-stranger">stranger</label><input type="checkbox" id="filter-stranger" checked="checked" />
+			</div>
+		</div>
 		<address id="credit">
-			Written by <a href="https://github.com/PrincessRTFM">Lilith Song</a> (<a href="https://reddit.com/user/PrincessRTFM">u/PrincessRTFM</a>) for <a href="https://reddit.com/user/edmandias">u/edmandias</a>.
-			Got ideas for more powers? Let me know on the <a href="https://github.com/PrincessRTFM/WebUtil/issues/2">dedicated thread</a> for those!
+			Written by
+			<a href="https://github.com/PrincessRTFM">Lilith Song</a>
+			(<a href="https://reddit.com/user/PrincessRTFM">u/PrincessRTFM</a>)
+			for
+			<a href="https://reddit.com/user/edmandias">u/edmandias</a>
+		</address>
+		<address id="contribute">
+			<a href="https://github.com/PrincessRTFM/WebUtil/issues/2">power ideas thread</a>
+			|
+			<a href="https://github.com/PrincessRTFM/WebUtil/issues/new">report a bug</a>
+			|
+			<a href="https://github.com/PrincessRTFM/WebUtil/issues/new">request a feature</a>
 		</address>
 	</body>
 </html>

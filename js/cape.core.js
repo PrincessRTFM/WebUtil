@@ -67,6 +67,17 @@ class Power {
 	hasType(type) {
 		return !!this._types[type || ""];
 	}
+	isOneOf(...types) {
+		while (types.length !== types.flat().length) {
+			types = types.flat();
+		}
+		for (let i = 0; i < types.length; i++) {
+			if (this.hasType(types[i])) {
+				return true;
+			}
+		}
+		return false;
+	}
 	toString() {
 		return `${this.category} who ${this.ability}`.replace(/<span class="[a-z\s]+">/gu, '').replace(/<\/span>/gu, '');
 	}
