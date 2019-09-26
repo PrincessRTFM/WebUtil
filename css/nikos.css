@@ -1,0 +1,66 @@
+@font-face {
+	font-family: 'TerminusTTF';
+	src: url('terminus.ttf');
+}
+
+#interface {
+	display: block;
+	width: 60%;
+	min-width: 600px;
+	margin: 4vh auto;
+}
+#placeholder {
+	display: block;
+	margin: 3px auto;
+}
+#photoshop {
+	display: none;
+	margin: 3px auto;
+}
+#message {
+	display: block;
+	width: 97%;
+	margin: 0.7em auto;
+	resize: none;
+	font-size: 20pt;
+	font-family: TerminusTTF;
+}
+.sidebar {
+	display: block;
+	width: 19%;
+	position: fixed;
+	top: 4vh;
+	bottom: 4vh;
+	padding: 3.5em 4px;
+}
+#leftbar {
+	left: 3px;
+}
+#rightbar {
+	right: 3px;
+}
+input[type="text"] {
+	border: 2px inset rgb(238, 238, 238);
+}
+label, span.label {
+	display: block;
+	font-size: 1.2em;
+	font-weight: bold;
+	margin-top: 0.4em;
+}
+.header {
+	margin-top: 1em;
+}
+
+#faces {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+}
+.face {
+	flex: 0 0 auto;
+	width: 96px;
+	height: 96px;
+	margin: 2px 4px;
+}
+

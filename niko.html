@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Niko died for your suns</title>
+		<link rel="stylesheet" type="text/css" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/ui-lightness/jquery-ui.css" />
+		<link rel="stylesheet" type="text/css" href="css/nikos.css" />
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="js/nikos.js"></script>
+	</head>
+	<body>
+		<div id="interface">
+			<div id="output">
+				<canvas id="photoshop" width="608" height="128"></canvas>
+				<img id="placeholder" width="608" height="128" src="img/niko-background.png" />
+			</div>
+			<div id="content">
+				<label for="message">Message</label>
+				<textarea rows="4" id="message" placeholder="What's Niko going to say?"></textarea>
+				<span class="label">Expression</span>
+				<div id="faces"></div>
+			</div>
+		</div>
+		<div id="leftbar" class="sidebar">
+			<h3>Welcome to NikoMaker!</h3>
+			<p>
+				This tool allows you to quickly create an image of Niko (the main character of <a href="https://store.steampowered.com/app/420530/OneShot/">Oneshot</a>) saying whatever you like, with any expression from the game!
+			</p>
+			<p>
+				Hover over an element to get more information on it.
+			</p>
+			<h4>Quick Basics</h4>
+			<p>You need to select Niko's expression and write a message to display on the image.</p>
+			<p>Once you've done that, you can copy or save the created image by right clicking on it.</p>
+		</div>
+		<div id="rightbar" class="sidebar">
+			<h4>Quick Help</h4>
+			<p id="helpText"><i>Hover over a control for details</i></p>
+		</div>
+	</body>
+</html>
