@@ -4,6 +4,7 @@ $(() => {
 		'#message': "Write a message here to display in the dialogue box with Niko's face.",
 		'#faces': "Pick an expression for Niko to make, to accompany your message!",
 		'#photoshop': "This is the canvas where the composite image is actually drawn. Right click to save it or copy as an image now.",
+		'#render': "This is the fully-rendered image, built off the canvas from the composite elements. You can save it or copy to use now.",
 	});
 	const FACES = Object.freeze([
 		'niko',
@@ -61,7 +62,7 @@ $(() => {
 	$('.soften, textarea').addClass('ui-corner-all');
 	const canvas = document.getElementById('photoshop');
 	const draw = canvas.getContext('2d');
-	const placeholder = document.getElementById('placeholder');
+	const image = document.getElementById('render');
 	const background = new Image();
 	const message = document.getElementById('message');
 	const refreshRender = () => {
@@ -86,8 +87,16 @@ $(() => {
 		if (message.value) {
 			draw.fillText(message.value, 20, 17, 465);
 		}
-		placeholder.style.display = 'none';
-		canvas.style.display = 'block';
+		// See if we can render it to a proper image element, so people can select it on mobile and all browsers (IE is not a browser, do not complain about it being broken)
+		try {
+			image.src = canvas.toDataURL();
+			image.style.display = 'block';
+			canvas.style.display = 'none';
+		}
+		catch (e) {
+			image.style.display = 'none';
+			canvas.style.display = 'block';
+		}
 	};
 	const faceList = $('#faces');
 	FACES.forEach(filename => {
