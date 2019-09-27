@@ -1,6 +1,7 @@
 /* eslint-env browser, jquery */
 $(() => {
 	const HELP_TEXT = Object.freeze({
+		'#errortext': "You wrote too much. Only three lines of text can be rendered in one dialogue box, anything else would overflow.",
 		'#message': "Write a message here to display in the dialogue box with Niko's face.",
 		'#faces': "Pick an expression for Niko to make, to accompany your message!",
 		'#photoshop': "This is the canvas where the composite image is actually drawn. Right click to save it or copy as an image now.",
