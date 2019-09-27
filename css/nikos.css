@@ -42,8 +42,15 @@
 input[type="text"] {
 	border: 2px inset rgb(238, 238, 238);
 }
+#errortext {
+	display: none;
+	float: right;
+	margin: 0;
+	margin-top: 6px;
+	margin-right: 24px;
+	padding: 3px;
+}
 label, span.label {
-	display: block;
 	font-size: 1.2em;
 	font-weight: bold;
 	margin-top: 0.4em;
@@ -62,5 +69,8 @@ label, span.label {
 	width: 96px;
 	height: 96px;
 	margin: 2px 4px;
+}
+.ui-icon {
+	margin-top: -0.15em;
 }
 

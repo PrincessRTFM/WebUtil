@@ -60,12 +60,14 @@ $(() => {
 	};
 	const help = (selector, text) => $(selector).hover(setHelpText.bind(setHelpText, text), startClearHelpTimer);
 	$('.soften, textarea').addClass('ui-corner-all');
+	const error = $('#errortext');
 	const canvas = document.getElementById('photoshop');
 	const draw = canvas.getContext('2d');
 	const image = document.getElementById('render');
 	const background = new Image();
 	const message = document.getElementById('message');
 	const refreshRender = () => {
+		const MAX_LINE_LENGTH = 465;
 		draw.clearRect(0, 0, canvas.width, canvas.height);
 		if (background.complete) {
 			draw.drawImage(background, 0, 0);
@@ -86,9 +88,31 @@ $(() => {
 		// Render the text from X=20 Y=17 to X=485 (465px)
 		if (message.value) {
 			const lines = message.value.split("\n");
-			for (let line = 0; line < lines.length; line++) {
-				draw.fillText(lines[line], 20, 17 + line * 28, 465);
+			for (let lineNo = 0; lineNo < lines.length; lineNo++) {
+				if (lineNo >= 3) {
+					error.show();
+					break;
+				}
+				else {
+					error.hide();
+				}
+				let line = lines[lineNo];
+				if (draw.measureText(line).width > MAX_LINE_LENGTH) {
+					const words = line.split(/\s/u);
+					for (let word = words.length; word > 0; word--) {
+						const left = words.slice(0, word).join(" ");
+						if (draw.measureText(left).width <= MAX_LINE_LENGTH) {
+							line = left;
+							lines.splice(lineNo + 1, 0, words.slice(word).join(" "));
+							break;
+						}
+					}
+				}
+				draw.fillText(line, 20, 17 + lineNo * 28, MAX_LINE_LENGTH);
 			}
+		}
+		else {
+			error.hide();
 		}
 		// See if we can render it to a proper image element, so people can select it on mobile and all browsers (IE is not a browser, do not complain about it being broken)
 		try {
