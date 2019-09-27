@@ -85,7 +85,10 @@ $(() => {
 		}
 		// Render the text from X=20 Y=17 to X=485 (465px)
 		if (message.value) {
-			draw.fillText(message.value, 20, 17, 465);
+			const lines = message.value.split("\n");
+			for (let line = 0; line < lines.length; line++) {
+				draw.fillText(lines[line], 20, 17 + line * 28, 465);
+			}
 		}
 		// See if we can render it to a proper image element, so people can select it on mobile and all browsers (IE is not a browser, do not complain about it being broken)
 		try {
@@ -114,6 +117,7 @@ $(() => {
 		refreshRender();
 	});
 	message.addEventListener('input', refreshRender);
+	message.focus();
 	for (const selector in HELP_TEXT) {
 		if (Object.prototype.hasOwnProperty.call(HELP_TEXT, selector)) {
 			help(selector, HELP_TEXT[selector]);
