@@ -16,8 +16,8 @@ function owo(text, cancer) {
 }
 owo.cancer = [
 	"owo",
-	"OwO",
 	"uwu",
 	">w<",
+	">w>",
 	"^w^",
 ];
