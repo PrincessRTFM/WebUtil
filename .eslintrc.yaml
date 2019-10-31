@@ -1,14 +1,32 @@
 ---
 root: true
 env:
-    es6: true
+    es2017: true
     browser: true
 overrides:
     - files:
         - "jquery.*.js"
       env:
           jquery: true
+    - files:
+        - "*.user.js"
+      env:
+          greasemonkey: true
+      rules:
+          camelcase:
+            - error
+            - allow:
+                - "^GM_"
 rules:
+    max-len:
+        - warn
+        - code: 160
+          comments: 160
+          ignoreComments: false
+          ignoreUrls: false
+          ignoreStrings: false
+          ignoreTemplateLiterals: false
+          ignoreRegExpLiterals: false
     for-direction: error
     getter-return: error
     no-compare-neg-zero: error
@@ -126,7 +144,6 @@ rules:
         - warn
         - allowEmptyReject: true
     radix: error
-    require-await: error
     require-unicode-regexp: warn
     wrap-iife:
         - error
@@ -162,11 +179,14 @@ rules:
     brace-style:
         - error
         - stroustrup
-        - allowSingleLine: true
     camelcase: error
     comma-dangle:
         - error
-        - always-multiline
+        - arrays: always-multiline
+          objects: always-multiline
+          imports: always-multiline
+          exports: always-multiline
+          functions: never
     comma-spacing: error
     comma-style: error
     computed-property-spacing: error
@@ -202,9 +222,7 @@ rules:
         - error
         - always-multiline
     new-parens: error
-    newline-per-chained-call:
-        - error
-        - ignoreChainWithDepth: 3
+    newline-per-chained-call: error
     no-array-constructor: error
     no-lonely-if: error
     no-mixed-spaces-and-tabs:
@@ -223,7 +241,7 @@ rules:
     object-curly-newline:
         - error
         - multiline: true
-          minProperties: 2
+          minProperties: 1
           consistent: true
     object-curly-spacing: error
     object-property-newline:
@@ -233,7 +251,9 @@ rules:
         - error
         - never
     operator-assignment: error
-    operator-linebreak: error
+    operator-linebreak:
+        - error
+        - before
     padded-blocks:
         - error
         - never
