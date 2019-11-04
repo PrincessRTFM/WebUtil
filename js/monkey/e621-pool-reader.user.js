@@ -166,7 +166,7 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 				clearInterval(interval);
 				resolve(direct.EMF);
 			}
-			else if (++emfCheckCounter > 10) {
+			else if (++emfCheckCounter > 50) {
 				clearInterval(interval);
 				reject(new Error('EMF not detected'));
 			}
