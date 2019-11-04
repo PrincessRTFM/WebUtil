@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 Saved Tags
 // @namespace    Lilith
-// @version      2.1.0
+// @version      2.2.1
 // @description  Provides a user-editable list of tags on the sidebar, with quicksearch/add-to/negate links like normal sidebar tag suggestions. Minor additional QoL tweaks to the site, including a direct link to the image on all image pages. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -28,6 +28,8 @@ v1.3.1: moved the "This Post" links to a new box so it doesn't break the "Child 
 v1.4.0: the "remember tag" pseudolinks now display differently based on whether the tag is saved or not
 v2.0.0: entire script rewritten to function as asynchronously as possible
 v2.1.0: added tag search button
+v2.2.0: tag search links now just replace the tag search box contents
+v2.2.1: fixed a bug in the tagline link functions where spaces wouldn't be escaped to underscores, which mangled searches
 */
 /* eslint-enable max-len */
 
@@ -423,7 +425,7 @@ const DEFAULT_TAGS = {
 								}
 								event.returnValue = false;
 							}
-							const searchableTag = normalise(tag);
+							const searchableTag = normalise(tag).replace(/\s+/gu, '_');
 							const currentSearch = tagSearchInput.val();
 							logger.info(`Injecting "${searchableTag}" into existing search for "${currentSearch}"`);
 							logger.info(`Stripping existing copies of "${searchableTag}" from existing search`);
@@ -526,7 +528,15 @@ const DEFAULT_TAGS = {
 						);
 						const isolate = $('<a>TAG</a>')
 							.text(targetTag)
-							.attr('href', `/post/search?tags=${uriTag}`);
+							.attr('href', `/post/search?tags=${uriTag}`)
+							.on('click', e => {
+								tagSearchInput.val(targetTag.replace(/\s+/gu, '_'));
+								if (e.preventDefault) {
+									e.preventDefault();
+								}
+								e.returnValue = false;
+								return false;
+							});
 						return [
 							wiki,
 							' ',
