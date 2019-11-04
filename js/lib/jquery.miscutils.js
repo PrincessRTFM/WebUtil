@@ -5,16 +5,19 @@ if (typeof jQuery != 'undefined') {
 		};
 		$.fn.scrollToTop = function scrollToTop(options) {
 			const self = this;
-			$('html, body').animate({
-				scrollTop: self.offset().top,
-			}, options);
+			$('html, body')
+				.animate({
+					scrollTop: self.offset().top,
+				}, options);
 			return self;
 		};
 		$.fn.scrollToMiddle = function scrollToMiddle(options) {
 			const self = this;
-			$('html, body').animate({
-				scrollTop: self.offset().top - (($(window).height() / 2) - (self.height() / 2)),
-			}, options);
+			$('html, body')
+				.animate({
+					scrollTop: self.offset().top - (($(window)
+						.height() / 2) - (self.height() / 2)),
+				}, options);
 			return self;
 		};
 		$.fn.scrollToShow = $.fn.scrollToTop;
@@ -41,7 +44,8 @@ if (typeof jQuery != 'undefined') {
 			return this.removeClass("ui-state-error");
 		};
 		$.fn.plain = function plain() {
-			return this.unhighlight().unerror();
+			return this.unhighlight()
+				.unerror();
 		};
 		$.fn.slideIn = function slideIn(side) {
 			return this.show({
@@ -62,15 +66,23 @@ if (typeof jQuery != 'undefined') {
 			});
 		};
 		$.fn.reject = function reject() {
-			return this.effect('highlight', {color: '#FF3E96'}, 1500);
+			return this.effect('highlight', {
+				color: '#FF3E96',
+			}, 1500);
 		};
 		$.fn.accept = function accept() {
-			return this.effect('highlight', {color: '#54FF9F'}, 1500);
+			return this.effect('highlight', {
+				color: '#54FF9F',
+			}, 1500);
 		};
 		$.fn.getCaretPos = function getCaretPos() {
 			const input = this.get(0);
-			if (!input) { return -1; }
-			if ('selectionStart' in input) { return input.selectionStart; }
+			if (!input) {
+				return -1;
+			}
+			if ('selectionStart' in input) {
+				return input.selectionStart;
+			}
 			else if (document.selection) {
 				// IE
 				input.focus();

@@ -11,7 +11,9 @@ function owo(text, cancer) {
 		.replace(/OVE/gu, "UV")
 		.replace(/!+/gu, () => ` ${cancer[cancer.length * Math.random() << 0]} `)
 		.trim();
-	if (text == text.toUpperCase()) { updated = updated.toUpperCase(); }
+	if (text == text.toUpperCase()) {
+		updated = updated.toUpperCase();
+	}
 	return updated;
 }
 owo.cancer = [
