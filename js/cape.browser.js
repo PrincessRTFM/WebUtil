@@ -6,7 +6,9 @@ $(() => {
 	const ability = $('#ability');
 	const reroll = $('#reroll').button();
 	const tweak = $('#tweak').button();
-	const filters = $('#filters > .filterline > input').checkboxradio({icon: false});
+	const filters = $('#filters > .filterline > input').checkboxradio({
+		icon: false,
+	});
 	let CURRENT_POWER;
 	const generateDifferentPower = () => {
 		let nextPower = CURRENT_POWER;
@@ -43,14 +45,18 @@ $(() => {
 			ability.html(power.ability);
 		}
 		category.html(power.category);
-		display.animate({opacity: 1}, 'slow');
+		display.animate({
+			opacity: 1,
+		}, 'slow');
 	};
 	const updateDisplay = () => {
 		if (display.css('opacity') == 0) {
 			displayPower(CURRENT_POWER);
 		}
 		else {
-			display.animate({opacity: 0}, 'slow', updateDisplay);
+			display.animate({
+				opacity: 0,
+			}, 'slow', updateDisplay);
 		}
 	};
 	const offerNewPower = () => {
@@ -59,7 +65,10 @@ $(() => {
 		}
 	};
 	const updateFragment = () => {
-		location.hash = filters.get().map(filter => (filter.checked ? '1' : '0')).join('');
+		location.hash = filters
+			.get()
+			.map(filter => (filter.checked ? '1' : '0'))
+			.join('');
 	};
 	if (location.hash.replace(/^#/u, '')) {
 		const hash = location.hash.replace(/^#/u, '');

@@ -4,10 +4,18 @@
 	const autoloadScriptPrefix = 'load=';
 	const jqKeypress = event => {
 		let pressed = '';
-		if (event.ctrlKey) { pressed += '^'; }
-		if (event.altKey) { pressed += '!'; }
-		if (event.shiftKey) { pressed += '+'; }
-		if (event.metaKey) { pressed += '#'; }
+		if (event.ctrlKey) {
+			pressed += '^';
+		}
+		if (event.altKey) {
+			pressed += '!';
+		}
+		if (event.shiftKey) {
+			pressed += '+';
+		}
+		if (event.metaKey) {
+			pressed += '#';
+		}
 		pressed += (event.key || '').toLowerCase();
 		return pressed;
 	};
@@ -44,8 +52,12 @@
 				let reader = new FileReader();
 				reader.onload = evt => {
 					textarea.value = evt.target.result;
-					if (typeof textarea.process == 'function') { textarea.process(textarea, '', evt); }
-					else if (typeof window.process == 'function') { window.process(textarea, '', evt); }
+					if (typeof textarea.process == 'function') {
+						textarea.process(textarea, '', evt);
+					}
+					else if (typeof window.process == 'function') {
+						window.process(textarea, '', evt);
+					}
 				};
 				reader.onerror = evt => {
 					console.error(evt);
@@ -73,7 +85,9 @@
 					input.removeClass('dropping');
 					const files = Array.from(evt.originalEvent.dataTransfer.files);
 					console.log(`File drop event on input #${index + 1} with ${files.length} file(s)`);
-					if (!files.length) { return; }
+					if (!files.length) {
+						return;
+					}
 					const file = files[0];
 					console.dir(file);
 					textarea.value = '';
@@ -104,8 +118,12 @@
 						textarea.select();
 						document.execCommand("copy");
 					}
-					else if (typeof textarea.process == 'function') { textarea.process(textarea, hit, evtKeyDown); }
-					else if (typeof window.process == 'function') { window.process(textarea, hit, evtKeyDown); }
+					else if (typeof textarea.process == 'function') {
+						textarea.process(textarea, hit, evtKeyDown);
+					}
+					else if (typeof window.process == 'function') {
+						window.process(textarea, hit, evtKeyDown);
+					}
 				});
 				Object.defineProperty(textarea, 'munge', {
 					enumerable: true,
@@ -146,7 +164,9 @@
 			enumerable: true,
 		},
 		reset: {
-			value: () => { window.boxes = window.boxes || 1; },
+			value: () => {
+				window.boxes = window.boxes || 1;
+			},
 			enumerable: true,
 		},
 		loadScript: {
@@ -161,7 +181,8 @@
 					console.error(`Unable to load script from ${src} (did your browser block the request?)`);
 					$(script).remove();
 				};
-				$('head').first().append(script);
+				$('head').first()
+					.append(script);
 				script.src = src;
 			},
 			enumerable: true,
@@ -172,17 +193,21 @@
 			if (evt.ctrlKey && 'osd'.includes(evt.key.toLowerCase())) {
 				evt.preventDefault();
 			}
-		}).on('dragenter dragover dragleave drop', evt => {
-			evt.preventDefault();
-		});
+		})
+			.on('dragenter dragover dragleave drop', evt => {
+				evt.preventDefault();
+			});
 		reset();
 		window.process = "textarea, pressed, event";
 		const unknownParameters = [];
 		const knownParameters = [];
-		(location.hash || '').replace(/^#/u, '').split(/\s*,\s*/u).map(part => part.trim())
+		(location.hash || '').replace(/^#/u, '').split(/\s*,\s*/u)
+			.map(part => part.trim())
 			.filter(part => part.length)
 			.forEach(param => {
-				if (param.startsWith(autoloadScriptPrefix)) { loadScript(param.substr(autoloadScriptPrefix.length)); }
+				if (param.startsWith(autoloadScriptPrefix)) {
+					loadScript(param.substr(autoloadScriptPrefix.length));
+				}
 				else {
 					unknownParameters.push(param);
 					return;
@@ -190,6 +215,7 @@
 				knownParameters.push(param);
 			});
 		location.hash = knownParameters.join(",");
+		/* eslint-disable max-len */
 		console.groupCollapsed("Help");
 		console.groupCollapsed("Basic Usage");
 		console.info("Call `initialise(<numberOfTextBoxes>)` (or `initialize` - both spellings do the same thing!) to reset the page and produce the given number of textareas, or just set `window.boxes` to a number. Calling `reset()` is the same as initialising to a single box.");
@@ -216,6 +242,7 @@
 		console.info("You don't need to load jQuery yourself, as this page already uses it on its own.");
 		console.groupEnd();
 		console.groupEnd();
+		/* eslint-enable max-len */
 		if (unknownParameters.length) {
 			console.info(`Received ${unknownParameters.length} unknown arguments in page URI hash:`, unknownParameters);
 		}
