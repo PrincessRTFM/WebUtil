@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 Saved Tags
 // @namespace    Lilith
-// @version      2.0.0
+// @version      2.1.0
 // @description  Provides a user-editable list of tags on the sidebar, with quicksearch/add-to/negate links like normal sidebar tag suggestions. Minor additional QoL tweaks to the site, including a direct link to the image on all image pages. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -27,6 +27,7 @@ v1.3.0: provide a box with a share link for the current post without the last-se
 v1.3.1: moved the "This Post" links to a new box so it doesn't break the "Child Posts" displays, which use hard-coded heights because the coder didn't want to use `display: none` I guess?
 v1.4.0: the "remember tag" pseudolinks now display differently based on whether the tag is saved or not
 v2.0.0: entire script rewritten to function as asynchronously as possible
+v2.1.0: added tag search button
 */
 /* eslint-enable max-len */
 
@@ -399,6 +400,7 @@ const DEFAULT_TAGS = {
 				}
 				else {
 					const tagSearchInput = $('input#tags');
+					const tagSearchContainer = tagSearchInput.parent();
 					const tagSearchDiv = tagSearchInput.parents('div.sidebar > div');
 					const savedTagsDiv = $('<div id="userscript-saved-tags" style="margin-bottom: 1em;"></div>');
 					const savedTagsTogglableContent = $('<div id="user-saved-tags-sidebar-content"></div>').hide();
@@ -635,7 +637,24 @@ const DEFAULT_TAGS = {
 					}
 					savedTagsDiv.append(savedTagsHeader, savedTagsTogglableContent);
 					tagSearchDiv.after(savedTagsDiv);
-					tagSearchInput.val(existingSearch);
+					tagSearchInput.css('width', tagSearchContainer[0].getWidth() - (tagSearchContainer[0].getHeight() + 10)).val(existingSearch);
+					tagSearchContainer.append(
+						$(`<input type="button" id="tagsearch-go-button"/>`)
+							.css('width', tagSearchContainer[0].getHeight())
+							.css('min-width', tagSearchContainer[0].getHeight())
+							.css('height', tagSearchContainer[0].getHeight())
+							.css('min-height', tagSearchContainer[0].getHeight())
+							.val('→')
+							.on('click', () => {
+								const tags = tagSearchInput.val().replace(/\s+/gu, ' ').trim();
+								if (tags.length) {
+									location.assign(`/post/index/1/${tags}`);
+								}
+								else {
+									location.assign('/post');
+								}
+							})
+					);
 					redrawScriptContent();
 					$('#tag-sidebar > li[class]')
 						.each(async (i, e) => {
@@ -692,7 +711,7 @@ const DEFAULT_TAGS = {
 				clearInterval(interval);
 				resolve(direct.EMF);
 			}
-			else if (++emfCheckCounter > 10) {
+			else if (++emfCheckCounter > 50) {
 				clearInterval(interval);
 				reject(new Error('EMF not detected'));
 			}
