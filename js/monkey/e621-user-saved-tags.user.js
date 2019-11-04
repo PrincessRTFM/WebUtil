@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 Saved Tags
 // @namespace    Lilith
-// @version      2.3.0
+// @version      2.3.1
 // @description  Provides a user-editable list of tags on the sidebar, with quicksearch/add-to/negate links like normal sidebar tag suggestions. Minor additional QoL tweaks to the site, including a direct link to the image on all image pages. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -31,6 +31,7 @@ v2.1.0: added tag search button
 v2.2.0: tag search links now just replace the tag search box contents
 v2.2.1: fixed a bug in the tagline link functions where spaces wouldn't be escaped to underscores, which mangled searches
 v2.3.0: errors are now displayed using EMF's new message utility
+v2.3.1: fixed é (accented lowercase e) turning into 'Ã©' in search tags (was using the wrong encode/decode function)
 */
 /* eslint-enable max-len */
 
@@ -63,10 +64,10 @@ const DEFAULT_TAGS = {
 		logger[wrap] = console[wrap].bind(console, `[${SCRIPT_TITLE}]`);
 	});
 	Object.freeze(logger);
-	const normalise = dirty => unescape(
+	const normalise = dirty => decodeURI(
 		(dirty || '').trim()
 	).replace(/_+/gu, ' ');
-	const technify = clean => escape(
+	const technify = clean => encodeURI(
 		normalise(clean).replace(/\s+/gu, '_')
 	);
 	const regexLocationTags = /^\/post(?:\/index\/\d+\/?|(?:\/search\/?)?\?tags=|\/show\/\d+\?last=)(.*)$/iu;
@@ -90,9 +91,13 @@ const DEFAULT_TAGS = {
 		logger.info(`Initialising with EMF ${EMF.VERSION}`);
 		const editorLink = EMF.CPAGE.linkFor(EDITOR_PAGE_SLUG);
 		const existingSearch = (
-			unescape(location.pathname + location.search).match(regexLocationTags)
+			decodeURI(location.pathname + location.search)
+				.match(regexLocationTags)
 			|| [ '', '' ]
-		)[1].replace(/\+/gu, ' ');
+		)[1]
+			.replace(/\+/gu, ' ')
+			.split('Ã©')
+			.join('é');
 		logger.info(`Existing search${existingSearch ? `: ${existingSearch}` : ' not found'}`);
 		const loadUserTags = async () => {
 			let storedValue = GM_getValue(STORAGE_KEY_TAGS_LIST, DEFAULT_TAGS);
@@ -485,10 +490,10 @@ const DEFAULT_TAGS = {
 						const wiki = $(`<a class="taglink taglink-wiki taglink-wiki-${uriTag}">?</a>`)
 							.attr('href', `/wiki/show?title=${uriTag}`);
 						const add = $(`<a class="taglink taglink-append taglink-append-${uriTag}">+</a>`)
-							.attr('href', `/post/search?tags=${`${escape(existingSearch)} ${uriTag}`.trim()}`)
+							.attr('href', `/post/search?tags=${`${encodeURI(existingSearch)} ${uriTag}`.trim()}`)
 							.on('click', e => addTagToSearchBox(targetTag, e));
 						const remove = $(`<a class="taglink taglink-negate taglink-negate-${uriTag}">–</a>`)
-							.attr('href', `/post/search?tags=${`${escape(existingSearch)} -${uriTag}`.trim()}`)
+							.attr('href', `/post/search?tags=${`${encodeURI(existingSearch)} -${uriTag}`.trim()}`)
 							.on('click', e => addTagToSearchBox(`-${targetTag}`, e));
 						const remember = $(`<a class="taglink taglink-remember taglink-remember-${uriTag}"></a>`)
 							.attr('href', '#')
@@ -610,11 +615,11 @@ const DEFAULT_TAGS = {
 					);
 					// debugger;
 					if (location.pathname.startsWith('/post/show/')) {
-						console.log(`Existing search ${existingSearch ? `found: ${unescape(existingSearch)}` : 'not found'}`);
+						console.log(`Existing search ${existingSearch ? `found: ${decodeURI(existingSearch)}` : 'not found'}`);
 						const originalTitle = document.title;
 						const postID = location.pathname.substr('/post/show/'.length);
 						document.title = `#${postID}: ${originalTitle}`;
-						tagSearchInput.val(unescape(existingSearch));
+						tagSearchInput.val(decodeURI(existingSearch));
 						const noticeBox = $('<div class="status-notice" style="padding: .5em;" id="uscript-this-post"></div>');
 						$('div.status-notice').prependTo('.sidebar');
 						$('.sidebar').prepend(noticeBox);
@@ -650,7 +655,9 @@ const DEFAULT_TAGS = {
 					}
 					savedTagsDiv.append(savedTagsHeader, savedTagsTogglableContent);
 					tagSearchDiv.after(savedTagsDiv);
-					tagSearchInput.css('width', tagSearchContainer[0].getWidth() - (tagSearchContainer[0].getHeight() + 10)).val(existingSearch);
+					tagSearchInput
+						.css('width', tagSearchContainer[0].getWidth() - (tagSearchContainer[0].getHeight() + 10))
+						.val(existingSearch);
 					tagSearchContainer.append(
 						$(`<input type="button" id="tagsearch-go-button"/>`)
 							.css('width', tagSearchContainer[0].getHeight())
