@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 Saved Tags
 // @namespace    Lilith
-// @version      2.2.1
+// @version      2.3.0
 // @description  Provides a user-editable list of tags on the sidebar, with quicksearch/add-to/negate links like normal sidebar tag suggestions. Minor additional QoL tweaks to the site, including a direct link to the image on all image pages. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -30,6 +30,7 @@ v2.0.0: entire script rewritten to function as asynchronously as possible
 v2.1.0: added tag search button
 v2.2.0: tag search links now just replace the tag search box contents
 v2.2.1: fixed a bug in the tagline link functions where spaces wouldn't be escaped to underscores, which mangled searches
+v2.3.0: errors are now displayed using EMF's new message utility
 */
 /* eslint-enable max-len */
 
@@ -318,7 +319,8 @@ const DEFAULT_TAGS = {
 								.then(
 									reloadAllTagEditors,
 									error => {
-										// TODO handle error
+										EMF.UTIL.error("Couldn't import tags, check your console for details");
+										console.error(error);
 									}
 								);
 						});
@@ -355,7 +357,8 @@ const DEFAULT_TAGS = {
 								.then(
 									reloadAllTagEditors,
 									error => {
-										// TODO handle error
+										EMF.UTIL.error("Couldn't amend tags, check your console for details");
+										console.error(error);
 									}
 								);
 						});
@@ -656,7 +659,10 @@ const DEFAULT_TAGS = {
 							.css('min-height', tagSearchContainer[0].getHeight())
 							.val('→')
 							.on('click', () => {
-								const tags = tagSearchInput.val().replace(/\s+/gu, ' ').trim();
+								const tags = tagSearchInput
+									.val()
+									.replace(/\s+/gu, ' ')
+									.trim();
 								if (tags.length) {
 									location.assign(`/post/index/1/${tags}`);
 								}

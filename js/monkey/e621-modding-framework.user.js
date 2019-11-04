@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 Modding Framework
 // @namespace    Lilith
-// @version      2.0.0
+// @version      2.1.0
 // @description  Provides a simple, event-based framework for E621 pages to be modified by userscripts. Should be loaded before such pages, but can (theoretically, if the plugin script is written properly) be loaded anywhere so long as it loads within one second of the plugin script.
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -55,6 +55,84 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 	Object.freeze(logger);
 	logger.info(`${SCRIPT_TITLE} initialising`);
 	const USERNAME = Cookies.get('login');
+	const warningBox = () => {
+		const ID = 'emf-message-box';
+		let box = $(`#${ID}`);
+		if (box.length) {
+			return box.first();
+		}
+		box = $(`<div class="status-notice" id="${ID}"></div>`).hide();
+		GM_addStyle(
+			`#${ID} {`
+			+ 'position: fixed;'
+			+ 'right: 0;'
+			+ `top: ${document.getElementById('content').offsetTop}px;`
+			+ 'border-top-right-radius: 0;'
+			+ 'border-bottom-right-radius: 0;'
+			+ 'width: 300px;'
+			+ '}'
+			+ `#${ID} > .emf-message {`
+			+ 'display: block;'
+			+ 'margin: 4px;'
+			+ 'padding: 3px;'
+			+ '}'
+			+ '.emf-message-dismiss {'
+			+ 'cursor: pointer;'
+			+ 'margin-right: 4px;'
+			+ 'color: #999999;'
+			+ 'font-size: 17px;'
+			+ 'position: relative;'
+			+ 'top: 2px;'
+			+ '}'
+			+ '.emf-message-icon {'
+			+ 'cursor: default;'
+			+ 'margin-left: 3px;'
+			+ 'margin-right: 2px;'
+			+ 'font-size: 16px;'
+			+ 'position: relative;'
+			+ 'top: 1px;'
+			+ '}'
+			+ '.emf-message-icon.emf-message-error {'
+			+ 'color: #EE0000;'
+			+ '}'
+			+ '.emf-message-icon.emf-message-warning {'
+			+ 'color: #EEEE00;'
+			+ '}'
+			+ '.emf-message-icon.emf-message-help {'
+			+ 'color: #00EE44;'
+			+ '}'
+			+ '.emf-message-content {'
+			+ 'cursor: default;'
+			+ 'margin-left: 2px;'
+			+ 'font-size: 16px;'
+			+ '}'
+		);
+		$('body')
+			.first()
+			.append(box);
+		return box;
+	};
+	const insertUserMessage = (content, type, icon) => {
+		const messageContainer = $(`<div class="emf-message emf-message-${type}"></div>`);
+		const messageText = $(`<span class="emf-message-content emf-message-${type}"></span>`).html(content);
+		const messageClose = $(`<span class="emf-message-dismiss emf-message-${type}">✖</span>`);
+		const messageIcon = $(`<span class="emf-message-icon emf-message-${type}"></span>`).text(icon);
+		messageContainer.append([
+			messageClose,
+			messageIcon,
+			messageText,
+		]);
+		messageClose.on('click', () => {
+			messageContainer.remove();
+			const master = warningBox();
+			if (!master.children().length) {
+				master.hide();
+			}
+		});
+		warningBox()
+			.append(messageContainer)
+			.show();
+	};
 	const EMF = {
 		USER: USERNAME,
 		VERSION: SCRIPT_VERSION,
@@ -87,6 +165,17 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 						.toLowerCase()
 						.replace(/\/+/gu, '/')
 					: void 0;
+			},
+		},
+		UTIL: {
+			error(content) {
+				insertUserMessage(content, 'error', '⚠');
+			},
+			warning(content) {
+				insertUserMessage(content, 'warning', '⚠');
+			},
+			help(content) {
+				insertUserMessage(content, 'help', '🛈');
 			},
 		},
 	};
@@ -286,19 +375,19 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 							saveAs: true,
 							onerror: state => {
 								if (state.error == 'not_enabled') {
-									alert(`You need to allow ${GM_info.scriptHandler} to download files to use this`);
+									EMF.UTIL.error(`You need to allow ${GM_info.scriptHandler} to download files to use this`);
 								}
 								else if (state.error == 'not_whitelisted') {
-									alert(`You need to whitelist '.txt' files in ${GM_info.scriptHandler} to use this`);
+									EMF.UTIL.error(`You need to whitelist '.txt' files in ${GM_info.scriptHandler} to use this`);
 								}
 								else if (state.error == 'not_permitted') {
-									alert(`You need to give ${GM_info.scriptHandler} permission to download files`);
+									EMF.UTIL.error(`You need to give ${GM_info.scriptHandler} permission to download files`);
 								}
 								else if (state.error == 'not_supported') {
-									alert(`${GM_info.scriptHandler} is unable to download files in your browser`);
+									EMF.UTIL.error(`${GM_info.scriptHandler} is unable to download files in your browser`);
 								}
 								else {
-									alert('There was an unknown error - check your console for details');
+									EMF.UTIL.error('There was an unknown error - check your console for details');
 									logger.group(`${SCRIPT_TITLE} download error`);
 									logger.dir(state.error);
 									logger.dir(state.details);
