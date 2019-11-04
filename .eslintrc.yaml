@@ -2,20 +2,26 @@
 root: true
 env:
     es2017: true
-    browser: true
 overrides:
+    - files:
+        - "*.browser.js"
+      env:
+          browser: true
     - files:
         - "jquery.*.js"
       env:
+          browser: true
           jquery: true
     - files:
         - "*.user.js"
       env:
+          browser: true
           greasemonkey: true
       rules:
           camelcase:
             - error
             - allow:
+                - "^INTERNAL_"
                 - "^GM_"
 rules:
     max-len:
@@ -179,7 +185,10 @@ rules:
     brace-style:
         - error
         - stroustrup
-    camelcase: error
+    camelcase:
+        - error
+        - allow:
+            - "^INTERNAL_"
     comma-dangle:
         - error
         - arrays: always-multiline
