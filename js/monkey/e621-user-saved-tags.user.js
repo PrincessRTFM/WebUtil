@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 Saved Tags
 // @namespace    Lilith
-// @version      2.3.1
+// @version      2.3.2
 // @description  Provides a user-editable list of tags on the sidebar, with quicksearch/add-to/negate links like normal sidebar tag suggestions. Minor additional QoL tweaks to the site, including a direct link to the image on all image pages. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -32,6 +32,7 @@ v2.2.0: tag search links now just replace the tag search box contents
 v2.2.1: fixed a bug in the tagline link functions where spaces wouldn't be escaped to underscores, which mangled searches
 v2.3.0: errors are now displayed using EMF's new message utility
 v2.3.1: fixed é (accented lowercase e) turning into 'Ã©' in search tags (was using the wrong encode/decode function)
+v2.3.2: fixed a bug where jquery was upset about invalid characters in a search query
 */
 /* eslint-enable max-len */
 
@@ -595,7 +596,11 @@ const DEFAULT_TAGS = {
 									.removeClass("usertag-saved");
 								TAG_TYPES.forEach(async type => {
 									usertags[type].forEach(
-										tag => $(`.taglink.taglink-remember.taglink-remember-${technify(tag).replace(/%../gu, '_')}`)
+										tag => $(`.taglink.taglink-remember.taglink-remember-${
+											technify(tag)
+												.replace(/%../gu, '_')
+												.replace(/\W+/gu, '_')
+										}`)
 											.addClass("usertag-saved")
 											.removeClass("usertag-unsaved")
 									);
