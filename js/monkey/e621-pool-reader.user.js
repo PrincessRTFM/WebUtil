@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 Pool Reader
 // @namespace    Lilith
-// @version      2.0.0
+// @version      2.0.1
 // @description  Adds a reader mode to pool pages, which displays all images sequentially. The pool reader page is a separate path, and normal pool page links are replaced with links to the corresponding pool reader page instead. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        https://e621.net/*
@@ -15,6 +15,11 @@
 // @require      https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js
 // @updateURL    https://gh.princessrtfm.com/js/monkey/e621-pool-reader.user.js
 // ==/UserScript==
+
+/*
+v2.0.0: rewritten for the new EMF v2.0.0 to make use of asynchronous JS where possible
+v2.0.1: fixed some incorrect logging calls
+*/
 /* eslint-enable max-len */
 
 /* eslint-env jquery */
@@ -62,7 +67,7 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 					statusLine.empty();
 					statusLine.text(statusText).append('<span id="statusline-right"></span>');
 					$('#statusline-right').append(`<a id="pool-source-link" href="/pool/show/${poolID}">Pool</a>`);
-					console.log(`[${SCRIPT_NAME}] ${statusText}`);
+					logger.debug(`[${SCRIPT_NAME}] ${statusText}`);
 				};
 				const title = function(subtitle) {
 					document.title = `Pool Reader: ${subtitle} - e621`;
@@ -172,6 +177,6 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 			}
 		}, 100);
 	});
-	emfCheck.then(scriptCore, error => logger.info("Failed to initialise:", error));
+	emfCheck.then(scriptCore, error => logger.error("Failed to initialise:", error));
 })(window, window.jQuery || window.$ || jQuery || $, unsafeWindow);
 

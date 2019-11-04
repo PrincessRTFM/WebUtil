@@ -1,8 +1,8 @@
 /* eslint-disable max-len */
 // ==UserScript==
-// @name         E621 Saved Tags
+// @name         E621 User Saved Tags
 // @namespace    Lilith
-// @version      2.3.2
+// @version      2.5.1
 // @description  Provides a user-editable list of tags on the sidebar, with quicksearch/add-to/negate links like normal sidebar tag suggestions. Minor additional QoL tweaks to the site, including a direct link to the image on all image pages. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -33,16 +33,17 @@ v2.2.1: fixed a bug in the tagline link functions where spaces wouldn't be escap
 v2.3.0: errors are now displayed using EMF's new message utility
 v2.3.1: fixed é (accented lowercase e) turning into 'Ã©' in search tags (was using the wrong encode/decode function)
 v2.3.2: fixed a bug where jquery was upset about invalid characters in a search query
+v2.3.3: fixed a bug where existing searches didn't fully decode
+v2.4.0: improved functionality of tagline links
+v2.4.1: fixed some incorrect logging calls
+v2.5.0: added a help/tutorial/guide page
+v2.5.1: fixed a TypeError where the script tried to get the height of something that didn't exist on EMF cpages
 */
 /* eslint-enable max-len */
 
 /* eslint-env jquery */
 /* global GM_addValueChangeListener */
 
-//   CONFIGURATION   \\
-const STORAGE_KEY_TAGS_LIST = 'tagList';
-const EDITOR_PAGE_SLUG = 'tagsaver';
-// END CONFIGURATION \\
 
 const SCRIPT_NAME = GM_info.script.name;
 const SCRIPT_VERSION = `V${GM_info.script.version || '???'}`;
@@ -54,6 +55,10 @@ const DEFAULT_TAGS = {
 		'rating:s',
 	],
 };
+const STORAGE_KEY_TAGS_LIST = 'tagList';
+const EDITOR_PAGE_SLUG = 'tagsaver/edit';
+const HELP_PAGE_SLUG = 'tagsaver/help';
+const STORAGE_KEY_FIRST_RUN = 'firstRun';
 
 (function runScript(window, $, direct) {
 	// SETUP
@@ -65,8 +70,10 @@ const DEFAULT_TAGS = {
 		logger[wrap] = console[wrap].bind(console, `[${SCRIPT_TITLE}]`);
 	});
 	Object.freeze(logger);
-	const normalise = dirty => decodeURI(
-		(dirty || '').trim()
+	const normalise = dirty => unescape(
+		decodeURI(
+			(dirty || '').trim()
+		)
 	).replace(/_+/gu, ' ');
 	const technify = clean => encodeURI(
 		normalise(clean).replace(/\s+/gu, '_')
@@ -91,14 +98,21 @@ const DEFAULT_TAGS = {
 	const scriptCore = EMF => {
 		logger.info(`Initialising with EMF ${EMF.VERSION}`);
 		const editorLink = EMF.CPAGE.linkFor(EDITOR_PAGE_SLUG);
+		const helpLink = EMF.CPAGE.linkFor(HELP_PAGE_SLUG);
+		if (GM_getValue(STORAGE_KEY_FIRST_RUN, true)) { // First run, so exciting!
+			EMF.UTIL.help(
+				`Welcome to <abbr title="${SCRIPT_NAME}">EUST</abbr> ${SCRIPT_VERSION}! `
+				+ 'It looks like this is your first time using this script, so we wanted to offer a '
+				+ `<a href="${helpLink}">quick guide</a> in case you're not sure what to do.`
+			);
+			GM_setValue(STORAGE_KEY_FIRST_RUN, false);
+		}
 		const existingSearch = (
-			decodeURI(location.pathname + location.search)
+			unescape(decodeURI(location.pathname + location.search))
 				.match(regexLocationTags)
 			|| [ '', '' ]
 		)[1]
-			.replace(/\+/gu, ' ')
-			.split('Ã©')
-			.join('é');
+			.replace(/\+/gu, ' ');
 		logger.info(`Existing search${existingSearch ? `: ${existingSearch}` : ' not found'}`);
 		const loadUserTags = async () => {
 			let storedValue = GM_getValue(STORAGE_KEY_TAGS_LIST, DEFAULT_TAGS);
@@ -161,7 +175,50 @@ const DEFAULT_TAGS = {
 		});
 		EMF.EVENTS.cpage.then(
 			slug => {
-				if (slug.startsWith(EDITOR_PAGE_SLUG)) {
+				if (slug.startsWith(HELP_PAGE_SLUG)) {
+					document.title = "User Saved Tags - Guide/Help - e621";
+					const body = $('#content');
+					const add = '<tt>+</tt>';
+					const del = '<tt>-</tt>';
+					const save = '<tt>#</tt>';
+					const unsave = '<tt>$</tt>';
+					const wiki = '<tt>?</tt>';
+					GM_addStyle(
+						'img.centre {'
+						+ 'display: block;'
+						+ 'margin: 0 auto;'
+						+ '}'
+					);
+					body.append([
+						/* eslint-disable max-len */
+						'<h4><a name="quickstart">Quickstart Guide</a></h4>',
+						`<p>If you're here, using this script, chances are you already know what it's for and you want it. This section tells you how to easily get set up with it for casual use. If that's wrong or you'd like a better description of this script, you'll probably want to look at the <a href="overview">overview</a> instead.</p>`,
+						`<p>At the most basic level:</p>`,
+						`<ul>`
+						+ `<li>Click the ${add} to un-negate (or add) the tag to your search box</li>`
+						+ `<li>Click the ${del} to remove (or negate) the tag from your search box</li>`
+						+ `<li>Click the tag itself to replace your search box contents with only that tag</li>`
+						+ `<li>Click the ${save} to add the tag to your favourites list</li>`
+						+ `<li>Click the ${unsave} to remove the tag from your favourites list</li>`
+						+ `<li>Go to <a href="${editorLink}">the editor page</a> to edit your tags in text fields</li>`
+						+ `<li>Click on the <tt>User Saved Tags</tt> header to show/hide your favourites list</li>`
+						+ `</ul>`,
+						`<p>Also, all changes to your favourite tags list are synchronised across tabs, so even if you have a dozen tabs open, they'll all keep up-to-date with any tags you add or remove, no matter where you do it.</p>`,
+						'<h4><a name="overview">Overview</a></h4>',
+						`<p>Welcome, presumably new user, to ${SCRIPT_TITLE}. This script is more of a general tag enhancer at this point, having grown from the original couple of hundred lines to about five times as long. The original (and main) purpose is to provide a list of your favourite or "pinned" tags in the sidebar, for quick and easy access.</p>`,
+						`<p>To that end, all post index and post view pages now have an additional section in the sidebar, just below the tag search box. The tag list is collapsed on page load so as to avoid over-cluttering your sidebar, but clicking on the <tt>User Saved Tags</tt> header will toggle it open and closed.</p>`,
+						`<p>For the sake of easier browsing, particularly with... ahem, only one hand, the sidebar tag links have all been overhauled as well. The ${wiki} link is unchanged and still directs you immediately to the wiki page, but the others now modify the contents of the tag search box instead of opening new pages.</p>`,
+						`<p>Additionally, the ${add} and ${del} links are now somewhat more powerful/useful. If you go to negate (the ${del} button) a tag that is currently in your search box, the non-negated tag will be removed, but the negated one will not be added. If the tag is not currently present, the negated tag will be appended to your search. The same effect in reverse applies to the ${add} button as well.</p>`,
+						`<p>Matching this, clicking a tag in the sidebar will completely replace the search query with the tag clicked, allowing you to start with only one tag and add/negate more as you please, before loading the search page. Finally, all internal links are rewritten to include the search query that you followed to reach that link. On search pages, this means that all post view page links will include the string you searched for, so that it can be preloaded into the search box on all available pages.</p>`,
+						`<p>The pinned tag list should be easy to use - clicking the ${save} button next to a sidebar tag will add it to your saved list and change the button to display a ${unsave} instead, which will remove the tag and return the button to the ${save} symbol. When your tag list is changed, all open pages running this script will update to match, with one exception.</p>`,
+						`<p>There is a rudimentary (the best available for a client-only script) <a href="${editorLink}">text-based editor page</a> for your pinned tags. All tags are separated into the five site categories: content, character, copyright, species, and artist. In practice, this is only to group and style the links in your pinned tags list according to the site's stylesheet. Unless you are manually editing your tag lists, the script will handle this for you.</p>`,
+						`<p>On the manual editor page, there are five text areas, one for each category of tag. If you enter a non-existant tag, the script will not care. If you enter a tag into the wrong category, the script will not care. However, when your pinned tags are updated from another page, only editor boxes that are "in sync" with the saved content will automatically update to match. Any editor that has different content from the saved list will be left untouched and will display an "out of sync" warning, requiring you to choose whether to save it and lose other changes, or reset it and lose those changes.</p>`,
+						`<p>Finally, on the manual editor page, you have three additional functions available: you can export your current tag list (all categories) as text, you can import a saved tags list from text and <b>replace</b> your current tags, or you can import from text and <b>amend</b> your current tags. Replacing your tags will delete all of your tags and replace them with the imported list. Amending will only add tags to your list that were in the imported list but not your own. Currently, this is all or nothing - you cannot export/import/amend only a specific category. This feature is planned for the future.</p>`,
+						`<p>Thank you for installing ${SCRIPT_NAME}, and we hope it serves you well. If you have questions, feature requests, or bug reports, please report them to the <a href="https://github.com/PrincessRTFM/WebUtil/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc">issue tracker</a>.</p>`,
+						/* eslint-enable max-len */
+					]);
+				}
+				else if (slug.startsWith(EDITOR_PAGE_SLUG)) {
 					document.title = "User Saved Tags - e621";
 					EMF.EVENTS.navsetup.then(({
 						navbar,
@@ -190,20 +247,6 @@ const DEFAULT_TAGS = {
 							+ '</li>'
 						);
 					});
-					GM_addStyle(
-						'button {'
-						+ 'border-radius: 2px;'
-						+ 'box-shadow: 2px 2px 5px #07162d;'
-						+ 'border: 0;'
-						+ 'margin-top: 5px;'
-						+ 'border: 0;'
-						+ 'padding: 1px 2px;'
-						+ 'position: relative;'
-						+ 'top: -3px;'
-						+ 'min-width: 65px;'
-						+ 'min-height:22px;'
-						+ '}'
-					);
 					const mkContainer = type => $('<div class="section taglist-container" style="width: min-content;"></div>')
 						.attr('id', `container-taglist-${type}`);
 					const mkEditor = type => $('<textarea class="taglist-editor" cols="80" rows="8" style="resize: none; display: block;"></textarea>')
@@ -234,11 +277,11 @@ const DEFAULT_TAGS = {
 						const warningDesynced = $(
 							'<span style="float: right;" class="taglist-warning taglist-warning-desync">⚠ This set of tags has changed elsewhere! ⚠</span>'
 						).addClass(`desync-warning-taglist-${type}`);
-						const btnSave = $('<button class="save-taglist-editor" style="display: inline;">Save</button>')
+						const btnSave = $('<input type="button" class="save-taglist-editor" style="display: inline;" value="Save" />')
 							.attr('id', `save-taglist-${type}`)
 							.on('click', () => {
 								loadUserTags()
-									.then(cleanTagList())
+									.then(cleanTagList)
 									.then(usertags => {
 										usertags[type] = editor.val()
 											.trim()
@@ -249,11 +292,11 @@ const DEFAULT_TAGS = {
 									.then(saveUserTags)
 									.then(() => container.removeClass('unsaved desync'));
 							});
-						const btnReset = $('<button class="reset-taglist-editor" style="display: inline; float: right;">Reset</button>')
+						const btnReset = $('<input type="button" class="reset-taglist-editor" style="display: inline; float: right;" value="Reset" />')
 							.attr('id', `reset-taglist-${type}`)
 							.on('click', () => {
 								loadUserTags()
-									.then(cleanTagList())
+									.then(cleanTagList)
 									.then(usertags => {
 										editor.val(
 											usertags[type]
@@ -302,7 +345,7 @@ const DEFAULT_TAGS = {
 					const headIO = mkHeader('import-export', 'Import/Export');
 					const sectIO = mkContainer('import-export');
 					const textIO = mkEditor('import-export');
-					const inputI = $('<button class="import-taglist-data" style="display: inline;" id="import-taglists">IMPORT</button>')
+					const inputI = $('<input type="button" class="import-taglist-data" style="display: inline;" id="import-taglists" value="IMPORT" />')
 						.on('click', async () => {
 							const imported = JSON.parse(
 								textIO.val().trim()
@@ -326,11 +369,11 @@ const DEFAULT_TAGS = {
 									reloadAllTagEditors,
 									error => {
 										EMF.UTIL.error("Couldn't import tags, check your console for details");
-										console.error(error);
+										logger.error(error);
 									}
 								);
 						});
-					const inputA = $('<button class="amend-taglist-data" style="display: inline;" id="import-taglists">AMEND</button>')
+					const inputA = $('<input type="button" class="amend-taglist-data" style="display: inline;" id="import-taglists" value="AMEND" />')
 						.on('click', async () => {
 							const imported = JSON.parse(
 								textIO.val().trim()
@@ -364,11 +407,13 @@ const DEFAULT_TAGS = {
 									reloadAllTagEditors,
 									error => {
 										EMF.UTIL.error("Couldn't amend tags, check your console for details");
-										console.error(error);
+										logger.error(error);
 									}
 								);
 						});
-					const inputO = $('<button class="export-taglist-data" style="display: inline; float: right;" id="export-taglists">EXPORT</button>')
+					const inputO = $(
+						'<input type="button" class="export-taglist-data" style="display: inline; float: right;" id="export-taglists" value="EXPORT" />'
+					)
 						.on('click', async () => {
 							loadUserTags()
 								.then(cleanTagList)
@@ -428,30 +473,71 @@ const DEFAULT_TAGS = {
 					const savedTagsEmptyWarning = $('<div>No user tags have been saved</div>');
 					const addTagToSearchBox = (tag, event) => {
 						if (tagSearchInput.length) {
+							const searchableTag = normalise(tag).replace(/\s+/gu, '_');
+							const negatedTagP = searchableTag.startsWith('-');
+							const includeTag = negatedTagP
+								? searchableTag.substr(1)
+								: searchableTag;
+							const excludeTag = `-${includeTag}`;
+							const currentSearch = tagSearchInput.val();
+							let currentTags = currentSearch
+								.split(/\s+/u);
+							if (negatedTagP) {
+								logger.info(`Negating tag "${includeTag}" in search string "${currentTags.join(' ')}"`);
+								if (currentTags.includes(excludeTag)) {
+									logger.debug("Tag is already present and negated");
+									currentTags = currentTags.filter(
+										existingTag => normalise(existingTag) != includeTag
+									).filter(
+										existingTag => normalise(existingTag) != excludeTag
+									);
+									currentTags.push(excludeTag);
+								}
+								else if (currentTags.includes(includeTag)) {
+									logger.debug("Tag is present, removing");
+									currentTags = currentTags.filter(
+										existingTag => normalise(existingTag) != includeTag
+									);
+								}
+								else {
+									logger.debug("Tag is not present, negating");
+									currentTags.push(excludeTag);
+								}
+							}
+							else {
+								logger.info(`Applying tag "${includeTag}" to search string "${currentTags.join(' ')}"`);
+								if (currentTags.includes(includeTag)) {
+									logger.debug("Tag is already present");
+									currentTags = currentTags.filter(
+										existingTag => normalise(existingTag) != includeTag
+									).filter(
+										existingTag => normalise(existingTag) != excludeTag
+									);
+									currentTags.push(includeTag);
+								}
+								else if (currentTags.includes(excludeTag)) {
+									logger.debug("Tag is negated, removing");
+									currentTags = currentTags.filter(
+										existingTag => normalise(existingTag) != excludeTag
+									);
+								}
+								else {
+									logger.debug("Tag is not present, adding");
+									currentTags.push(includeTag);
+								}
+							}
+							const modifiedSearch = currentTags
+								.join(' ')
+								.replace(/\s+/gu, ' ')
+								.trim();
+							logger.debug(`Constructed new search string "${modifiedSearch}"`);
+							tagSearchInput.val(modifiedSearch);
 							if (typeof event == 'object') {
 								if (typeof event.preventDefault == 'function') {
 									event.preventDefault();
 								}
 								event.returnValue = false;
 							}
-							const searchableTag = normalise(tag).replace(/\s+/gu, '_');
-							const currentSearch = tagSearchInput.val();
-							logger.info(`Injecting "${searchableTag}" into existing search for "${currentSearch}"`);
-							logger.info(`Stripping existing copies of "${searchableTag}" from existing search`);
-							let currentTags = currentSearch
-								.split(/\s+/u)
-								.filter(existingTag => normalise(existingTag) != searchableTag);
-							if (searchableTag.startsWith('-')) {
-								logger.info(`Stripping non-negated copies of "${searchableTag}" from existing search`);
-								currentTags = currentTags.filter(existingTag => normalise(existingTag) != searchableTag.substr(1));
-							}
-							else {
-								logger.info(`Stripping negated copies of "${searchableTag}" from existing search`);
-								currentTags = currentTags.filter(existingTag => normalise(existingTag) != `-${searchableTag}`);
-							}
-							const modifiedSearch = `${currentTags.join(' ')} ${searchableTag}`.replace(/\s+/gu, ' ').trim();
-							logger.debug(`Constructed new search string: ${modifiedSearch}`);
-							tagSearchInput.val(modifiedSearch);
 							return false;
 						}
 						if (typeof event == 'object') {
@@ -620,11 +706,11 @@ const DEFAULT_TAGS = {
 					);
 					// debugger;
 					if (location.pathname.startsWith('/post/show/')) {
-						console.log(`Existing search ${existingSearch ? `found: ${decodeURI(existingSearch)}` : 'not found'}`);
+						logger.info(`Existing search ${existingSearch ? `found: ${existingSearch}` : 'not found'}`);
 						const originalTitle = document.title;
 						const postID = location.pathname.substr('/post/show/'.length);
 						document.title = `#${postID}: ${originalTitle}`;
-						tagSearchInput.val(decodeURI(existingSearch));
+						tagSearchInput.val(existingSearch);
 						const noticeBox = $('<div class="status-notice" style="padding: .5em;" id="uscript-this-post"></div>');
 						$('div.status-notice').prependTo('.sidebar');
 						$('.sidebar').prepend(noticeBox);
@@ -660,29 +746,31 @@ const DEFAULT_TAGS = {
 					}
 					savedTagsDiv.append(savedTagsHeader, savedTagsTogglableContent);
 					tagSearchDiv.after(savedTagsDiv);
-					tagSearchInput
-						.css('width', tagSearchContainer[0].getWidth() - (tagSearchContainer[0].getHeight() + 10))
-						.val(existingSearch);
-					tagSearchContainer.append(
-						$(`<input type="button" id="tagsearch-go-button"/>`)
-							.css('width', tagSearchContainer[0].getHeight())
-							.css('min-width', tagSearchContainer[0].getHeight())
-							.css('height', tagSearchContainer[0].getHeight())
-							.css('min-height', tagSearchContainer[0].getHeight())
-							.val('→')
-							.on('click', () => {
-								const tags = tagSearchInput
-									.val()
-									.replace(/\s+/gu, ' ')
-									.trim();
-								if (tags.length) {
-									location.assign(`/post/index/1/${tags}`);
-								}
-								else {
-									location.assign('/post');
-								}
-							})
-					);
+					if (tagSearchContainer.length) {
+						tagSearchInput
+							.css('width', tagSearchContainer[0].getWidth() - (tagSearchContainer[0].getHeight() + 10))
+							.val(existingSearch);
+						tagSearchContainer.append(
+							$(`<input type="button" id="tagsearch-go-button"/>`)
+								.css('width', tagSearchContainer[0].getHeight())
+								.css('min-width', tagSearchContainer[0].getHeight())
+								.css('height', tagSearchContainer[0].getHeight())
+								.css('min-height', tagSearchContainer[0].getHeight())
+								.val('→')
+								.on('click', () => {
+									const tags = tagSearchInput
+										.val()
+										.replace(/\s+/gu, ' ')
+										.trim();
+									if (tags.length) {
+										location.assign(`/post/index/1/${tags}`);
+									}
+									else {
+										location.assign('/post');
+									}
+								})
+						);
+					}
 					redrawScriptContent();
 					$('#tag-sidebar > li[class]')
 						.each(async (i, e) => {
@@ -713,7 +801,7 @@ const DEFAULT_TAGS = {
 						if (name != STORAGE_KEY_TAGS_LIST) {
 							return;
 						}
-						logger.info("Saved tags have changed, reassembling page data");
+						logger.debug("Saved tags have changed, reassembling page data");
 						redrawScriptContent();
 						$('li.tag-line');
 						$('.taglist-container')
@@ -745,6 +833,6 @@ const DEFAULT_TAGS = {
 			}
 		}, 100);
 	});
-	emfCheck.then(scriptCore, error => logger.info("Failed to initialise:", error));
+	emfCheck.then(scriptCore, error => logger.error("Failed to initialise:", error));
 })(window, window.jQuery || window.$ || jQuery || $, unsafeWindow);
 

@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 Modding Framework
 // @namespace    Lilith
-// @version      2.1.0
+// @version      2.1.2
 // @description  Provides a simple, event-based framework for E621 pages to be modified by userscripts. Should be loaded before such pages, but can (theoretically, if the plugin script is written properly) be loaded anywhere so long as it loads within one second of the plugin script.
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,13 @@
 // @require      https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js
 // @updateURL    https://gh.princessrtfm.com/js/monkey/e621-modding-framework.user.js
 // ==/UserScript==
+
+/*
+v2.0.0: rewritten to use asynchronous JS where possible, and to be less bloated and organic
+v2.1.0: added EMF.UTIL with three message display functions
+v2.1.1: set the message display box's z-index to 9999 so it'll stay on top of other things
+v2.1.2: fixed a cpage bug where the background would be inherited by child elements
+*/
 /* eslint-enable max-len */
 
 /* eslint-env jquery */
@@ -69,7 +76,8 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 			+ `top: ${document.getElementById('content').offsetTop}px;`
 			+ 'border-top-right-radius: 0;'
 			+ 'border-bottom-right-radius: 0;'
-			+ 'width: 300px;'
+			+ 'width: 350px;'
+			+ 'z-index: 9999;'
 			+ '}'
 			+ `#${ID} > .emf-message {`
 			+ 'display: block;'
@@ -140,19 +148,9 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 		CPAGE: {
 			PREFIX: '/emf/',
 			linkFor: Object.freeze(cpage => `${EMF.CPAGE.PREFIX}${cpage}`.replace(/\/+/gu, '/')),
-			on: Object.freeze(slug => EMF.CPAGE.path.startsWith(slug.toLowerCase().replace(/\/+/gu, '/'))),
+			on: Object.freeze(slug => EMF.CPAGE.slug.startsWith(slug.toLowerCase().replace(/\/+/gu, '/'))),
 			get is() {
 				return location.pathname.startsWith(EMF.CPAGE.PREFIX);
-			},
-			get path() {
-				return EMF.CPAGE.is
-					? location
-						.pathname
-						.substr(EMF.CPAGE.PREFIX.length - 1)
-						.toLowerCase()
-						.replace(/#.*$/u, '')
-						|| '/'
-					: '';
 			},
 			set slug(cpage) {
 				location.assign(EMF.CPAGE.url(cpage));
@@ -305,6 +303,7 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 					'background-position': 'top right',
 					'background-repeat': 'no-repeat',
 					'background-color': 'transparent',
+					'background-attachment': 'fixed',
 					'margin': 'initial',
 					'padding': 'initial',
 					'border-radius': 'initial',
@@ -319,6 +318,11 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 				body.wrap(wrapper);
 				Object.keys(bgBits).forEach(key => body[0].style.setProperty(key, bgBits[key], "important"));
 				body.empty();
+				GM_addStyle([
+					'#content * {',
+					'background: none !important;', // You want a background, use a more specific CSS rule
+					'}',
+				].join(''));
 				if (EMF.CPAGE.on('/debug')) { // EMF internal debug info page
 					document.title = `${SCRIPT_TITLE} Debug - e621`;
 					const header = $(`<h2 id="emf-debug-header">${SCRIPT_NAME} Debug Information</h2>`);
