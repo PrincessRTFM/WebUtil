@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 User Saved Tags
 // @namespace    Lilith
-// @version      2.5.1
+// @version      2.5.2
 // @description  Provides a user-editable list of tags on the sidebar, with quicksearch/add-to/negate links like normal sidebar tag suggestions. Minor additional QoL tweaks to the site, including a direct link to the image on all image pages. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -38,6 +38,7 @@ v2.4.0: improved functionality of tagline links
 v2.4.1: fixed some incorrect logging calls
 v2.5.0: added a help/tutorial/guide page
 v2.5.1: fixed a TypeError where the script tried to get the height of something that didn't exist on EMF cpages
+v2.5.2: fix an error with pinning tags that use non-ASCII-alphanumeric characters
 */
 /* eslint-enable max-len */
 
@@ -582,7 +583,11 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 						const remove = $(`<a class="taglink taglink-negate taglink-negate-${uriTag}">–</a>`)
 							.attr('href', `/post/search?tags=${`${encodeURI(existingSearch)} -${uriTag}`.trim()}`)
 							.on('click', e => addTagToSearchBox(`-${targetTag}`, e));
-						const remember = $(`<a class="taglink taglink-remember taglink-remember-${uriTag}"></a>`)
+						const remember = $(`<a class="taglink taglink-remember taglink-remember-${
+							uriTag
+								.replace(/%../gu, '_')
+								.replace(/\W+/gu, '_')
+						}"></a>`)
 							.attr('href', '#')
 							.on('click', e => {
 								searchForTag(targetTag, type)
@@ -594,7 +599,11 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 										}) => {
 											const usertags = await loadUserTags().then(cleanTagList);
 											usertags[tagType].splice(userlistIndex, 1);
-											$(`.taglink.taglink-remember.taglink-remember-${technify(tag)}`)
+											$(`.taglink.taglink-remember.taglink-remember-${
+												technify(tag)
+													.replace(/%../gu, '_')
+													.replace(/\W+/gu, '_')
+											}`)
 												.addClass("usertag-unsaved")
 												.removeClass("usertag-saved");
 											saveUserTags(usertags);
@@ -605,7 +614,11 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 										}) => {
 											const usertags = await loadUserTags().then(cleanTagList);
 											usertags[tagType].push(technify(tag));
-											$(`.taglink.taglink-remember.taglink-remember-${technify(tag)}`)
+											$(`.taglink.taglink-remember.taglink-remember-${
+												technify(tag)
+													.replace(/%../gu, '_')
+													.replace(/\W+/gu, '_')
+											}`)
 												.addClass("usertag-saved")
 												.removeClass("usertag-unsaved");
 											saveUserTags(usertags);
