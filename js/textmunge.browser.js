@@ -19,6 +19,30 @@
 		pressed += (event.key || '').toLowerCase();
 		return pressed;
 	};
+	const insertTextAtCursor = (input, text, highlightP) => {
+		input.focus();
+		const successP = document.execCommand("insertText", false, text);
+		// Firefox uses (used?) a non-standard method - the insertText command doesn't (didn't?) work for it
+		if (!successP && typeof input.setRangeText == "function") {
+			const start = input.selectionStart;
+			input.setRangeText(text);
+			input.selectionEnd = start + text.length;
+			input.selectionStart = highlightP
+				? start
+				: input.selectionEnd;
+			const e = document.createEvent("UIEvent");
+			e.initEvent("input", true, false);
+			input.dispatchEvent(e);
+		}
+	};
+	const proc = (target, ...details) => {
+		if (typeof target.process == 'function') {
+			target.process(target, ...details);
+		}
+		else if (typeof window.process == 'function') {
+			window.process(target, ...details);
+		}
+	};
 	const pageInitialiser = function pageInitialiser(count) {
 		const ids = 'abcdefghijklmnopqrstuvwxyz';
 		const body = $('body');
@@ -52,12 +76,7 @@
 				let reader = new FileReader();
 				reader.onload = evt => {
 					textarea.value = evt.target.result;
-					if (typeof textarea.process == 'function') {
-						textarea.process(textarea, '', evt);
-					}
-					else if (typeof window.process == 'function') {
-						window.process(textarea, '', evt);
-					}
+					proc(textarea, '', evt);
 				};
 				reader.onerror = evt => {
 					console.error(evt);
@@ -118,12 +137,12 @@
 						textarea.select();
 						document.execCommand("copy");
 					}
-					else if (typeof textarea.process == 'function') {
-						textarea.process(textarea, hit, evtKeyDown);
+					else if (hit == 'tab') {
+						evtKeyDown.block();
+						insertTextAtCursor(textarea, "\t");
+						proc(textarea, hit, evtKeyDown);
 					}
-					else if (typeof window.process == 'function') {
-						window.process(textarea, hit, evtKeyDown);
-					}
+					proc(textarea, hit, evtKeyDown);
 				});
 				Object.defineProperties(textarea, {
 					munge: {
@@ -202,7 +221,10 @@
 	$(() => {
 		$(document).on('keydown keyup', evt => {
 			if (evt.ctrlKey && 'osd'.includes(evt.key.toLowerCase())) {
-				evt.preventDefault();
+				evt.block();
+			}
+			else if (['tab'].includes(evt.key.toLowerCase())) {
+				evt.block();
 			}
 		})
 			.on('dragenter dragover dragleave drop', evt => {
