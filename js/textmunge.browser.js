@@ -66,7 +66,7 @@
 					reader = new FileReader();
 				};
 				textarea.id = id;
-				textarea.process = "textarea, pressed, event";
+				textarea.process = "function(textarea, pressed, event)";
 				label.text(id);
 				input.on('dragenter', evt => {
 					evt.block();
@@ -125,16 +125,26 @@
 						window.process(textarea, hit, evtKeyDown);
 					}
 				});
-				Object.defineProperty(textarea, 'munge', {
-					enumerable: true,
-					value: munger => {
-						textarea.value = munger(textarea.value) || textarea.value;
+				Object.defineProperties(textarea, {
+					munge: {
+						enumerable: true,
+						value: munger => {
+							textarea.value = munger(textarea.value) || textarea.value;
+						},
+					},
+					toString: {
+						value: () => textarea.value,
 					},
 				});
-				Object.defineProperty(input, 'munge', {
-					enumerable: true,
-					value: munger => {
-						input.val(munger(input.val()) || input.val());
+				Object.defineProperties(input, {
+					munge: {
+						enumerable: true,
+						value: munger => {
+							input.val(munger(input.val()) || input.val());
+						},
+					},
+					toString: {
+						value: () => input.val(),
 					},
 				});
 				window[id] = textarea;
@@ -181,7 +191,8 @@
 					console.error(`Unable to load script from ${src} (did your browser block the request?)`);
 					$(script).remove();
 				};
-				$('head').first()
+				$('head')
+					.first()
 					.append(script);
 				script.src = src;
 			},
@@ -198,7 +209,7 @@
 				evt.preventDefault();
 			});
 		reset();
-		window.process = "textarea, pressed, event";
+		window.process = "function(textarea, pressed, event)";
 		const unknownParameters = [];
 		const knownParameters = [];
 		(location.hash || '').replace(/^#/u, '').split(/\s*,\s*/u)
