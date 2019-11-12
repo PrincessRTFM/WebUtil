@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 User Saved Tags
 // @namespace    Lilith
-// @version      2.5.2
+// @version      2.6.0
 // @description  Provides a user-editable list of tags on the sidebar, with quicksearch/add-to/negate links like normal sidebar tag suggestions. Minor additional QoL tweaks to the site, including a direct link to the image on all image pages. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -39,6 +39,8 @@ v2.4.1: fixed some incorrect logging calls
 v2.5.0: added a help/tutorial/guide page
 v2.5.1: fixed a TypeError where the script tried to get the height of something that didn't exist on EMF cpages
 v2.5.2: fix an error with pinning tags that use non-ASCII-alphanumeric characters
+v2.5.3: fix a bug where the explicitly clean link was still being munged like the others
+v2.6.0: double clicking the post image now goes to the direct image itself
 */
 /* eslint-enable max-len */
 
@@ -728,13 +730,15 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 						$('div.status-notice').prependTo('.sidebar');
 						$('.sidebar').prepend(noticeBox);
 						const thisPost = $('<p></p>');
+						const postImage = $('#image');
 						const br = '<br />';
-						const linkClean = $(`<a href="${location.href.substring(0, location.href.length - location.search.length)}"></a>`);
-						const linkDirty = $(`<a href="${location.href}"></a>`);
-						const linkImage = $(`<a href="${
-							$('#highres').attr('href')
-							|| $('#image').attr('src')
-						}"></a>`);
+						const uriClean = location.href.substring(0, location.href.length - location.search.length);
+						const uriDirty = location.href;
+						const uriImage = $('#highres').attr('href')
+							|| postImage.attr('src');
+						const linkClean = $(`<a class="eust-no-munge-href" href="${uriClean}"></a>`);
+						const linkDirty = $(`<a href="${uriDirty}"></a>`);
+						const linkImage = $(`<a href="${uriImage}"></a>`);
 						linkClean.text(`#${location.pathname.replace(/^.+\/(\d+).*$/u, '$1') + (existingSearch ? ' (clean link)' : '')}`);
 						linkDirty.text(`#${location.pathname.replace(/^.+\/(\d+).*$/u, '$1')} (this link)`);
 						linkImage.text('Direct image');
@@ -746,10 +750,16 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 							]
 							: br, linkImage);
 						noticeBox.prepend('<h6>This Post</h6>', thisPost);
+						postImage.on('dblclick', () => {
+							location.assign(uriImage);
+						});
 					}
 					if (existingSearch) {
 						$('a[href]')
 							.each(async (i, elem) => {
+								if (elem.classList.contains("eust-no-munge-href")) {
+									return;
+								}
 								const href = new URL(elem.href, location.origin);
 								if (href.host == location.host && href.pathname.startsWith("/post/show/")) {
 									href.searchParams.set("last", existingSearch);
