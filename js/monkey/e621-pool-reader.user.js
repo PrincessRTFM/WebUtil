@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 Pool Reader
 // @namespace    Lilith
-// @version      2.2.0
+// @version      2.3.0
 // @description  Adds a reader mode to pool pages, which displays all images sequentially. The pool reader page is a separate path, and normal pool page links are replaced with links to the corresponding pool reader page instead. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        https://e621.net/*
@@ -22,6 +22,7 @@ v2.0.1: fixed some incorrect logging calls
 v2.0.2: fixed an off-by-one error in the display
 v2.1.0: added a percent-complete readout for loading images
 v2.2.0: wrapped all reader images in links to the post page
+v2.3.0: reader page image links include the progress through the pool as a tooltip
 */
 /* eslint-enable max-len */
 
@@ -116,6 +117,7 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 							const link = document.createElement('a');
 							link.id = `post-${post.id}`;
 							link.href = `/post/show/${post.id}`;
+							link.title = `${lpad(index + 1, String(total).length, 0)}/${total}`;
 							$(link).append(img);
 							body.append(link);
 							img.src = post.file_url;
