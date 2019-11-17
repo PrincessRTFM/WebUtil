@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 Pool Reader
 // @namespace    Lilith
-// @version      2.0.1
+// @version      2.2.0
 // @description  Adds a reader mode to pool pages, which displays all images sequentially. The pool reader page is a separate path, and normal pool page links are replaced with links to the corresponding pool reader page instead. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        https://e621.net/*
@@ -19,6 +19,9 @@
 /*
 v2.0.0: rewritten for the new EMF v2.0.0 to make use of asynchronous JS where possible
 v2.0.1: fixed some incorrect logging calls
+v2.0.2: fixed an off-by-one error in the display
+v2.1.0: added a percent-complete readout for loading images
+v2.2.0: wrapped all reader images in links to the post page
 */
 /* eslint-enable max-len */
 
@@ -67,7 +70,7 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 					statusLine.empty();
 					statusLine.text(statusText).append('<span id="statusline-right"></span>');
 					$('#statusline-right').append(`<a id="pool-source-link" href="/pool/show/${poolID}">Pool</a>`);
-					logger.debug(`[${SCRIPT_NAME}] ${statusText}`);
+					logger.debug(statusText);
 				};
 				const title = function(subtitle) {
 					document.title = `Pool Reader: ${subtitle} - e621`;
@@ -100,12 +103,21 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 								return;
 							}
 							index++;
-							status(`Loading image #${post.id} (${lpad(index, String(total).length, 0)}/${total})...`);
+							const completion = (index / total * 100).toFixed();
+							title(`[${completion}%] ${name}... (#${id})`);
+							status(
+								`Loading image #${post.id} (${lpad(index + 1, String(total).length, 0)}/${total}, ${completion}% done)...`
+							);
 							img = document.createElement('img');
 							img.onload = loadNextImage;
-							$(img).addClass('pool-image')
+							$(img)
+								.addClass('pool-image')
 								.hide();
-							body.append(img);
+							const link = document.createElement('a');
+							link.id = `post-${post.id}`;
+							link.href = `/post/show/${post.id}`;
+							$(link).append(img);
+							body.append(link);
 							img.src = post.file_url;
 						};
 						loadNextImage();
