@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 User Saved Tags
 // @namespace    Lilith
-// @version      2.6.1
+// @version      2.6.2
 // @description  Provides a user-editable list of tags on the sidebar, with quicksearch/add-to/negate links like normal sidebar tag suggestions. Minor additional QoL tweaks to the site, including a direct link to the image on all image pages. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -42,6 +42,7 @@ v2.5.2: fix an error with pinning tags that use non-ASCII-alphanumeric character
 v2.5.3: fix a bug where the explicitly clean link was still being munged like the others
 v2.6.0: double clicking the post image now goes to the direct image itself
 v2.6.1: fixed a bug causing duplicated search terms
+v2.6.2: finished fixing the bug about duplicate search terms
 */
 /* eslint-enable max-len */
 
@@ -490,12 +491,6 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 								logger.info(`Negating tag "${includeTag}" in search string "${currentTags.join(' ')}"`);
 								if (currentTags.includes(excludeTag)) {
 									logger.debug("Tag is already present and negated");
-									currentTags = currentTags.filter(
-										existingTag => normalise(existingTag) != includeTag
-									).filter(
-										existingTag => normalise(existingTag) != excludeTag
-									);
-									currentTags.push(excludeTag);
 								}
 								else if (currentTags.includes(includeTag)) {
 									logger.debug("Tag is present, removing");
