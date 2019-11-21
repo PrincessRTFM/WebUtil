@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 Pool Reader
 // @namespace    Lilith
-// @version      2.3.1
+// @version      2.4.0
 // @description  Adds a reader mode to pool pages, which displays all images sequentially. The pool reader page is a separate path, and normal pool page links are replaced with links to the corresponding pool reader page instead. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        https://e621.net/*
@@ -24,6 +24,7 @@ v2.1.0: added a percent-complete readout for loading images
 v2.2.0: wrapped all reader images in links to the post page
 v2.3.0: reader page image links include the progress through the pool as a tooltip
 v2.3.1: fixed another off-by-one error in the display
+v2.4.0: now displays pool title during loading (also clarified some display text)
 */
 /* eslint-enable max-len */
 
@@ -77,18 +78,24 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 				const title = function(subtitle) {
 					document.title = `Pool Reader: ${subtitle} - e621`;
 				};
-				const onPoolDataLoaded = (additionalPagesNeeded, poolData) => {
+				const onPoolDataLoaded = (loadPoolData, poolData) => {
 					body.empty();
 					const pool = poolData.response;
 					const id = pool.id || poolData.context.pool;
 					const page = poolData.context.page || 1;
 					const name = pool.name.replace(/_/gu, ' ');
 					const total = pool.post_count;
+					const noPostsThisPageP = !pool.posts.length;
 					title(`loading ${name}... (#${id})`);
-					status(`Queueing posts for pool ${id} (${name}...`);
+					status(`Queueing posts for pool #${id} (${name}...`);
 					pool.posts.forEach(post => postList.push(post));
-					if (postList.length == total) {
-						status(`Loading ${total} post${total == 1 ? '' : 's'} from ${id}...`);
+					const loadedAllPostsP = postList.length == total;
+					const doneLoading = loadedAllPostsP || noPostsThisPageP;
+					if (doneLoading) {
+						if (noPostsThisPageP) {
+							logger.warn("No posts were found on this page - something's probably wrong!");
+						}
+						status(`Loading ${total} post${total == 1 ? '' : 's'} from pool #${id}...`);
 						// Put the image on the page, load it
 						// When it's done, pull the next and repeat
 						let post;
@@ -128,25 +135,33 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 					}
 					else {
 						status(`Loaded ${postList.length} of ${total} posts, trying next page`);
-						additionalPagesNeeded(id, page + 1);
+						loadPoolData(id, page + 1, name);
 					}
 				};
 				const onPoolLoadingError = err => {
 					const id = err.context.pool || poolID;
 					const page = err.context.page || 1;
 					title(`Error on ${id}`);
-					status(`Unable to load pool data for ${id}, page ${page}`);
+					status(`Unable to load pool data for pool #${id}, page ${page}`);
 				};
 				const onPoolLoadingTimeout = state => {
 					const id = state.context.pool || poolID;
 					const page = state.context.page || 1;
-					title(`Timed out on ${id}`);
-					status(`Request timed out loading pool data for ${id}, page ${page}`);
+					title(`Timed out on #${id}`);
+					status(`Request timed out loading pool data for pool #${id}, page ${page}`);
 				};
-				const loadPoolData = (id, page) => {
+				const loadPoolData = (id, page, poolTitle) => {
 					page = page || 1;
-					title(`loading ${id}...`);
-					status(`Loading pool data for page ${page} of ${id}...`);
+					title(
+						poolTitle
+							? `loading ${poolTitle} (pool #${id}) ...`
+							: `loading pool #${id}...`
+					);
+					status(
+						poolTitle
+							? `Loading pool data for page ${page} of ${poolTitle} (pool #${id})...`
+							: `Loading pool data for page ${page} of pool #${id}...`
+					);
 					GM_xmlhttpRequest({
 						method: "GET",
 						url: `${location.origin}/pool/show/${id}.json?page=${page}`,
