@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 User Saved Tags
 // @namespace    Lilith
-// @version      2.8.1
+// @version      2.8.2
 // @description  Provides a user-editable list of tags on the sidebar, with quicksearch/add-to/negate links like normal sidebar tag suggestions. Minor additional QoL tweaks to the site, including a direct link to the image on all image pages. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -47,6 +47,7 @@ v2.6.3: finally tracked down a bug preventing tags from being properly detected 
 v2.7.0: post pages have a tag count for each category header on the sidebar
 v2.8.0: tag index pages (/tag/index) now offer save/forget links too
 v2.8.1: tag editors are slightly cleaner now
+v2.8.2: fixed a bug where the update handler wouldn't register on cpages
 */
 /* eslint-enable max-len */
 
@@ -169,6 +170,20 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 			GM_setValue(STORAGE_KEY_TAGS_LIST, JSON.stringify(cleanedTags));
 			return cleanedTags;
 		});
+		const registerUpdateHandler = handler => {
+			if (typeof handler == 'function') {
+				GM_addValueChangeListener(STORAGE_KEY_TAGS_LIST, name => {
+					if (name != STORAGE_KEY_TAGS_LIST) {
+						return;
+					}
+					logger.debug("Saved tags have changed, executing registered update handler");
+					handler();
+				});
+			}
+			else {
+				logger.error("Attempted to register non-function update handler");
+			}
+		};
 		// EVENTS
 		EMF.EVENTS.navsetup.then(({
 			subnav,
@@ -467,6 +482,19 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 						+ '}'
 					);
 					core.append(body);
+					registerUpdateHandler(() => {
+						$('.taglist-container')
+							.each((i, container) => {
+								if ($(container).hasClass('unsaved')) {
+									$(container).addClass('desync');
+								}
+								else {
+									$(container)
+										.children('.reset-taglist-editor')
+										.click();
+								}
+							});
+					});
 				}
 				else {
 					const tagSearchInput = $('input#tags');
@@ -856,25 +884,7 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 									remainder
 								);
 						});
-					GM_addValueChangeListener(STORAGE_KEY_TAGS_LIST, name => {
-						if (name != STORAGE_KEY_TAGS_LIST) {
-							return;
-						}
-						logger.debug("Saved tags have changed, reassembling page data");
-						redrawScriptContent();
-						$('li.tag-line');
-						$('.taglist-container')
-							.each((i, container) => {
-								if ($(container).hasClass('unsaved')) {
-									$(container).addClass('desync');
-								}
-								else {
-									$(container)
-										.children('.reset-taglist-editor')
-										.click();
-								}
-							});
-					});
+					registerUpdateHandler(redrawScriptContent);
 				}
 			}
 		);
