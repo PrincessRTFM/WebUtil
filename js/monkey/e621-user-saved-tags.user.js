@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 User Saved Tags
 // @namespace    Lilith
-// @version      2.8.2
+// @version      2.9.0
 // @description  Provides a user-editable list of tags on the sidebar, with quicksearch/add-to/negate links like normal sidebar tag suggestions. Minor additional QoL tweaks to the site, including a direct link to the image on all image pages. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -48,6 +48,7 @@ v2.7.0: post pages have a tag count for each category header on the sidebar
 v2.8.0: tag index pages (/tag/index) now offer save/forget links too
 v2.8.1: tag editors are slightly cleaner now
 v2.8.2: fixed a bug where the update handler wouldn't register on cpages
+v2.9.0: added a save/unsave link on wiki pages
 */
 /* eslint-enable max-len */
 
@@ -499,6 +500,7 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 				else {
 					const tagSearchInput = $('input#tags');
 					const searchboxExists = !!tagSearchInput.length;
+					const wikiPageP = location.pathname.startsWith("/wiki/show");
 					const tagSearchContainer = tagSearchInput.parent();
 					const tagSearchDiv = tagSearchInput.parents('div.sidebar > div');
 					const savedTagsDiv = $('<div id="userscript-saved-tags" style="margin-bottom: 1em;"></div>');
@@ -749,14 +751,28 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 							.then(assembleTagList);
 					};
 					savedTagsTogglableContent.append(savedTagsList, savedTagsEmptyWarning);
-					GM_addStyle(
-						'.taglink.taglink-remember.usertag-saved::after {'
-						+ 'content: "$";'
-						+ '}'
-						+ '.taglink.taglink-remember.usertag-unsaved::after {'
-						+ 'content: "#";'
-						+ '}'
-					);
+					if (wikiPageP) {
+						GM_addStyle([
+							'.taglink.taglink-remember.usertag-saved::after {',
+							'content: "[unsave]";',
+							'float: right;',
+							'}',
+							'.taglink.taglink-remember.usertag-unsaved::after {',
+							'content: "[save]";',
+							'float: right;',
+							'}',
+						].join("\n"));
+					}
+					else {
+						GM_addStyle([
+							'.taglink.taglink-remember.usertag-saved::after {',
+							`content: "$";`,
+							'}',
+							'.taglink.taglink-remember.usertag-unsaved::after {',
+							`content: "#";`,
+							'}',
+						].join("\n"));
+					}
 					// debugger;
 					if (location.pathname.startsWith('/post/show/')) {
 						GM_addStyle([
@@ -817,6 +833,20 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 								logger.error(ex);
 							}
 						});
+					}
+					else if (wikiPageP) {
+						const titleLine = $('#wiki-show > h2.title');
+						const [ tagType, tagText ] = titleLine
+							.text()
+							.trim()
+							.toLowerCase()
+							.split(/\s*:\s*/u);
+						if (tagType && tagText && TAG_TYPES.includes(tagType)) {
+							const toggleLink = generateTagLineElements(tagText, tagType).slice(-3, -2);
+							if (toggleLink) {
+								titleLine.append(toggleLink);
+							}
+						}
 					}
 					if (existingSearch) {
 						$('a[href]')
