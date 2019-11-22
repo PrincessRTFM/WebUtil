@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 Modding Framework
 // @namespace    Lilith
-// @version      2.1.2
+// @version      2.1.3
 // @description  Provides a simple, event-based framework for E621 pages to be modified by userscripts. Should be loaded before such pages, but can (theoretically, if the plugin script is written properly) be loaded anywhere so long as it loads within one second of the plugin script.
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -25,6 +25,7 @@ v2.0.0: rewritten to use asynchronous JS where possible, and to be less bloated 
 v2.1.0: added EMF.UTIL with three message display functions
 v2.1.1: set the message display box's z-index to 9999 so it'll stay on top of other things
 v2.1.2: fixed a cpage bug where the background would be inherited by child elements
+v2.1.3: fixed a css bug for cpages
 */
 /* eslint-enable max-len */
 
@@ -300,7 +301,7 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 				const bgBits = {
 					'background-image': "url('https://i.imgur.com/ruTZXSo.png')",
 					'background-size': '150px',
-					'background-position': 'top right',
+					'background-position': 'right 50px top 100px',
 					'background-repeat': 'no-repeat',
 					'background-color': 'transparent',
 					'background-attachment': 'fixed',
@@ -319,7 +320,7 @@ const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 				Object.keys(bgBits).forEach(key => body[0].style.setProperty(key, bgBits[key], "important"));
 				body.empty();
 				GM_addStyle([
-					'#content * {',
+					'#content > * {',
 					'background: none !important;', // You want a background, use a more specific CSS rule
 					'}',
 				].join(''));
