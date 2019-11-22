@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 User Saved Tags
 // @namespace    Lilith
-// @version      2.9.0
+// @version      2.9.2
 // @description  Provides a user-editable list of tags on the sidebar, with quicksearch/add-to/negate links like normal sidebar tag suggestions. Minor additional QoL tweaks to the site, including a direct link to the image on all image pages. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -49,6 +49,8 @@ v2.8.0: tag index pages (/tag/index) now offer save/forget links too
 v2.8.1: tag editors are slightly cleaner now
 v2.8.2: fixed a bug where the update handler wouldn't register on cpages
 v2.9.0: added a save/unsave link on wiki pages
+v2.9.1: fixed a bug in a utility function that prevented exporting the tags
+v2.9.2: (theoretically) optimised some code for updating the save/unsave buttons so it should run faster now
 */
 /* eslint-enable max-len */
 
@@ -94,7 +96,7 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 	const filterObj = (obj, pred) => {
 		const result = {};
 		for (const key in obj) {
-			if ({}.prototype.hasOwnProperty.call(obj, key) && pred(obj[key])) {
+			if (Object.prototype.hasOwnProperty.call(obj, key) && pred(obj[key])) {
 				result[key] = obj[key];
 			}
 		}
@@ -607,15 +609,15 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 					const generateTagLineElements = (targetTag, type) => {
 						targetTag = normalise(targetTag);
 						const uriTag = technify(targetTag);
-						const wiki = $(`<a class="taglink taglink-wiki taglink-wiki-${uriTag}">?</a>`)
+						const wiki = $(`<a class="taglink taglink-wiki taglink-type-${type} taglink-wiki-${uriTag}">?</a>`)
 							.attr('href', `/wiki/show?title=${uriTag}`);
-						const add = $(`<a class="taglink taglink-append taglink-append-${uriTag}">+</a>`)
+						const add = $(`<a class="taglink taglink-append taglink-type-${type} taglink-append-${uriTag}">+</a>`)
 							.attr('href', `/post/search?tags=${`${encodeURI(existingSearch)} ${uriTag}`.trim()}`)
 							.on('click', e => addTagToSearchBox(targetTag, e));
-						const remove = $(`<a class="taglink taglink-negate taglink-negate-${uriTag}">–</a>`)
+						const remove = $(`<a class="taglink taglink-negate taglink-type-${type} taglink-negate-${uriTag}">–</a>`)
 							.attr('href', `/post/search?tags=${`${encodeURI(existingSearch)} -${uriTag}`.trim()}`)
 							.on('click', e => addTagToSearchBox(`-${targetTag}`, e));
-						const remember = $(`<a class="taglink taglink-remember taglink-remember-${
+						const remember = $(`<a class="taglink taglink-remember taglink-type-${type} taglink-remember-${
 							uriTag
 								.replace(/%../gu, '_')
 								.replace(/\W+/gu, '_')
@@ -662,11 +664,13 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 								e.returnValue = false;
 								return false;
 							});
+						remember[0].dataset.tag = targetTag;
+						remember[0].dataset.type = type;
 						searchForTag(targetTag, type).then(
 							() => remember.addClass("usertag-saved").removeClass("usertag-unsaved"),
 							() => remember.addClass("usertag-unsaved").removeClass("usertag-saved")
 						);
-						const isolate = $('<a class="taglink taglink-isolate">TAG</a>')
+						const isolate = $(`<a class="taglink taglink-isolate taglink-type-${type}">TAG</a>`)
 							.text(targetTag)
 							.attr('href', `/post/search?tags=${uriTag}`);
 						if (searchboxExists) {
@@ -733,19 +737,16 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 							.then(cleanTagList)
 							.then(usertags => {
 								$('.taglink.taglink-remember')
-									.addClass("usertag-unsaved")
-									.removeClass("usertag-saved");
-								TAG_TYPES.forEach(async type => {
-									usertags[type].forEach(
-										tag => $(`.taglink.taglink-remember.taglink-remember-${
-											technify(tag)
-												.replace(/%../gu, '_')
-												.replace(/\W+/gu, '_')
-										}`)
-											.addClass("usertag-saved")
-											.removeClass("usertag-unsaved")
-									);
-								});
+									.each(async (i, e) => {
+										if (usertags[e.dataset.type].includes(e.dataset.tag)) {
+											e.classList.remove("usertag-unsaved");
+											e.classList.add("usertag-saved");
+										}
+										else {
+											e.classList.remove("usertag-saved");
+											e.classList.add("usertag-unsaved");
+										}
+									});
 								return usertags;
 							})
 							.then(assembleTagList);
