@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 User Saved Tags
 // @namespace    Lilith
-// @version      2.6.3
+// @version      2.8.1
 // @description  Provides a user-editable list of tags on the sidebar, with quicksearch/add-to/negate links like normal sidebar tag suggestions. Minor additional QoL tweaks to the site, including a direct link to the image on all image pages. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -44,6 +44,9 @@ v2.6.0: double clicking the post image now goes to the direct image itself
 v2.6.1: fixed a bug causing duplicated search terms
 v2.6.2: finished fixing the bug about duplicate search terms
 v2.6.3: finally tracked down a bug preventing tags from being properly detected during the add/remove process
+v2.7.0: post pages have a tag count for each category header on the sidebar
+v2.8.0: tag index pages (/tag/index) now offer save/forget links too
+v2.8.1: tag editors are slightly cleaner now
 */
 /* eslint-enable max-len */
 
@@ -64,6 +67,7 @@ const DEFAULT_TAGS = {
 const STORAGE_KEY_TAGS_LIST = 'tagList';
 const EDITOR_PAGE_SLUG = 'tagsaver/edit';
 const HELP_PAGE_SLUG = 'tagsaver/help';
+const POST_PAGE_SLUG = 'post/show/';
 const STORAGE_KEY_FIRST_RUN = 'firstRun';
 
 (function runScript(window, $, direct) {
@@ -306,7 +310,9 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 									.then(usertags => {
 										editor.val(
 											usertags[type]
-												.map(tag => tag.trim())
+												.map(tag => normalise(tag)
+													.replace(/\s+/gu, '_')
+													.trim())
 												.join("\n")
 												.trim()
 										).trigger('keyup');
@@ -320,7 +326,9 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 							onTagEditorContentChanged.timeout = setTimeout(async () => {
 								if (
 									(await loadUserTags().then(cleanTagList))[type]
-										.map(tag => tag.trim())
+										.map(tag => normalise(tag)
+											.replace(/\s+/gu, '_')
+											.trim())
 										.join("\n")
 										.trim()
 									== this.value.trim()
@@ -462,6 +470,7 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 				}
 				else {
 					const tagSearchInput = $('input#tags');
+					const searchboxExists = !!tagSearchInput.length;
 					const tagSearchContainer = tagSearchInput.parent();
 					const tagSearchDiv = tagSearchInput.parents('div.sidebar > div');
 					const savedTagsDiv = $('<div id="userscript-saved-tags" style="margin-bottom: 1em;"></div>');
@@ -627,10 +636,11 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 							() => remember.addClass("usertag-saved").removeClass("usertag-unsaved"),
 							() => remember.addClass("usertag-unsaved").removeClass("usertag-saved")
 						);
-						const isolate = $('<a>TAG</a>')
+						const isolate = $('<a class="taglink taglink-isolate">TAG</a>')
 							.text(targetTag)
-							.attr('href', `/post/search?tags=${uriTag}`)
-							.on('click', e => {
+							.attr('href', `/post/search?tags=${uriTag}`);
+						if (searchboxExists) {
+							isolate.on('click', e => {
 								tagSearchInput.val(targetTag.replace(/\s+/gu, '_'));
 								if (e.preventDefault) {
 									e.preventDefault();
@@ -638,17 +648,26 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 								e.returnValue = false;
 								return false;
 							});
-						return [
-							wiki,
-							' ',
-							add,
-							' ',
-							remove,
-							' ',
-							remember,
-							' ',
-							isolate,
-						];
+						}
+						return searchboxExists
+							? [
+								wiki,
+								' ',
+								add,
+								' ',
+								remove,
+								' ',
+								remember,
+								' ',
+								isolate,
+							]
+							: [
+								wiki,
+								' ',
+								remember,
+								' ',
+								isolate,
+							];
 					};
 					const assembleTagList = async usertags => {
 						savedTagsList.empty();
@@ -712,6 +731,11 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 					);
 					// debugger;
 					if (location.pathname.startsWith('/post/show/')) {
+						GM_addStyle([
+							'span.tag-header-count {',
+							'color: #888888;',
+							'}',
+						].join("\n"));
 						logger.info(`Existing search ${existingSearch ? `found: ${existingSearch}` : 'not found'}`);
 						const originalTitle = document.title;
 						const postID = location.pathname.substr('/post/show/'.length);
@@ -743,6 +767,27 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 						noticeBox.prepend('<h6>This Post</h6>', thisPost);
 						postImage.on('dblclick', () => {
 							location.assign(uriImage);
+						});
+						TAG_TYPES.forEach(tagType => {
+							const tagHeader = $(`ul#tag-sidebar > li#category-${tagType}, ul#tag-sidebar > li#category-hidden-${tagType}`);
+							const tagCount = $(`ul#tag-sidebar > li.tag-type-${tagType}`).length;
+							tagHeader.append(' ', `<span class="tag-header-count tag-count-${tagType}">[${tagCount}]</span>`);
+						});
+					}
+					else if (location.pathname.startsWith('/tag/index') || location.pathname == '/tag') {
+						$('div#content table tbody tr td[class*="tag-type-"]').each((i, e) => {
+							try {
+								const type = Array.from(e.classList).filter(s => s.startsWith("tag-type-"))[0].substr(9);
+								if (TAG_TYPES.includes(type)) {
+									const line = generateTagLineElements(e.innerText.trim(), type);
+									$(e)
+										.empty()
+										.append(line);
+								}
+							}
+							catch (ex) {
+								logger.error(ex);
+							}
 						});
 					}
 					if (existingSearch) {
