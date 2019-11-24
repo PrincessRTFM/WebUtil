@@ -4,6 +4,12 @@ env:
     es2017: true
 overrides:
     - files:
+        - "*.webpack.js"
+      env:
+          browser: true
+      parserOptions:
+          sourceType: module
+    - files:
         - "*.browser.js"
       env:
           browser: true
