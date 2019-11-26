@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E621 User Saved Tags
 // @namespace    Lilith
-// @version      2.9.2
+// @version      2.9.3
 // @description  Provides a user-editable list of tags on the sidebar, with quicksearch/add-to/negate links like normal sidebar tag suggestions. Minor additional QoL tweaks to the site, including a direct link to the image on all image pages. [REQUIRES EMFv2]
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -51,6 +51,7 @@ v2.8.2: fixed a bug where the update handler wouldn't register on cpages
 v2.9.0: added a save/unsave link on wiki pages
 v2.9.1: fixed a bug in a utility function that prevented exporting the tags
 v2.9.2: (theoretically) optimised some code for updating the save/unsave buttons so it should run faster now
+v2.9.3: fixed a bug introduced in the last update that caused some of the save/unsave buttons to not update properly
 */
 /* eslint-enable max-len */
 
@@ -664,7 +665,7 @@ const STORAGE_KEY_FIRST_RUN = 'firstRun';
 								e.returnValue = false;
 								return false;
 							});
-						remember[0].dataset.tag = targetTag;
+						remember[0].dataset.tag = targetTag.replace(/\s+/gu, '_');
 						remember[0].dataset.type = type;
 						searchForTag(targetTag, type).then(
 							() => remember.addClass("usertag-saved").removeClass("usertag-unsaved"),
