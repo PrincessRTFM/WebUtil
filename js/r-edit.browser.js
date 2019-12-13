@@ -38,6 +38,12 @@ const blockEvent = evt => {
 			})
 			.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 	};
+	const mungeInput = () => {
+		input.value = getSortedEntries().join("\n");
+	};
+	const mungeOutput = () => {
+		output.value = getSortedEntries().join("+");
+	};
 	const dragStartHandler = evt => {
 		evt.target.addClass("dropping");
 		return blockEvent(evt);
@@ -117,19 +123,15 @@ const blockEvent = evt => {
 	document.addEventListener('dragover', blockEvent);
 	document.addEventListener('dragleave', blockEvent);
 	document.addEventListener('drop', blockEvent);
-	input.addEventListener('blur', async () => {
-		input.value = getSortedEntries();
-	});
-	output.addEventListener('focus', async () => {
-		output.value = getSortedEntries();
-	});
-	output.addEventListener('blur', async () => {
+	input.addEventListener('blur', mungeInput);
+	output.addEventListener('focus', mungeOutput);
+	output.addEventListener('blur', () => {
 		output.value = '';
 	});
-	const initialInput = (location.hash || '').replace(/^#+/u, '');
+	const initialInput = (location.hash || '').replace(/^#+\/*/u, '').replace(/\/+$/u, '');
 	if (initialInput) {
 		input.value = initialInput;
-		input.blur();
+		mungeInput();
 	}
 	input.focus();
 })();
