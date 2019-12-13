@@ -43,6 +43,7 @@ const blockEvent = evt => {
 	};
 	const mungeOutput = () => {
 		output.value = getSortedEntries().join("+");
+		output.select();
 	};
 	const dragStartHandler = evt => {
 		evt.target.addClass("dropping");
