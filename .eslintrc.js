@@ -11,6 +11,9 @@ const config = {
 		es2017: true,
 		node: true,
 	},
+	parserOptions: {
+		ecmaVersion: 9,
+	},
 	rules: {
 		"prefer-spread": "error",
 		"max-len": [
