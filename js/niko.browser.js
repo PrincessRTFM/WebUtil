@@ -8,45 +8,56 @@ $(() => {
 		'#render': "This is the fully-rendered image, built off the canvas from the composite elements. You can save it or copy to use now.",
 	});
 	const FACES = Object.freeze([
-		'niko',
+		'niko_normal',
 		'niko2',
 		'niko3',
 		'niko4',
 		'niko5',
 		'niko6',
-		'niko_83c',
-		'niko_blush',
-		'niko_cry',
 		'niko_disgusted',
 		'niko_distressed',
-		'niko_distressed_cry',
-		'niko_distressed_talk',
 		'niko_distressed2',
-		'niko_eyeclosed',
-		'niko_eyeclosed_sigh',
-		'niko_gasmask',
-		'niko_less_sad',
-		'niko_oof',
-		'niko_ouch',
-		'niko_pancakes',
-		'niko_sad',
+		'niko_distressed_talk',
 		'niko_shock',
 		'niko_shocked',
+		'niko_what',
+		'niko_what2',
+		'niko_wtf',
+		'niko_wtf2',
+		'niko_yawn',
+		'niko_eyeclosed',
+		'niko_eyeclosed_sigh',
+		'niko_sunglasses',
+		'niko_popcorn',
 		'niko_smile',
+		'niko_owo',
+		'niko_83c',
+		'niko_owoc',
+		'niko_uwu',
+		'niko_xwx',
+		'niko_wink',
+		'niko_winkc',
+		'niko_winkp',
+		'niko_derp',
 		'niko_speak',
+		'niko_pancakes',
 		'niko_surprise',
+		'niko_shy',
+		'niko_blush',
+		'niko_blushier',
+		'niko_oof',
+		'niko_ouch',
 		'niko_thinking',
+		'niko_fingerguns',
+		'niko_gasmask',
+		'niko_teary',
+		'niko_distressed_cry',
+		'niko_crying',
+		'niko_wipe_tears',
 		'niko_upset',
 		'niko_upset_meow',
 		'niko_upset2',
-		'niko_what',
-		'niko_what2',
-		'niko_wink',
-		'niko_winkc',
-		'niko_wtf',
-		'niko_wtf2',
-		'niko_xwx',
-		'niko_yawn',
+		'niko_really',
 	]);
 	const initialHelpText = $('#helpText').html();
 	let unhelpTimer = false;
@@ -65,11 +76,11 @@ $(() => {
 	);
 	$('.soften, textarea').addClass('ui-corner-all');
 	const error = $('#errortext');
-	const canvas = document.getElementById('photoshop');
+	const canvas = document.querySelector('#photoshop');
 	const draw = canvas.getContext('2d');
-	const image = document.getElementById('render');
+	const image = document.querySelector('#render');
 	const background = new Image();
-	const message = document.getElementById('message');
+	const message = document.querySelector('#message');
 	const refreshRender = () => {
 		const MAX_LINE_LENGTH = 465; // Magic. Do not change.
 		draw.clearRect(0, 0, canvas.width, canvas.height);
@@ -82,13 +93,13 @@ $(() => {
 		}
 		// Render the chosen FACE at X=496 Y=16
 		// Technically, any 96x96 image will do... so this could be tweakable for future ideas pretty easily
-		if (document.getElementById('selected')) {
+		if (document.querySelector('#selected')) {
 			try {
-				draw.drawImage(document.getElementById('selected'), 496, 16);
+				draw.drawImage(document.querySelector('#selected'), 496, 16);
 			}
-			catch (e) {
-				console.error(e);
-				console.dir(document.getElementById('selected'));
+			catch (err) {
+				console.error(err);
+				console.dir(document.querySelector('#selected'));
 			}
 		}
 		// Render the text from X=20 Y=17 to X=485 (465px)
@@ -139,7 +150,7 @@ $(() => {
 			image.style.display = 'block';
 			canvas.style.display = 'none';
 		}
-		catch (e) {
+		catch (err) {
 			image.style.display = 'none';
 			canvas.style.display = 'block';
 		}
