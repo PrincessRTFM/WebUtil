@@ -7,58 +7,63 @@ $(() => {
 		'#photoshop': "This is the canvas where the composite image is actually drawn. Right click to save it or copy as an image now.",
 		'#render': "This is the fully-rendered image, built off the canvas from the composite elements. You can save it or copy to use now.",
 	});
-	const FACES = Object.freeze([
-		'niko_normal',
-		'niko2',
-		'niko3',
-		'niko4',
-		'niko5',
-		'niko6',
-		'niko_disgusted',
-		'niko_distressed',
-		'niko_distressed2',
-		'niko_distressed_talk',
-		'niko_shock',
-		'niko_shocked',
-		'niko_what',
-		'niko_what2',
-		'niko_wtf',
-		'niko_wtf2',
-		'niko_yawn',
-		'niko_eyeclosed',
-		'niko_eyeclosed_sigh',
-		'niko_sunglasses',
-		'niko_popcorn',
-		'niko_smile',
-		'niko_owo',
-		'niko_83c',
-		'niko_owoc',
-		'niko_uwu',
-		'niko_xwx',
-		'niko_wink',
-		'niko_winkc',
-		'niko_winkp',
-		'niko_derp',
-		'niko_speak',
-		'niko_pancakes',
-		'niko_surprise',
-		'niko_shy',
-		'niko_blush',
-		'niko_blushier',
-		'niko_oof',
-		'niko_ouch',
-		'niko_thinking',
-		'niko_fingerguns',
-		'niko_gasmask',
-		'niko_teary',
-		'niko_distressed_cry',
-		'niko_crying',
-		'niko_wipe_tears',
-		'niko_upset',
-		'niko_upset_meow',
-		'niko_upset2',
-		'niko_really',
-	]);
+	const FACES = {
+		Niko: [
+			'niko_normal',
+			'niko2',
+			'niko3',
+			'niko4',
+			'niko5',
+			'niko6',
+			'niko_disgusted',
+			'niko_distressed',
+			'niko_distressed2',
+			'niko_distressed_talk',
+			'niko_shock',
+			'niko_shocked',
+			'niko_what',
+			'niko_what2',
+			'niko_wtf',
+			'niko_wtf2',
+			'niko_yawn',
+			'niko_eyeclosed',
+			'niko_eyeclosed_sigh',
+			'niko_sunglasses',
+			'niko_popcorn',
+			'niko_smile',
+			'niko_owo',
+			'niko_83c',
+			'niko_owoc',
+			'niko_uwu',
+			'niko_xwx',
+			'niko_wink',
+			'niko_winkc',
+			'niko_winkp',
+			'niko_derp',
+			'niko_speak',
+			'niko_pancakes',
+			'niko_surprise',
+			'niko_shy',
+			'niko_blush',
+			'niko_blushier',
+			'niko_oof',
+			'niko_ouch',
+			'niko_thinking',
+			'niko_fingerguns',
+			'niko_gasmask',
+			'niko_teary',
+			'niko_distressed_cry',
+			'niko_crying',
+			'niko_wipe_tears',
+			'niko_upset',
+			'niko_upset_meow',
+			'niko_upset2',
+			'niko_really',
+		],
+		Other: [
+			'rqst_other_sonicastle',
+		],
+	};
 	const initialHelpText = $('#helpText').html();
 	let unhelpTimer = false;
 	const setHelpText = function(text) {
@@ -159,21 +164,58 @@ $(() => {
 		// is only shown (and the canvas hidden automatically) if we CAN get the data URL. Otherwise, if we can't, the canvas
 		// element is shown and the image is automatically hidden.
 	};
-	const faceList = $('#faces');
-	FACES.forEach(filename => { // This makes it really easy to add new faces - upload a 96x96 image in the right place and extend the array
-		const face = $(`<img class="face" src="img/expressions/${filename}.png" />`);
-		faceList.append(face);
-	});
+	const faceListContainer = $('#faces');
+	for (const [
+		title,
+		filenames,
+	] of Object.entries(FACES)) {
+		const header = $('<div class="face-header"></div>');
+		const faceList = $('<div class="face-list"></div>');
+		header.text(title);
+		for (const filename of filenames) {
+			const face = $(`<img class="face" src="img/expressions/${filename}.png" />`);
+			faceList.append(face);
+		}
+		header.on('click', () => {
+			const metalist = faceListContainer
+				.children('.face-list');
+			const headerlist = faceListContainer
+				.children('.face-header');
+			if (faceList.is(':visible')) {
+				metalist
+					.hide()
+					.first()
+					.show();
+				headerlist
+					.addClass('collapsed')
+					.first()
+					.removeClass('collapsed');
+			}
+			else {
+				metalist.hide();
+				headerlist.addClass('collapsed');
+				faceList.show();
+				header.removeClass('collapsed');
+			}
+		});
+		faceListContainer.append(header, faceList);
+	}
 	draw.font = '20pt TerminusTTF'; // Loaded off the css/ directory, in case you don't have it natively
 	draw.textBaseline = 'top';
 	draw.fillStyle = '#ffffff';
 	background.addEventListener('load', refreshRender, false); // As soon as the background image loads, try to render
 	background.src = "img/niko-background.png";
-	faceList.children('img').on('click', function setSelectedFace() {
-		$('.face#selected').attr('id', '');
-		this.id = 'selected';
-		refreshRender();
-	});
+	faceListContainer
+		.children('.face-header')
+		.not(':first()')
+		.click();
+	faceListContainer
+		.children('img')
+		.on('click', function setSelectedFace() {
+			$('.face#selected').attr('id', '');
+			this.id = 'selected';
+			refreshRender();
+		});
 	message.addEventListener('input', refreshRender);
 	message.focus();
 	for (const selector in HELP_TEXT) {

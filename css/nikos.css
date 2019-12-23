@@ -7,7 +7,7 @@
 	display: block;
 	width: 60%;
 	min-width: 600px;
-	margin: 4vh auto;
+	margin: 2vh auto;
 }
 #render {
 	display: block;
@@ -51,7 +51,7 @@ input[type="text"] {
 	padding: 3px;
 }
 label, span.label {
-	font-size: 1.2em;
+	font-size: 1.3em;
 	font-weight: bold;
 	margin-top: 0.4em;
 }
@@ -59,10 +59,26 @@ label, span.label {
 	margin-top: 1em;
 }
 
-#faces {
+#faces > .face-list {
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: center;
+}
+#faces > .face-header {
+	font-weight: bold;
+	margin-left: 1.6em;
+	cursor: pointer;
+	font-size: 1.1em;
+}
+#faces > .face-header:not(.collapsed)::before {
+	content: "▼";
+	cursor: pointer;
+	font-size: 1.1em;
+}
+#faces > .face-header.collapsed::before {
+	content: "▶";
+	cursor: pointer;
+	font-size: 1.1em;
 }
 .face {
 	flex: 0 0 auto;
