@@ -210,7 +210,7 @@ $(() => {
 		.not(':first()')
 		.click();
 	faceListContainer
-		.children('img')
+		.find('img')
 		.on('click', function setSelectedFace() {
 			$('.face#selected').attr('id', '');
 			this.id = 'selected';
