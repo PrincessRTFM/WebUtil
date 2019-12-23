@@ -50,7 +50,7 @@ const config = {
 		"array-bracket-newline": [
 			"error",
 			{
-				minItems: 3,
+				minItems: 1,
 				multiline: true,
 			},
 		],
@@ -159,7 +159,7 @@ const config = {
 			"error",
 			{
 				multiline: true,
-				minItems: 3,
+				minItems: 1,
 			},
 		],
 		"semi": "error",
