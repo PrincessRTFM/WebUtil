@@ -19,13 +19,13 @@ const config = {
 		"max-len": [
 			"warn",
 			{
-				code: 160,
+				code: 125,
 				ignoreRegExpLiterals: false,
 				ignoreStrings: false,
 				ignoreUrls: false,
 				ignoreTemplateLiterals: false,
 				ignoreComments: false,
-				comments: 160,
+				comments: 125,
 			},
 		],
 		"no-empty": "error",
@@ -50,7 +50,7 @@ const config = {
 		"array-bracket-newline": [
 			"error",
 			{
-				minItems: 1,
+				minItems: 2,
 				multiline: true,
 			},
 		],
@@ -62,6 +62,7 @@ const config = {
 			"that",
 			"self",
 			"me",
+			"executionContext",
 		],
 		"implicit-arrow-linebreak": "error",
 		"space-infix-ops": [
@@ -253,7 +254,12 @@ const config = {
 		"no-iterator": "error",
 		"object-shorthand": "error",
 		"no-self-compare": "error",
-		"no-constant-condition": "error",
+		"no-constant-condition": [
+			"error",
+			{
+				checkLoops: false,
+			},
+		],
 		"no-undefined": "warn",
 		"no-with": "error",
 		"no-fallthrough": "error",
@@ -383,7 +389,6 @@ const config = {
 		"unicorn/no-keyword-prefix": "error",
 		"unicorn/no-new-buffer": "error",
 		"unicorn/no-process-exit": "warn",
-		"unicorn/no-unsafe-regex": "error",
 		"unicorn/no-zero-fractions": "warn",
 		"unicorn/number-literal-case": "warn",
 		"unicorn/prefer-add-event-listener": "error",
@@ -426,7 +431,6 @@ const config = {
 		"import/newline-after-import": "warn",
 		"import/no-unassigned-import": "error",
 		"import/no-anonymous-default-export": "warn",
-		"import/group-exports": "warn",
 		"sonarjs/no-element-overwrite": "error",
 		"sonarjs/no-extra-arguments": "error",
 		"sonarjs/no-identical-conditions": "error",
