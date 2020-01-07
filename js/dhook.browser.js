@@ -338,7 +338,6 @@ once(window, LOAD_EVENT, () => {
 	listen(window, 'hashchange', updateHookTargetFromHash);
 	// End of event handler registration, begin initialisation...
 	updateWebhookPreviewDetails();
-	sections[DEFAULT_SECTION_IDX].classList.add('active');
 	for (const section of sections) {
 		const headerLink = section.querySelector('h2');
 		listen(headerLink, 'click', () => {
@@ -357,6 +356,7 @@ once(window, LOAD_EVENT, () => {
 		});
 	}
 	updateHookTargetFromHash();
+	sections[0].classList.add('active');
 	elemAll('input[type="text"]').forEach(box => {
 		listen(box, 'keydown', evt => {
 			if (evt.key.toLowerCase() == 'enter') {
