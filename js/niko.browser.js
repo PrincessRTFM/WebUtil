@@ -1,5 +1,6 @@
-/* eslint-env browser, jquery */
+/* eslint-env jquery */
 $(() => {
+	/* eslint-disable max-len */
 	const HELP_TEXT = Object.freeze({
 		'#errortext': "You wrote too much. Only three lines of text can be rendered in one dialogue box, anything else would overflow.",
 		'#message': "Write a message here to display in the dialogue box with Niko's face.",
@@ -7,6 +8,7 @@ $(() => {
 		'#photoshop': "This is the canvas where the composite image is actually drawn. Right click to save it or copy as an image now.",
 		'#render': "This is the fully-rendered image, built off the canvas from the composite elements. You can save it or copy to use now.",
 	});
+	/* eslint-enable max-len */
 	const FACES = {
 		Niko: [
 			'niko_normal',
@@ -60,9 +62,7 @@ $(() => {
 			'niko_upset2',
 			'niko_really',
 		],
-		Other: [
-			'rqst_other_sonicastle',
-		],
+		Other: ['rqst_other_sonicastle'],
 	};
 	const initialHelpText = $('#helpText').html();
 	let unhelpTimer = false;
@@ -109,12 +109,12 @@ $(() => {
 		}
 		// Render the text from X=20 Y=17 to X=485 (465px)
 		// This 465px is where the magic MAX_LINE_LENGTH constant came from, and why it's that exact number
-		// The top/left start point and font size were carefully determined through testing in GIMP to be the actual values used in the game itself
-		// The multi-line splitting was done manually for a closest-approximation look, but if someone (hi there!) can send me the correct values,
-		// it's easy enough to update them in here.
+		// The top/left start point and font size were carefully determined through testing in GIMP to be the actual values
+		// used in the game itself. The multi-line splitting was done manually for a closest-approximation look, but if
+		// someone (hi there!) can send me the correct values, it's easy enough to update them in here.
 		if (message.value) {
 			const lines = message.value.split("\n"); // Split on actual line breaks to keep any user-defined lines intact
-			for (let lineNo = 0; lineNo < lines.length; lineNo++) { // Iterate through the lines, NOT using any kind of foreach loop - see below for why
+			for (let lineNo = 0; lineNo < lines.length; lineNo++) { // Iterate through the lines, NOT using a foreach loop
 				if (lineNo >= 3) { // We can only fit three lines into a single image, more will get cut off
 					error.show();
 					break;
@@ -123,11 +123,12 @@ $(() => {
 					error.hide();
 				}
 				let line = lines[lineNo];
-				// Here's a bit of magic - it adds line breaks where needed, but still maintains the user's original line breaks too!
-				// If the rendered line is/would be too wide, we split it into words (splitting on whitespace, although I could do more)
-				// and slowly snip words off the end, one by one, until the line is within the max width. Then, all of the words that had
-				// to be removed are spliced into the lines array immediately following the current line, which is why we had to use the
-				// basic for loop above instead of any kind of for/in or foreach method instead - the array is being modified inside the loop.
+				// Here's a bit of magic - it adds line breaks where needed, but still maintains the user's original line
+				// breaks too! If the rendered line is/would be too wide, we split it into words (splitting on whitespace,
+				// although I could do more) and slowly snip words off the end, one by one, until the line is within the max
+				// width. Then, all of the words that had to be removed are spliced into the lines array immediately
+				// following the current line, which is why we had to use the basic for loop above instead of any kind of
+				// for/in or for/of method instead - the array is being modified inside the loop.
 				if (draw.measureText(line).width > MAX_LINE_LENGTH) {
 					const words = line.split(/\s/u);
 					for (let word = words.length; word > 0; word--) {

@@ -2,7 +2,7 @@
 /* globals initialise initialize boxes reset loadScript */
 (() => {
 	const autoloadScriptPrefix = 'load=';
-	const jqKeypress = event => {
+	const jqKeypress = event => { // eslint-disable-line unicorn/consistent-function-scoping
 		let pressed = '';
 		if (event.ctrlKey) {
 			pressed += '^';
@@ -19,7 +19,7 @@
 		pressed += (event.key || '').toLowerCase();
 		return pressed;
 	};
-	const insertTextAtCursor = (input, text, highlightP) => {
+	const insertTextAtCursor = (input, text, highlightP) => { // eslint-disable-line unicorn/consistent-function-scoping
 		input.focus();
 		const successP = document.execCommand("insertText", false, text);
 		// Firefox uses (used?) a non-standard method - the insertText command doesn't (didn't?) work for it
@@ -74,13 +74,13 @@
 				const textarea = document.createElement('textarea');
 				const input = $(textarea);
 				let reader = new FileReader();
-				reader.onload = evt => {
+				reader.addEventListener('load', evt => {
 					textarea.value = evt.target.result;
 					proc(textarea, '', evt);
-				};
-				reader.onerror = evt => {
+				});
+				reader.addEventListener('error', evt => {
 					console.error(evt);
-				};
+				});
 				reader.onloadend = () => {
 					reader = new FileReader();
 				};
@@ -118,14 +118,14 @@
 						evtKeyDown.block();
 						const picker = document.createElement('input');
 						picker.type = 'file';
-						picker.onchange = evtFileChanged => {
+						picker.addEventListener('change', evtFileChanged => {
 							if (!evtFileChanged.target.files.length) {
 								console.log("File selector says no file was chosen");
 								return;
 							}
 							const file = evtFileChanged.target.files[0];
 							reader.readAsText(file);
-						};
+						});
 						picker.click();
 					}
 					else if (hit == '^d') {
@@ -202,14 +202,14 @@
 			value: src => {
 				const script = document.createElement('script');
 				script.type = "text/javascript";
-				script.onload = () => {
+				script.addEventListener('load', () => {
 					console.info(`Loaded script from ${src}`);
 					$(script).remove();
-				};
-				script.onerror = () => {
+				});
+				script.addEventListener('error', () => {
 					console.error(`Unable to load script from ${src} (did your browser block the request?)`);
 					$(script).remove();
-				};
+				});
 				$('head')
 					.first()
 					.append(script);
@@ -220,10 +220,7 @@
 	});
 	$(() => {
 		$(document).on('keydown keyup', evt => {
-			if (evt.ctrlKey && 'osd'.includes(evt.key.toLowerCase())) {
-				evt.block();
-			}
-			else if (['tab'].includes(evt.key.toLowerCase())) {
+			if (evt.ctrlKey && 'osd'.includes(evt.key.toLowerCase()) || ['tab'].includes(evt.key.toLowerCase())) {
 				evt.block();
 			}
 		})
@@ -239,7 +236,7 @@
 			.filter(part => part.length)
 			.forEach(param => {
 				if (param.startsWith(autoloadScriptPrefix)) {
-					loadScript(param.substr(autoloadScriptPrefix.length));
+					loadScript(param.slice(autoloadScriptPrefix.length));
 				}
 				else {
 					unknownParameters.push(param);

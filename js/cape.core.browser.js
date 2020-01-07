@@ -71,8 +71,8 @@ class Power {
 		while (types.length !== types.flat().length) {
 			types = types.flat();
 		}
-		for (let i = 0; i < types.length; i++) {
-			if (this.hasType(types[i])) {
+		for (const element of types) {
+			if (this.hasType(element)) {
 				return true;
 			}
 		}

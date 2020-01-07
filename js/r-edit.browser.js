@@ -53,7 +53,10 @@ const blockEvent = evt => {
 		evt.target.removeClass("dropping");
 		return blockEvent(evt);
 	};
-	for (const box of [ input, output ]) {
+	for (const box of [
+		input,
+		output,
+	]) {
 		let reader = new FileReader();
 		reader.addEventListener('load', evt => {
 			box.value = evt.target.result;
