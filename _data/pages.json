@@ -1,0 +1,27 @@
+[
+	{
+		"title": "Random Cape Generator - new and improved!",
+		"desc": "a Worm-style random parahuman power generator",
+		"url": "/cape.html"
+	},
+	{
+		"title": "DHook interface",
+		"desc": "a (mostly complete) visual interface for sending messages through Discord webhooks",
+		"url": "/dhook.html"
+	},
+	{
+		"title": "NikoMaker - Niko died for our suns",
+		"desc": "a point, click, and type creator for dialogue boxes featuring Niko, from the game Oneshot",
+		"url": "/niko.html"
+	},
+	{
+		"title": "rEdit v1.1.0",
+		"desc": "an easy way to sort and deduplicate subreddits for creating a multireddit list",
+		"url": "/r-edit.html"
+	},
+	{
+		"title": "TextMunge v1.2.1",
+		"desc": "a general-purpose text-processing framework page, for writing your own JS functionality with prebuilt text inputs",
+		"url": "/textmunge.html"
+	}
+]
