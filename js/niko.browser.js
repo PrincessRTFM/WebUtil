@@ -108,14 +108,19 @@ $(() => {
 			}
 		}
 		// Render the text from X=20 Y=17 to X=485 (465px)
-		// This 465px is where the magic MAX_LINE_LENGTH constant came from, and why it's that exact number
-		// The top/left start point and font size were carefully determined through testing in GIMP to be the actual values
-		// used in the game itself. The multi-line splitting was done manually for a closest-approximation look, but if
-		// someone (hi there!) can send me the correct values, it's easy enough to update them in here.
+		// This 465px is where the magic MAX_LINE_LENGTH constant came from,
+		// and why it's that exact number. The top/left start point and font
+		// size were carefully determined through testing in GIMP to be the actual values
+		// used in the game itself. The multi-line splitting was done manually for a
+		// closest-approximation look, but if someone (hi there!) can send me the correct
+		// values, it's easy enough to update them in here.
 		if (message.value) {
-			const lines = message.value.split("\n"); // Split on actual line breaks to keep any user-defined lines intact
-			for (let lineNo = 0; lineNo < lines.length; lineNo++) { // Iterate through the lines, NOT using a foreach loop
-				if (lineNo >= 3) { // We can only fit three lines into a single image, more will get cut off
+			// Split on actual line breaks to keep any user-defined lines intact
+			const lines = message.value.split("\n");
+			// Iterate through the lines, NOT using a foreach loop
+			for (let lineNo = 0; lineNo < lines.length; lineNo++) {
+				// We can only fit three lines into a single image, more will get cut off
+				if (lineNo >= 3) {
 					error.show();
 					break;
 				}
@@ -123,12 +128,16 @@ $(() => {
 					error.hide();
 				}
 				let line = lines[lineNo];
-				// Here's a bit of magic - it adds line breaks where needed, but still maintains the user's original line
-				// breaks too! If the rendered line is/would be too wide, we split it into words (splitting on whitespace,
-				// although I could do more) and slowly snip words off the end, one by one, until the line is within the max
-				// width. Then, all of the words that had to be removed are spliced into the lines array immediately
-				// following the current line, which is why we had to use the basic for loop above instead of any kind of
-				// for/in or for/of method instead - the array is being modified inside the loop.
+				// Here's a bit of magic - it adds line breaks where needed,
+				// but still maintains the user's original line breaks too!
+				// If the rendered line is/would be too wide, we split it into
+				// words (splitting on whitespace, although I could do more)
+				// and slowly snip words off the end, one by one, until the line
+				// is within the max width. Then, all of the words that had to be
+				// removed are spliced into the lines array immediately following
+				// the current line, which is why we had to use the basic for loop
+				// above instead of any kind of for/in or for/of method instead,
+				// since the array is being modified inside the loop.
 				if (draw.measureText(line).width > MAX_LINE_LENGTH) {
 					const words = line.split(/\s/u);
 					for (let word = words.length; word > 0; word--) {
@@ -160,10 +169,11 @@ $(() => {
 			image.style.display = 'none';
 			canvas.style.display = 'block';
 		}
-		// That's in a try/catch because if you're running this locally, not off a web server, then for security reasons the
-		// canvas contents can't be retrieved as a data URL. In order to sneak around that little issue, the image element
-		// is only shown (and the canvas hidden automatically) if we CAN get the data URL. Otherwise, if we can't, the canvas
-		// element is shown and the image is automatically hidden.
+		// That's in a try/catch because if you're running this locally, not off a web server,
+		// then for security reasons the canvas contents can't be retrieved as a data URL.
+		// In order to sneak around that little issue, the image element is only shown (and
+		// the canvas hidden automatically) if we CAN get the data URL. Otherwise, if we can't,
+		// the canvas element is shown and the image is automatically hidden.
 	};
 	const faceListContainer = $('#faces');
 	for (const [
@@ -204,7 +214,8 @@ $(() => {
 	draw.font = '20pt TerminusTTF'; // Loaded off the css/ directory, in case you don't have it natively
 	draw.textBaseline = 'top';
 	draw.fillStyle = '#ffffff';
-	background.addEventListener('load', refreshRender, false); // As soon as the background image loads, try to render
+	// As soon as the background image loads, try to render
+	background.addEventListener('load', refreshRender, false);
 	background.src = "img/niko-background.png";
 	faceListContainer
 		.children('.face-header')

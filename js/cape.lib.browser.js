@@ -282,7 +282,8 @@ const POWERS = [
 	),
 	new Power(
 		'shaker',
-		'slows down anything within {#range} metres/yards that they feel threatened by, to a minimum of {#speed} {#unit}',
+		'slows down anything within {#range} metres/yards that they feel threatened by,'
+		+ ' to a minimum of {#speed} {#unit}',
 		{
 			range: [
 				'five',
@@ -326,7 +327,8 @@ const POWERS = [
 	),
 	new Power(
 		'blaster striker',
-		'can cause objects they throw to explode at will - the {#condition} the object, the bigger the explosion {#verb} be',
+		'can cause objects they throw to explode at will - the {#condition} the object,'
+		+ ' the bigger the explosion {#verb} be',
 		{
 			condition: [
 				'heavier',

@@ -19,7 +19,8 @@
 		pressed += (event.key || '').toLowerCase();
 		return pressed;
 	};
-	const insertTextAtCursor = (input, text, highlightP) => { // eslint-disable-line unicorn/consistent-function-scoping
+	// eslint-disable-next-line unicorn/consistent-function-scoping
+	const insertTextAtCursor = (input, text, highlightP) => {
 		input.focus();
 		const successP = document.execCommand("insertText", false, text);
 		// Firefox uses (used?) a non-standard method - the insertText command doesn't (didn't?) work for it
@@ -274,7 +275,10 @@
 		console.groupEnd();
 		/* eslint-enable max-len */
 		if (unknownParameters.length) {
-			console.info(`Received ${unknownParameters.length} unknown arguments in page URI hash:`, unknownParameters);
+			console.info(
+				`Received ${unknownParameters.length} unknown arguments in page URI hash:`,
+				unknownParameters
+			);
 		}
 	});
 })();

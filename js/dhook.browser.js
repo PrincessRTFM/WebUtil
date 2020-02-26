@@ -51,7 +51,9 @@ function elemAll(selector) {
 
 function extractEndpoint(hookText) {
 	const given = String(hookText).trim();
-	const m = given.replace(/^https?:\/\/([a-z]+\.)?discordapp\.com\/api\/webhooks\//ui, '').match(/^([^/]+)\/(.+)$/u);
+	const m = given
+		.replace(/^https?:\/\/([a-z]+\.)?discordapp\.com\/api\/webhooks\//ui, '')
+		.match(/^([^/]+)\/(.+)$/u);
 	if (m) {
 		return m.slice(1, 3).join('/');
 	}
@@ -192,7 +194,10 @@ once(window, LOAD_EVENT, () => {
 					hookInputBox.classList.add(HTMLCLASS_ERROR);
 					hookPingStatus.src = HOOKPING_ERROR;
 				});
-				req.open("GET", `https://cors-anywhere.herokuapp.com/https://www.discordapp.com/api/webhooks/${hook}`);
+				req.open(
+					"GET",
+					`https://cors-anywhere.herokuapp.com/https://www.discordapp.com/api/webhooks/${hook}`
+				);
 				req.send();
 			}
 		}
@@ -260,7 +265,14 @@ once(window, LOAD_EVENT, () => {
 				},
 				err => {
 					// :c
-					resultBox.textContent = `Your message failed to send${err ? `: ${err}` : ", but we don't know why!"}`;
+					let ohnoes = 'Your message failed to send';
+					if (err) {
+						ohnoes += `: ${err}`;
+					}
+					else {
+						ohnoes += ", but I don't know why!";
+					}
+					resultBox.textContent = ohnoes;
 					return false;
 				}
 			)

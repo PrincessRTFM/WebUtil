@@ -19,13 +19,13 @@ const config = {
 		"max-len": [
 			"warn",
 			{
-				code: 125,
+				code: 115,
 				ignoreRegExpLiterals: false,
 				ignoreStrings: false,
 				ignoreUrls: false,
 				ignoreTemplateLiterals: false,
 				ignoreComments: false,
-				comments: 125,
+				comments: 115,
 			},
 		],
 		"no-empty": "error",

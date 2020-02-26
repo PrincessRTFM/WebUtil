@@ -25,7 +25,10 @@ class Power {
 			types = types.split(/[^a-z]+/ui);
 		}
 		else {
-			console.error(`Invalid <types> in Power constructor (must be array, object, or string, not ${typeof types})`);
+			console.error(
+				'Invalid <types> in Power constructor',
+				`(must be array, object, or string, not ${typeof types})`
+			);
 			return null;
 		}
 		types = types.map(s => String(s).toLowerCase());
@@ -79,7 +82,9 @@ class Power {
 		return false;
 	}
 	toString() {
-		return `${this.category} who ${this.ability}`.replace(/<span class="[a-z\s]+">/gu, '').replace(/<\/span>/gu, '');
+		return `${this.category} who ${this.ability}`
+			.replace(/<span class="[a-z\s]+">/gu, '')
+			.replace(/<\/span>/gu, '');
 	}
 }
 
