@@ -150,7 +150,15 @@ const POWERS = [
 	),
 	new Power(
 		'brute',
-		'is indestructible while holding their breath'
+		'is indestructible while {#condition}',
+		{
+			condition: [
+				'holding their breath',
+				'their eyes are closed',
+				'both feet are on the floor/ground',
+				'in the air',
+			],
+		}
 	),
 	new Power(
 		'blaster',
