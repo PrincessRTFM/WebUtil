@@ -82,16 +82,23 @@ function* corrupt(from, to, extraChars = '', ignoreExtraCharCase = true) {
 				extraChars[Math.floor(Math.random() * extraChars.length)]
 			);
 		}
-		// Initially, we didn't do this until it was the right length, but that looked too boring.
-		// So instead, we start corrupting immediately, and if the length changes, we'll just have to corrupt
-		// the letters we already corrupted until we're done.
-		let idx;
-		// Keep coming up with a new index to change until the characters at that index AREN'T the same.
-		// Otherwise, we'd keep slowing down the visible changes and it'd take a lot longer to finish.
-		do {
-			idx = Math.floor(Math.random() * current.length);
-		} while (current[idx] == to[idx]);
-		current[idx] = to[idx];
+		const maxIndex = Math.min(current.length, to.length);
+		// If the operable segment of both strings is the same, don't bother corrupting
+		// It's not LIKELY unless you specifically set it up to happen, but I don't want
+		// to end up in an endless thrash loop down in that do/while.
+		if (current.slice(0, maxIndex).join('') != to.slice(0, maxIndex).join('')) {
+			// Initially, we didn't do this until it was the right length, but that looked too boring.
+			// So instead, we start corrupting immediately, and if the length changes, we'll just have to corrupt
+			// the letters we already corrupted until we're done.
+			let idx;
+			// Keep coming up with a new index to change until the characters at that index AREN'T the same.
+			// Otherwise, we'd keep slowing down the visible changes and it'd take a lot longer to finish.
+			do {
+				// Use whichever is shorter, to guarantee we actually get a character in both
+				idx = Math.floor(Math.random() * maxIndex);
+			} while (current[idx] == to[idx]);
+			current[idx] = to[idx];
+		}
 		// If we're done, then make sure we don't do another (unnecessary) call - break the loop and return,
 		// so that the iterator is marked complete.
 		if (current.join('') == to.join('')) {
