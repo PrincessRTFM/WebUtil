@@ -91,7 +91,7 @@ const config = {
 		"no-dupe-class-members": "error",
 		"no-lonely-if": "error",
 		"no-multi-str": "warn",
-		"prefer-const": "warn",
+		"prefer-const": "error",
 		"dot-notation": [
 			"error",
 			{
@@ -291,7 +291,7 @@ const config = {
 			},
 		],
 		"no-unused-vars": [
-			"error",
+			"warn",
 			{
 				args: "after-used",
 				vars: "local",
