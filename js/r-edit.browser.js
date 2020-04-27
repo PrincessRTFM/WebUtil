@@ -27,9 +27,13 @@ const blockEvent = evt => {
 		const seen = Object.create({});
 		return input
 			.value
+			.trim()
 			.split(/\W+/u)
 			.filter(entry => {
-				const filterString = entry.toLowerCase();
+				const filterString = entry.toLowerCase().trim();
+				if (!filterString) {
+					return false;
+				}
 				if (seen[filterString]) {
 					return false;
 				}
