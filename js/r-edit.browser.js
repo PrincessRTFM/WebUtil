@@ -42,12 +42,10 @@ const blockEvent = evt => {
 			})
 			.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 	};
-	const mungeInput = () => {
-		input.value = getSortedEntries().join("\n");
-	};
-	const mungeOutput = () => {
-		output.value = getSortedEntries().join("+");
-		output.select();
+	const munge = () => {
+		const entries = getSortedEntries();
+		input.value = entries.join("\n");
+		output.value = entries.join("+");
 	};
 	const dragStartHandler = evt => {
 		evt.target.addClass("dropping");
@@ -57,89 +55,83 @@ const blockEvent = evt => {
 		evt.target.removeClass("dropping");
 		return blockEvent(evt);
 	};
-	for (const box of [
-		input,
-		output,
-	]) {
-		let reader = new FileReader();
-		reader.addEventListener('load', evt => {
-			box.value = evt.target.result;
-		});
-		reader.addEventListener('error', evt => {
-			console.error(evt);
-		});
-		reader.onloadend = () => {
-			reader = new FileReader();
-		};
-		box.addEventListener('dragenter', dragStartHandler);
-		box.addEventListener('dragover', dragStartHandler);
-		box.addEventListener('dragleave', dragStopHandler);
-		box.addEventListener('drop', evt => {
-			const files = Array.from(evt.originalEvent.dataTransfer.files);
-			if (!files.length) {
-				return true;
-			}
-			const file = files[0];
-			console.dir(file);
-			box.value = '';
-			reader.readAsText(file);
-			return dragStopHandler(evt);
-		});
-		box.addEventListener('keydown', evtKeyDown => {
-			const ctrl = evtKeyDown.ctrlKey;
-			const compareKey = evtKeyDown.key.toLowerCase();
-			if (ctrl && compareKey == 'o') {
-				const picker = document.createElement('input');
-				picker.type = 'file';
-				picker.addEventListener('change', evtFileChanged => {
-					if (!evtFileChanged.target.files.length) {
-						console.log("File selector says no file was chosen");
-						return;
-					}
-					const file = evtFileChanged.target.files[0];
-					reader.readAsText(file);
-				});
-				picker.click();
-				return blockEvent(evtKeyDown);
-			}
-			else if (ctrl && compareKey == 'd') {
-				box.value = '';
-				return blockEvent(evtKeyDown);
-			}
-			else if (ctrl && compareKey == 's') {
-				box.select();
-				document.execCommand("copy");
-				return blockEvent(evtKeyDown);
-			}
-			else if (compareKey == 'tab') {
-				insertTextAtCursor(box, "\t");
-				return blockEvent(evtKeyDown);
-			}
+	let reader = new FileReader();
+	reader.addEventListener('load', evt => {
+		input.value = evt.target.result;
+	});
+	reader.addEventListener('error', evt => {
+		console.error(evt);
+	});
+	reader.onloadend = () => {
+		reader = new FileReader();
+	};
+	input.addEventListener('dragenter', dragStartHandler);
+	input.addEventListener('dragover', dragStartHandler);
+	input.addEventListener('dragleave', dragStopHandler);
+	input.addEventListener('drop', evt => {
+		const files = Array.from(evt.originalEvent.dataTransfer.files);
+		if (!files.length) {
 			return true;
-		});
-		Object.defineProperty(box, 'toString', {
-			value: () => box.value,
-		});
-	}
-	document.addEventListener('keydown', evt => {
-		if ((evt.ctrlKey && 'osd'.includes(evt.key.toLowerCase())) || ['tab'].includes(evt.key.toLowerCase())) {
-			return blockEvent(evt);
+		}
+		const file = files[0];
+		console.dir(file);
+		input.value = '';
+		reader.readAsText(file);
+		return dragStopHandler(evt);
+	});
+	document.addEventListener('keydown', evtKeyDown => {
+		const ctrl = evtKeyDown.ctrlKey;
+		const compareKey = evtKeyDown.key.toLowerCase();
+		if (ctrl && compareKey == 'o') {
+			const picker = document.createElement('input');
+			picker.type = 'file';
+			picker.addEventListener('change', evtFileChanged => {
+				if (!evtFileChanged.target.files.length) {
+					console.log("File selector says no file was chosen");
+					return;
+				}
+				const file = evtFileChanged.target.files[0];
+				reader.readAsText(file);
+			});
+			picker.click();
+			return blockEvent(evtKeyDown);
+		}
+		else if (ctrl && compareKey == 's') {
+			munge();
+			output.focus();
+			output.select();
+			document.execCommand("copy");
+			input.focus();
+			return blockEvent(evtKeyDown);
 		}
 		return true;
+	});
+	document.addEventListener('paste', evt => {
+		try {
+			const text = (evt.clipboardData || window.clipboardData).getData('text/plain').trim();
+			if (text) {
+				input.value += `\n${text}`;
+				munge();
+				input.focus();
+			}
+		}
+		catch (err) {
+			console.error("Couldn't handle paste event:", err);
+		}
+		return blockEvent(evt);
+	}, {
+		capture: true,
 	});
 	document.addEventListener('dragenter', blockEvent);
 	document.addEventListener('dragover', blockEvent);
 	document.addEventListener('dragleave', blockEvent);
 	document.addEventListener('drop', blockEvent);
-	input.addEventListener('blur', mungeInput);
-	output.addEventListener('focus', mungeOutput);
-	output.addEventListener('blur', () => {
-		output.value = '';
-	});
+	input.addEventListener('blur', munge);
+	output.addEventListener('focus', () => output.select());
 	const initialInput = (location.hash || '').replace(/^#+\/*/u, '').replace(/\/+$/u, '');
 	if (initialInput) {
 		input.value = initialInput;
-		mungeInput();
+		munge();
 	}
 	input.focus();
 })();
