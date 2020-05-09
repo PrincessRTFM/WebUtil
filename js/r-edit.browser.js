@@ -101,7 +101,7 @@ const blockEvent = evt => {
 			output.focus();
 			output.select();
 			document.execCommand("copy");
-			input.focus();
+			output.blur();
 			return blockEvent(evtKeyDown);
 		}
 		return true;
@@ -111,8 +111,8 @@ const blockEvent = evt => {
 			const text = (evt.clipboardData || window.clipboardData).getData('text/plain').trim();
 			if (text) {
 				input.value += `\n${text}`;
-				munge();
 				input.focus();
+				input.blur();
 			}
 		}
 		catch (err) {
@@ -128,10 +128,10 @@ const blockEvent = evt => {
 	document.addEventListener('drop', blockEvent);
 	input.addEventListener('blur', munge);
 	output.addEventListener('focus', () => output.select());
-	const initialInput = (location.hash || '').replace(/^#+\/*/u, '').replace(/\/+$/u, '');
+	const initialInput = (location.hash || '').replace(/^#+\/*/u, '').replace(/\/*(?:#.*)?$/u, '');
 	if (initialInput) {
+		location.hash = initialInput;
 		input.value = initialInput;
 		munge();
 	}
-	input.focus();
 })();
