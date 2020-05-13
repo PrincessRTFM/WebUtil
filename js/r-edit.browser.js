@@ -23,6 +23,7 @@ const blockEvent = evt => {
 (() => {
 	const input = document.querySelector("#lined");
 	const output = document.querySelector("#collapsed");
+	const link = document.querySelector('#multireddit');
 	const getSortedEntries = () => {
 		const seen = Object.create({});
 		return input
@@ -46,6 +47,15 @@ const blockEvent = evt => {
 		const entries = getSortedEntries();
 		input.value = entries.join("\n");
 		output.value = entries.join("+");
+		location.hash = output.value;
+		if (output.value) {
+			link.href = `https://www.reddit.com/r/${output.value}`;
+			link.style.display = 'inline';
+		}
+		else {
+			link.href = "#";
+			link.style.display = 'none';
+		}
 	};
 	const dragStartHandler = evt => {
 		evt.target.addClass("dropping");

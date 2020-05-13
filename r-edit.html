@@ -4,7 +4,7 @@
 -->
 <html>
 	<head>
-		<title>rEdit v1.2.1</title>
+		<title>rEdit v1.3.0</title>
 		<style type="text/css">
 			body, .row, .box {
 				display: flex;
@@ -41,12 +41,13 @@
 				border-color: silver;
 				color: silver;
 			}
-			.label {
+			#multireddit {
 				font-size: 1.2em;
 				position: absolute;
-				bottom: 1px;
-				right: 21px;
+				bottom: 5px;
+				right: 7px;
 				color: white;
+				display: none;
 			}
 			.dropping {
 				border: 3px dashed #3cb3da;
@@ -59,7 +60,8 @@
 				<textarea id="lined" placeholder="Put the subreddit names here, separated by anything that ISN'T a letter, number, or underscore ('_')"></textarea>
 			</div>
 			<div class="box">
-				<textarea id="collapsed" placeholder="Then focus this box to get the multireddit collection"></textarea>
+				<textarea id="collapsed" placeholder="This box will give you the multireddit collection"></textarea>
+				<a id="multireddit" href="">multireddit</a>
 			</div>
 		</div>
 		<script type="text/javascript" src="js/r-edit.browser.js"></script>
