@@ -10,12 +10,17 @@
 		"url": "/dhook.html"
 	},
 	{
+		"title": "FontBox v1.0.0",
+		"desc": "a page to turn normal text into specially-fonted text",
+		"url": "/fontbox.html"
+	},
+	{
 		"title": "NikoMaker - Niko died for our suns",
 		"desc": "a point, click, and type creator for dialogue boxes featuring Niko, from the game Oneshot",
 		"url": "/niko.html"
 	},
 	{
-		"title": "rEdit v1.1.0",
+		"title": "rEdit v1.3.0",
 		"desc": "an easy way to sort and deduplicate subreddits for creating a multireddit list",
 		"url": "/r-edit.html"
 	},

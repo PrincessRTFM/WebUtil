@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<!--
+	@desc a page to turn normal text into specially-fonted text
+-->
+<html>
+	<head>
+		<title>FontBox v1.0.0</title>
+		<style type="text/css">
+			body, .row, .box {
+				display: flex;
+				align-items: stretch;
+				justify-content: stretch;
+				align-content: stretch;
+				flex-wrap: nowrap;
+			}
+			.row, .box, textarea {
+				flex: 1 1 auto;
+			}
+			body {
+				height: calc(100vh - 16px);
+				margin: 0;
+				padding: 8px;
+				flex-direction: column;
+				background-color: grey;
+			}
+			.row {
+				width: 100%;
+				flex-direction: row;
+			}
+			.box {
+				position: relative;
+				flex-direction: row;
+			}
+			textarea {
+				resize: none;
+				font-size: 1.1em;
+				line-height: 1.1em;
+				min-height: 11em;
+				background-color: black;
+				border-color: silver;
+				color: silver;
+				font-family: auto;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="row">
+			<div class="box">
+				<textarea id="plain" placeholder="Write your text here"></textarea>
+			</div>
+			<div class="box">
+				<textarea id="bold" placeholder="This box will give you the text in bold"></textarea>
+			</div>
+		</div>
+		<div class="row">
+			<div class="box">
+				<textarea id="italic" placeholder="This box will give you the text in italic"></textarea>
+			</div>
+			<div class="box">
+				<textarea id="boldtalic" placeholder="This box will give you the text in bold and italics"></textarea>
+			</div>
+		</div>
+		<div class="row">
+			<div class="box">
+				<textarea id="gothic" placeholder="This box will give you the text in a gothic font"></textarea>
+			</div>
+			<div class="box">
+				<textarea id="fancy" placeholder="This box will give you the text in a fancy font"></textarea>
+			</div>
+		</div>
+		<div class="row">
+			<div class="box">
+				<textarea id="cursive" placeholder="This box will give you the text in cursive"></textarea>
+			</div>
+			<div class="box">
+				<textarea id="smallcaps" placeholder="This box will give you the text in small caps"></textarea>
+			</div>
+		</div>
+		<script type="text/javascript" src="js/fontbox.browser.js"></script>
+	</body>
+</html>
