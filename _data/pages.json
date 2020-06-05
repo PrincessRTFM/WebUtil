@@ -28,5 +28,10 @@
 		"title": "TextMunge v1.2.1",
 		"desc": "a general-purpose text-processing framework page, for writing your own JS functionality with prebuilt text inputs",
 		"url": "/textmunge.html"
+	},
+	{
+		"title": "Welcome Back, Listeners",
+		"desc": "provides a nice Welcome To Night Vale quote, chosen at random",
+		"url": "/wtnv.html"
 	}
 ]

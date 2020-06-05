@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<!--
+	@desc provides a nice Welcome To Night Vale quote, chosen at random
+-->
+<html>
+	<head>
+		<script type="text/javascript" src="js/lib/wtnvfortunes.js"></script>
+		<title>Welcome Back, Listeners</title>
+		<style type="text/css">
+			body {
+				height: 100vh;
+				width: 100vw;
+				margin: auto;
+				padding: 0;
+				background-color: black;
+				color: #d0d0d0;
+				text-align: center;
+			}
+			#fuck-css {
+				position: absolute;
+				left: 50%;
+				top: 35%;
+				transform: translateX(-50%);
+				width: 100%;
+				opacity: 0;
+			}
+			a:link {
+				color: #a9a9a9;
+			}
+			a:visited {
+				color: #8a8a8a;
+			}
+			#content {
+				margin: 9px;
+				font-size: 4em;
+				font-style: italic;
+				cursor: default;
+			}
+			#reroll {
+				font-size: 1.5em;
+			}
+			address {
+				position: fixed;
+				top: 3px;
+				font-size: 1.1em;
+				opacity: 0.6;
+				-moz-transition: opacity .3s ease-out;
+				-webkit-transition: opacity .3s ease-out;
+				-o-transition: opacity .3s ease-out;
+				transition: opacity .3s ease-out;
+			}
+			address:hover {
+				opacity: 1;
+			}
+			#contribute {
+				right: 3px;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="fuck-css">
+			<div id="content"></div>
+			<a href="#" id="reroll">Good night, Night Vale. Good night.</a>
+		</div>
+		<address id="credit">
+			Written by
+			<a href="https://github.com/PrincessRTFM">Lilith Song</a>
+			<span id="reason"></span>
+		</address>
+		<address id="contribute">
+			<!-- TODO add contribution links -->
+		</address>
+	</body>
+	<script type="text/javascript" src="js/wtnv.browser.js"></script>
+</html>
