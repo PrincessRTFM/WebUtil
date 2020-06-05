@@ -67,7 +67,7 @@ const BENEDICT = Object.defineProperties(Object.create(null), {
 			"Cabbagewank",
 			"Candybatch",
 			"Cattleranch",
-			"Chedarcheese",
+			"Cheddarcheese",
 			"Cheeseburger",
 			"Chesterfield",
 			"Chowderpants",
