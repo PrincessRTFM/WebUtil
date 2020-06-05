@@ -1,5 +1,10 @@
 [
 	{
+		"title": "What's That One Actor's Name?",
+		"desc": "reminds you what Bendersnoot Baggageclaim's name is in case you forgot",
+		"url": "/benedict.html"
+	},
+	{
 		"title": "Random Cape Generator - new and improved!",
 		"desc": "a Worm-style random parahuman power generator",
 		"url": "/cape.html"

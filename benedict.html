@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<!--
+	@desc reminds you what Bendersnoot Baggageclaim's name is in case you forgot
+-->
+<html>
+	<head>
+		<script type="text/javascript" src="js/lib/benedictnames.js"></script>
+		<title>What's That One Actor's Name?</title>
+		<style type="text/css">
+			body {
+				height: 100vh;
+				width: 100vw;
+				margin: auto;
+				padding: 0;
+				background-color: black;
+				color: #d0d0d0;
+				text-align: center;
+			}
+			#fuck-css {
+				position: absolute;
+				left: 50%;
+				top: 35%;
+				transform: translateX(-50%);
+				width: 100%;
+			}
+			a:link {
+				color: #a9a9a9;
+			}
+			a:visited {
+				color: #8a8a8a;
+			}
+			#header {
+				font-size: 4em;
+				margin-top: 5px;
+				margin-bottom: 7px;
+			}
+			#that-guy {
+				opacity: 0;
+				margin: 9px;
+				font-size: 6em;
+				font-style: italic;
+			}
+			#reroll {
+				font-size: 2em;
+			}
+			address {
+				position: fixed;
+				top: 3px;
+				font-size: 1.1em;
+				opacity: 0.6;
+				-moz-transition: opacity .3s ease-out;
+				-webkit-transition: opacity .3s ease-out;
+				-o-transition: opacity .3s ease-out;
+				transition: opacity .3s ease-out;
+			}
+			address:hover {
+				opacity: 1;
+			}
+			#contribute {
+				right: 3px;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="fuck-css">
+			<h1 id="header">Are you thinking of...</h1>
+			<h3 id="that-guy">
+				<span id="name">Benedict Cumberbatch</span>?
+			</h3>
+			<a href="#" id="reroll">No, that's not it...</a>
+		</div>
+		<address id="credit">
+			Written by
+			<a href="https://github.com/PrincessRTFM">Lilith Song</a>
+			<span id="reason"></span>
+		</address>
+		<address id="contribute">
+			<!-- TODO add contribution links -->
+		</address>
+	</body>
+	<script type="text/javascript" src="js/benedict.browser.js"></script>
+</html>
