@@ -2,7 +2,7 @@
 /* globals initialise initialize boxes reset loadScript */
 (() => {
 	const autoloadScriptPrefix = 'load=';
-	const jqKeypress = event => { // eslint-disable-line unicorn/consistent-function-scoping
+	const jqKeypress = event => {
 		let pressed = '';
 		if (event.ctrlKey) {
 			pressed += '^';
@@ -19,7 +19,6 @@
 		pressed += (event.key || '').toLowerCase();
 		return pressed;
 	};
-	// eslint-disable-next-line unicorn/consistent-function-scoping
 	const insertTextAtCursor = (input, text, highlightP) => {
 		input.focus();
 		const successP = document.execCommand("insertText", false, text);
