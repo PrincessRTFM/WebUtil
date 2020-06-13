@@ -6,6 +6,7 @@
 // @description  Provides minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
+// @updateURL    https://gh.princessrtfm.com/js/monkey/e621-enhanced.user.js
 // @grant        GM_info
 // @grant        GM_getValue
 // @grant        GM_setValue
