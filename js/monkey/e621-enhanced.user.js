@@ -2,8 +2,8 @@
 // ==UserScript==
 // @name         E(nhanced)621
 // @namespace    Lilith
-// @version      0.0.0
-// @description  TODO
+// @version      1.0.0
+// @description  Provides minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
 // @grant        GM_info
@@ -347,6 +347,12 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 		else {
 			putWarning(errorNoSource);
 		}
+	}
+	try {
+		document.querySelector("#page").scrollIntoView();
+	}
+	catch (err) {
+		console.error("Can't scroll to page content:", err);
 	}
 }
 
