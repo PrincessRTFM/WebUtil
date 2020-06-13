@@ -1,6 +1,7 @@
-const FORTUNES_WTNV = [
+const FORTUNES_WTNV = [ // eslint-disable-line no-unused-vars
+/* eslint-disable max-len */
 	"Death is only the end if you assume the story is about you.",
-	"\x22One day you will die.\x22 Not true! It will likely take several days.",
+	"\u0022One day you will die.\u0022 Not true! It will likely take several days.",
 	"Not everything with a human face is human.",
 	"Guns don't kill people. Guns are post-structuralist as heck.",
 	"Speak softly and carry a glowing scepter.",
@@ -89,13 +90,13 @@ const FORTUNES_WTNV = [
 	"It's darkest before the dawn. Usually not this dark, though. Wow, this is like pitch black. Wasn't dawn supposed to be two hours ago?",
 	"Ask your doctor if you are a tree, if we are all trees, if everything is a single being of shared roots and majestic limbs.",
 	"Ask your doctor to get away. Ask him to stand back and stop looking directly at you. Ask your doctor if he believes in the devil. Ask him.",
-	"Ask your doctor a seemingly innocent question. Tap the side of your nose. Say \x22perhaps I have said too much.\x22 Say it again.",
+	"Ask your doctor a seemingly innocent question. Tap the side of your nose. Say \u0022perhaps I have said too much.\u0022 Say it again.",
 	"Ask your doctor just how many of you there are. Ask her what she told the others. What did she tell the others?",
 	"Wow, the continuous nuclear explosion in the sky is really nice today. Hardly any floating water in the way.",
 	"Ask your doctor if you're already dead. Ask your doctor if she can even see you. Ask your doctor this while waving your arms. Ask louder.",
 	"Ask your doctor if you can go. Tell your doctor that you won't alert anyone about the Plan. Try to sneak away when your doctor isn't looking.",
 	"Whatever's in your oven smells good. Oh, sorry, it smells WELL. It also has excellent vision and three rows of teeth. Chain your oven shut.",
-	"\x22Nobody knows what that thing is, or why it's here,\x22 says the scientist, pointing to everything.",
+	"\u0022Nobody knows what that thing is, or why it's here,\u0022 says the scientist, pointing to everything.",
 	"Ask your doctor why there are no windows, no doors. Ask your doctor why you cannot see, hear her.",
 	"Summer tips to beat the heat: deny the heat. What heat?",
 	"Summer tips to beat the heat: spread rumors about the heat. Report imagined suspicions about the heat to the government.",
@@ -105,11 +106,12 @@ const FORTUNES_WTNV = [
 	"You can tell a lot about a person by using spy cameras and a team of agents to investigate every private facet of their life.",
 	"Looking for a simple solution to all life's problems? We are proud to present obstinate denial. Accept no substitute. Accept nothing.",
 	"Ask your doctor if anyone will hear his screams. Ask again in a firm whisper. Ask again with just your crooked smile.",
-	"Ask your doctor if cats are supposed to do that. Tell your doctor that you don't think they are. \x22They aren't right?\x22 whisper to your doctor.",
+	"Ask your doctor if cats are supposed to do that. Tell your doctor that you don't think they are. \u0022They aren't right?\u0022 whisper to your doctor.",
 	"One way to test if someone is actually dead is to think about when that person was born. Was it 400 years ago? Probably dead.",
 	"The only bad question is the one not asked. And don't you dare ask it. It's a terrible question.",
 	"Shoot for the moon. Even if you miss, you will have plenty of time to regret your hubris as you drift for infinity through the void.",
 	"Follow your heart. It's in a cooler in the back of that van up ahead. Step on it. They're getting away.",
-	"\x22It's always darkest before the dawn,\x22 we are often reassured by people who are totally wrong about how the sun works.",
+	"\u0022It's always darkest before the dawn,\u0022 we are often reassured by people who are totally wrong about how the sun works.",
 	"When a door closes, a window opens. This contractor did a terrible job.\n",
+/* eslint-enable max-len */
 ];

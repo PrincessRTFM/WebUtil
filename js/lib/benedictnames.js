@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 const BENEDICT = Object.defineProperties(Object.create(null), {
 	FIRST_NAMES: {
 		enumerable: true,
@@ -122,15 +123,16 @@ const BENEDICT = Object.defineProperties(Object.create(null), {
 	name: {
 		enumerable: true,
 		get() {
-			let first, last;
+			let first;
+			let last;
 			do {
 				first = this.FIRST_NAMES[Math.floor(Math.random() * this.FIRST_NAMES.length)];
 			} while (!first);
 			do {
 				last = this.LAST_NAMES[Math.floor(Math.random() * this.LAST_NAMES.length)];
 			} while (!last);
-			return String(first + ' ' + last).trim();
-		}
+			return `${first} ${last}`.trim();
+		},
 	},
 	toString: {
 		enumerable: true,
