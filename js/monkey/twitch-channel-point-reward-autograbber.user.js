@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 // ==UserScript==
 // @name         Twitch Channel Point Reward Autograbber
 // @namespace    PrincessRTFM
@@ -7,6 +8,7 @@
 // @match        https://www.twitch.tv/*
 // @updateURL    https://gh.princessrtfm.com/js/monkey/twitch-channel-point-reward-autograbber.user.js
 // ==/UserScript==
+/* eslint-enable max-len */
 
 
 setInterval(() => {

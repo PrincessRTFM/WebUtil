@@ -16,7 +16,7 @@
 (window => {
 	const BLOOD_TEAL = '#008282';
 	const BLOOD_LIME = '#658200';
-	const BLOOD_VIOLET = '#6a006a';
+	// const BLOOD_VIOLET = '#6a006a';
 	const BLOOD_JADE = '#008282';
 	const scrollWindow = offset => {
 		console.log(`Scrolling window by ${offset}`);
@@ -51,7 +51,6 @@
 			setTimeout(core, 500);
 			return;
 		}
-		const first = comic[0];
 		const toggleHeader = document.createElement('p');
 		const showChat = () => {
 			if (chat) {
