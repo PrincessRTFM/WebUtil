@@ -80,7 +80,8 @@
 				color: #bbffcc;
 			}
 			.detail {
-				color: #a3f9ff;
+				color: #00f5ff;
+				cursor: help;
 			}
 			#filters {
 				margin: 12px;
@@ -91,8 +92,15 @@
 				margin: 4px 2px;
 			}
 			#filters > p {
-				font-size: 1.3em;
+				font-size: 1.4em;
 				margin: 2px;
+			}
+			#help {
+				width: 60%;
+				min-width: 300px;
+				margin: 0 auto;
+				text-align: left;
+				font-size: 1.2em;
 			}
 		</style>
 	</head>
@@ -129,6 +137,25 @@
 				<label for="filter-trump">trump</label><input type="checkbox" id="filter-trump" checked="checked" />
 				<label for="filter-stranger">stranger</label><input type="checkbox" id="filter-stranger" checked="checked" />
 			</div>
+		</div>
+		<div id="help">
+			<p>The categories of powers are taken from <a href="https://parahumans.wordpress.com/">Worm</a>, and the <i>approximate</i> breakdown is below. Any of the generated power text that's in <i class="detail">blue</i> is variable, and will be randomised each time that power is generated - you can use the <i>retry this one</i> button to reroll the current power to change those details.</p>
+			<p>Each time a power is rolled, the type may be any of the power filters that are enabled. If the power fits multiple categories, disabled ones will <b>not</b> stop the power from coming up - a striker/blaster can be picked if either striker or blaster is enabled, even if the other isn't, for instance. The filters you have enabled are actually saved to the URL of the page, so you can select your filters and then share the page URL to someone else to let them select a power from the categories you chose.</p>
+			<p>Roughly, the power classifications mean something like this:</p>
+			<p>
+				<b>Movers</b> are what it sounds like - they move around quickly. Speed, flight, teleportation, that kind of thing.<br/>
+				<b>Shakers</b> affect areas, usually only the area around them, and it usually goes away when they leave.<br/>
+				<b>Brutes</b> are all physical; strength, durability, and regeneration are the sorts of things you'd expect from them.<br/>
+				<b>Breakers</b> are complicated, but they tend to create an effect that only applies to them, and in some way changes their state or their physical properties.<br/>
+				<b>Masters</b> control minions in some way, be they animated constructs, animals, or even other people.<br/>
+				<b>Tinkers</b>, as you might expect, build things. Advanced technology, beyond normal, doing things that might not even make sense. They usually have a specialisation that they work best in, or even that they can <i>only</i> work in.<br/>
+				<b>Blasters</b> create directed, targetted, ranged effects. Think laser eyes and you'll get the idea, but they're a lot more varied.<br/>
+				<b>Thinkers</b> have some kind of purely mental effect, such as precognition (seeing the future) or mind reading.<br/>
+				<b>Strikers</b> cause some kind of effect through direct physical contact. No contact, no effect.<br/>
+				<b>Changers</b> can change their forms, but usually it's more like a werewolf than a ghost - a different form, not just different properties on the same shape. They're close to breakers, but subtly different.<br/>
+				<b>Trumps</b> do something to or with powers. Maybe they strengthen (or weaken) the powers of others, maybe they can grant temporary powers, maybe they themselves get stronger depending on how many people with powers are around them.<br/>
+				<b>Strangers</b> mess with your perceptions; things like invisibility fall under this, but so does shapeshifting that lets them look like other (existing, real) people - even though that <i>also</i> falls under changer.
+			</p>
 		</div>
 		<address id="credit">
 			Written by

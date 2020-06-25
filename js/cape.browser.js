@@ -82,7 +82,5 @@ $(() => {
 	reroll.on('click', offerNewPower);
 	tweak.on('click', updateDisplay);
 	filters.on('input', updateFragment);
-	if (generateDifferentPower()) {
-		updateDisplay();
-	}
+	offerNewPower();
 });

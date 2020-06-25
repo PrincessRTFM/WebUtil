@@ -57,13 +57,32 @@ class Power {
 		return !!Object.keys(this.bindings).length;
 	}
 	get ability() {
+		const detailTitle = "This is a randomisable detail - reroll this power to change it!";
 		let text = this.rawText;
 		for (const key in this.bindings) {
 			if (Object.prototype.hasOwnProperty.call(this.bindings, key)) {
 				const options = this.bindings[key];
 				const chosen = options[Math.floor(Math.random() * options.length)];
-				text = text.replace(new RegExp(`\\{#${key}\\}`, 'ug'), `<span class="detail">${chosen}</span>`);
+				text = text.replace(
+					new RegExp(`\\{#${key}\\}`, 'ug'),
+					`<span class="detail" title="${detailTitle}">${chosen}</span>`
+				);
 			}
+		}
+		const rngPattern = /\{=\s*(\d+)\D+(\d+)\}/u;
+		while (text.match(rngPattern)) {
+			text = text.replace(rngPattern, (_, min, max) => {
+				min = parseInt(min, 10);
+				max = parseInt(max, 10);
+				if (min > max) {
+					// eslint-disable-next-line array-bracket-newline, array-bracket-spacing, array-element-newline
+					[min, max] = [max, min];
+				}
+				else if (min == max) {
+					return min;
+				}
+				return Math.floor(Math.random() * (max - min + 1)) + min;
+			});
 		}
 		return text;
 	}

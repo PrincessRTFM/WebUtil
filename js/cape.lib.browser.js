@@ -55,17 +55,11 @@ const POWERS = [
 	),
 	new Power(
 		'shaker',
-		'can {#effect} their environment within {#distance} {#unit}',
+		'can {#effect} their environment within {=5 25} {#unit}',
 		{
 			effect: [
 				'soften',
 				'harden',
-			],
-			distance: [
-				'five',
-				'ten',
-				'fifteen',
-				'twenty',
 			],
 			unit: [
 				'feet',
@@ -218,7 +212,7 @@ const POWERS = [
 	),
 	new Power(
 		'striker changer',
-		'can turn into any {#target} they have touched in the last {#time} minutes',
+		'can turn into any {#target} they have touched in the last {=10 30} minutes',
 		{
 			target: [
 				'living creature (including humans)',
@@ -227,11 +221,6 @@ const POWERS = [
 				'non-human',
 				'mammal (including humans)',
 				'mammal (excluding humans)',
-			],
-			time: [
-				'ten',
-				'fifteen',
-				'thirty',
 			],
 		}
 	),
@@ -269,14 +258,12 @@ const POWERS = [
 	),
 	new Power(
 		'thinker',
-		'has unlimited omniscience within {#range} metres/yards',
+		'has unlimited omniscience within {=5 25} {#unit}',
 		{
-			range: [
-				'five',
-				'ten',
-				'fifteen',
-				'twenty',
-				'twenty five',
+			unit: [
+				'feet',
+				'yards',
+				'metres',
 			],
 		}
 	),
@@ -290,27 +277,17 @@ const POWERS = [
 	),
 	new Power(
 		'shaker',
-		'slows down anything within {#range} metres/yards that they feel threatened by,'
-		+ ' to a minimum of {#speed} {#unit}',
+		'slows down anything within {=5 25} {#range} that they feel threatened by,'
+		+ ' to a minimum of {=1 10} {#unit} per hour',
 		{
 			range: [
-				'five',
-				'ten',
-				'fifteen',
-				'twenty',
-				'twenty five',
-			],
-			speed: [
-				'one',
-				'three',
-				'five',
-				'seven',
-				'eight',
-				'ten',
+				'feet',
+				'yards',
+				'metres',
 			],
 			unit: [
-				'mph',
-				'kph',
+				'miles',
+				'kilometres',
 			],
 		}
 	),
