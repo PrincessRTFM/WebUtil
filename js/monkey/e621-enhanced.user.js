@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E(nhanced)621
 // @namespace    Lilith
-// @version      1.0.0
+// @version      1.1.0
 // @description  Provides minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -20,6 +20,7 @@
 
 /* CHANGELOG
 v1.0.0 - initial script, minimal functionality, mostly ripped apart from three old scripts broken in the site update
+v1.1.0 - added keybind features; currently only alt-r for random but more can be easily added
 */
 /* eslint-enable max-len */
 
@@ -28,11 +29,18 @@ const SCRIPT_NAME = GM_info.script.name;
 const SCRIPT_VERSION = `V${GM_info.script.version || '???'}`;
 const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 
+const NOP = () => {}; // eslint-disable-line no-empty-function
+
 const debug = console.debug.bind(console, `[${SCRIPT_TITLE}]`);
 const log = console.log.bind(console, `[${SCRIPT_TITLE}]`);
 const info = console.info.bind(console, `[${SCRIPT_TITLE}]`);
 const warn = console.warn.bind(console, `[${SCRIPT_TITLE}]`);
 const error = console.error.bind(console, `[${SCRIPT_TITLE}]`);
+
+const KB_NONE = 0;
+const KB_ALT = 1;
+const KB_CTRL = 2;
+const KB_SHIFT = 4;
 
 
 const pause = delay => new Promise(resolve => setTimeout(resolve.bind(resolve, delay), delay));
@@ -141,6 +149,69 @@ const putMessage = (content, type, icon) => {
 const putError = content => putMessage(content, 'error', '⚠');
 const putWarning = content => putMessage(content, 'warning', '⚠');
 const putHelp = content => putMessage(content, 'help', '🛈');
+
+const KEY_HANDLERS = new Map();
+const registerKeybind = (keys, handler) => {
+	let modifiers = KB_NONE;
+	KEYSTRING: for (let key of keys.split(/\s+/u)) {
+		while (key.length > 1) {
+			const modifier = key.slice(0, 1);
+			key = key.slice(1);
+			if (modifier == '^') {
+				modifiers |= KB_CTRL;
+			}
+			else if (modifier == '!') {
+				modifiers |= KB_ALT;
+			}
+			else if (modifier == '+') {
+				modifiers |= KB_SHIFT;
+			}
+			else {
+				console.error(`Unknown modifier "${modifier}" in keystring, skipping`);
+				continue KEYSTRING;
+			}
+		}
+		if (key != key.toLowerCase()) {
+			modifiers |= KB_SHIFT;
+			key = key.toLowerCase();
+		}
+		const keymap = KEY_HANDLERS.get(key) || [];
+		keymap[modifiers] = handler;
+		KEY_HANDLERS.set(key, keymap);
+		const pretty = (modifiers & KB_CTRL ? 'ctrl-' : '')
+			+ (modifiers & KB_ALT ? 'alt-' : '')
+			+ (modifiers & KB_SHIFT ? 'shift-' : '')
+			+ key;
+		console.log(`Registered keybind handler for ${pretty}`);
+	}
+};
+document.addEventListener('keydown', evt => {
+	// eslint-disable-next-line array-bracket-newline, array-element-newline
+	if (evt.target.isContentEditable || [ 'input', 'textarea' ].includes(evt.target.tagName.toLowerCase())) {
+		// The user is typing into some kind of input area - don't interfere
+		return;
+	}
+	if (event.isComposing || event.keyCode === 229) {
+		// This is part of an IME composition - don't interfere
+		return;
+	}
+	const key = (evt.key || '').toLowerCase();
+	const alt = evt.altKey;
+	const ctrl = evt.ctrlKey;
+	const shift = evt.shiftKey;
+	const modifiers = (alt ? KB_ALT : KB_NONE)
+		| (ctrl ? KB_CTRL : KB_NONE)
+		| (shift ? KB_SHIFT : KB_NONE);
+	const handlerMap = KEY_HANDLERS.get(key) || [];
+	const handler = handlerMap[modifiers];
+	if (typeof handler == 'function') {
+		const handled = handler(evt, key, modifiers);
+		if (handled === false) { // If you don't return a value, it'll assume you handled things fine
+			evt.preventDefault();
+			evt.stopPropagation();
+		}
+	}
+});
 
 const navbar = document.querySelector('#nav').children[0];
 const subnavbar = document.querySelector('#nav').children[1];
@@ -303,6 +374,10 @@ const togglePoolReaderMode = evt => {
 };
 
 log("Initialising");
+
+registerKeybind('!r', () => {
+	document.location = 'https://e621.net/posts/random';
+});
 
 for (const link of document.querySelectorAll(`a[href^="${POOL_PATH_PREFIX}"]`)) {
 	link.href = `${link.href}#${POOL_FRAG_READER}`;
