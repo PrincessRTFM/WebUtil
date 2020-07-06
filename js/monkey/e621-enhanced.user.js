@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E(nhanced)621
 // @namespace    Lilith
-// @version      1.1.0
+// @version      1.2.0
 // @description  Provides minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -21,6 +21,7 @@
 /* CHANGELOG
 v1.0.0 - initial script, minimal functionality, mostly ripped apart from three old scripts broken in the site update
 v1.1.0 - added keybind features; currently only alt-r for random but more can be easily added
+v1.2.0 - added an indicator for parent/child posts on post pages
 */
 /* eslint-enable max-len */
 
@@ -397,6 +398,7 @@ if (location.pathname.startsWith(POOL_PATH_PREFIX)) {
 else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 	const sourceLink = document.querySelector('#image-download-link > a[href]');
 	const image = document.querySelector('#image');
+	const parentChildNotices = document.querySelector('.bottom-notices > .parent-children');
 	const errorNoSource = "Could't find download/source link!";
 	if (image) {
 		if (image.tagName.toLowerCase() == 'img') {
@@ -421,8 +423,32 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 			subnavbar.append(directSourceItem);
 		}
 		else {
-			putWarning(errorNoSource);
+			putError(errorNoSource);
 		}
+	}
+	if (parentChildNotices) {
+		const scrollToNoticeItem = makeElem('li', 'enhanced621-parent-child-notices');
+		const scrollToNoticeLink = makeElem('a');
+		GM_addStyle('#enhanced621-parent-child-notices { position: absolute; right: 120px; cursor: pointer; }');
+		scrollToNoticeLink.textContent = [
+			document.querySelector('#has-parent-relationship-preview') ? 'Parent' : '',
+			document.querySelector('#has-children-relationship-preview') ? 'Children' : '',
+		].filter(e => e).join('/');
+		scrollToNoticeLink.href = '#';
+		scrollToNoticeLink.addEventListener('click', evt => {
+			try {
+				parentChildNotices.scrollIntoView();
+				console.log("Scrolled to parent/child notices");
+			}
+			catch (err) {
+				putError("Scrolling failed");
+				console.err("Can't scroll to parent/child notices", err);
+			}
+			evt.preventDefault();
+			evt.stopPropagation();
+		});
+		scrollToNoticeItem.append(scrollToNoticeLink);
+		subnavbar.append(scrollToNoticeItem);
 	}
 	try {
 		document.querySelector("#page").scrollIntoView();
