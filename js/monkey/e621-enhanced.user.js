@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E(nhanced)621
 // @namespace    Lilith
-// @version      1.2.0
+// @version      1.3.0
 // @description  Provides minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -22,6 +22,7 @@
 v1.0.0 - initial script, minimal functionality, mostly ripped apart from three old scripts broken in the site update
 v1.1.0 - added keybind features; currently only alt-r for random but more can be easily added
 v1.2.0 - added an indicator for parent/child posts on post pages
+v1.3.0 - added a tag entry for the post rating
 */
 /* eslint-enable max-len */
 
@@ -396,10 +397,13 @@ if (location.pathname.startsWith(POOL_PATH_PREFIX)) {
 	}
 }
 else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
+	const errorNoSource = "Could't find download/source link!";
+	const postRatingClassPrefix = 'post-rating-text-';
 	const sourceLink = document.querySelector('#image-download-link > a[href]');
 	const image = document.querySelector('#image');
 	const parentChildNotices = document.querySelector('.bottom-notices > .parent-children');
-	const errorNoSource = "Could't find download/source link!";
+	const postRatingElem = document.querySelector('#post-rating-text');
+	const tagList = document.querySelector('#tag-list');
 	if (image) {
 		if (image.tagName.toLowerCase() == 'img') {
 			image.addEventListener('dblclick', evt => {
@@ -442,13 +446,76 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 			}
 			catch (err) {
 				putError("Scrolling failed");
-				console.err("Can't scroll to parent/child notices", err);
+				console.err("Can't scroll to parent/child notices:", err);
 			}
 			evt.preventDefault();
 			evt.stopPropagation();
 		});
 		scrollToNoticeItem.append(scrollToNoticeLink);
 		subnavbar.append(scrollToNoticeItem);
+	}
+	if (postRatingElem) {
+		try {
+			const postRating = Array.from(postRatingElem.classList)
+				.filter(cl => cl.startsWith(postRatingClassPrefix))
+				.shift()
+				.slice(postRatingClassPrefix.length)
+				.toLowerCase();
+			if (postRating) {
+				const ratingTag = `rating:${postRating}`;
+				const ratingURI = encodeURIComponent(ratingTag);
+				const header = document.createElement('h2');
+				const list = document.createElement('ul');
+				const item = document.createElement('li');
+				const wiki = document.createElement('a');
+				const include = document.createElement('a');
+				const exclude = document.createElement('a');
+				const search = document.createElement('a');
+				const tagParam = new URL(location.href)
+					.searchParams
+					.get('q')
+					.replace(
+						new RegExp("\\s*-?rating(:|%3A)\\w+\\s*", 'iug'),
+						''
+					);
+				/* eslint-disable unicorn/no-keyword-prefix */
+				header.className = 'rating-tag-list-header tag-list-header';
+				header.dataset.category = 'rating';
+				list.className = 'rating-tag-list';
+				item.className = 'category-0';
+				[
+					wiki,
+					include,
+					exclude,
+					search,
+				].forEach(a => {
+					a.rel = 'nofollow';
+					a.className = 'rating-tag';
+				});
+				wiki.classList.add('wiki-link');
+				wiki.textContent = '?';
+				wiki.href = `/wiki_pages/show_or_new?title=${ratingURI}`;
+				include.classList.add('search-inc-tag');
+				include.textContent = '+';
+				include.href = `/posts?tags=${tagParam}${tagParam ? '+' : ''}${ratingTag}`;
+				exclude.classList.add('search-exl-tag');
+				exclude.textContent = '-';
+				exclude.href = `/posts?tags=${tagParam}${tagParam ? '+' : ''}-${ratingTag}`;
+				search.classList.add('search-tag');
+				search.textContent = postRating.slice(0, 1).toUpperCase()
+					+ postRating.slice(1);
+				search.href = `/posts?tags=${ratingURI}`;
+				/* eslint-enable unicorn/no-keyword-prefix */
+				item.append(wiki, ' ', include, ' ', exclude, ' ', search);
+				list.append(item);
+				header.textContent = "Rating";
+				tagList.insertBefore(list, tagList.children[0]);
+				tagList.insertBefore(header, tagList.children[0]);
+			}
+		}
+		catch (err) {
+			console.error("Can't find post rating:", err);
+		}
 	}
 	try {
 		document.querySelector("#page").scrollIntoView();
