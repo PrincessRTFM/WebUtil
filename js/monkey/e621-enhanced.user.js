@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E(nhanced)621
 // @namespace    Lilith
-// @version      1.3.1
+// @version      1.3.2
 // @description  Provides minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -24,6 +24,7 @@ v1.1.0 - added keybind features; currently only alt-r for random but more can be
 v1.2.0 - added an indicator for parent/child posts on post pages
 v1.3.0 - added a tag entry for the post rating
 v1.3.1 - fixed a missing property access on sanity checking, removed an unnecessary Promise.resolve(), reordered the pool reader sequence
+v1.3.2 - clean up some element-contructor code
 */
 /* eslint-enable max-len */
 
@@ -466,13 +467,13 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 			if (postRating) {
 				const ratingTag = `rating:${postRating}`;
 				const ratingURI = encodeURIComponent(ratingTag);
-				const header = document.createElement('h2');
-				const list = document.createElement('ul');
-				const item = document.createElement('li');
-				const wiki = document.createElement('a');
-				const include = document.createElement('a');
-				const exclude = document.createElement('a');
-				const search = document.createElement('a');
+				const header = makeElem('h2', '', 'rating-tag-list-header tag-list-header');
+				const list = makeElem('ul', '', 'rating-tag-list');
+				const item = makeElem('li', '', 'category-0');
+				const wiki = makeElem('a', '', 'wiki-link');
+				const include = makeElem('a', 'search-inc-tag');
+				const exclude = makeElem('a', 'search-exl-tag');
+				const search = makeElem('a', 'search-tag');
 				const tagParam = new URL(location.href)
 					.searchParams
 					.get('q')
@@ -480,11 +481,7 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 						new RegExp("\\s*-?rating(:|%3A)\\w+\\s*", 'iug'),
 						''
 					);
-				/* eslint-disable unicorn/no-keyword-prefix */
-				header.className = 'rating-tag-list-header tag-list-header';
 				header.dataset.category = 'rating';
-				list.className = 'rating-tag-list';
-				item.className = 'category-0';
 				[
 					wiki,
 					include,
@@ -492,22 +489,17 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 					search,
 				].forEach(a => {
 					a.rel = 'nofollow';
-					a.className = 'rating-tag';
+					a.classList.add('rating-tag');
 				});
-				wiki.classList.add('wiki-link');
 				wiki.textContent = '?';
 				wiki.href = `/wiki_pages/show_or_new?title=${ratingURI}`;
-				include.classList.add('search-inc-tag');
 				include.textContent = '+';
 				include.href = `/posts?tags=${tagParam}${tagParam ? '+' : ''}${ratingTag}`;
-				exclude.classList.add('search-exl-tag');
 				exclude.textContent = '-';
 				exclude.href = `/posts?tags=${tagParam}${tagParam ? '+' : ''}-${ratingTag}`;
-				search.classList.add('search-tag');
 				search.textContent = postRating.slice(0, 1).toUpperCase()
 					+ postRating.slice(1);
 				search.href = `/posts?tags=${ratingURI}`;
-				/* eslint-enable unicorn/no-keyword-prefix */
 				item.append(wiki, ' ', include, ' ', exclude, ' ', search);
 				list.append(item);
 				header.textContent = "Rating";
