@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E(nhanced)621
 // @namespace    Lilith
-// @version      1.3.0
+// @version      1.3.1
 // @description  Provides minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -23,6 +23,7 @@ v1.0.0 - initial script, minimal functionality, mostly ripped apart from three o
 v1.1.0 - added keybind features; currently only alt-r for random but more can be easily added
 v1.2.0 - added an indicator for parent/child posts on post pages
 v1.3.0 - added a tag entry for the post rating
+v1.3.1 - fixed a missing property access on sanity checking, removed an unnecessary Promise.resolve(), reordered the pool reader sequence
 */
 /* eslint-enable max-len */
 
@@ -237,7 +238,7 @@ const enablePoolReaderMode = async () => {
 		vanillaPageList.style.display = 'none';
 		readerPageContainer.style.display = '';
 		document.querySelector(`#${POOL_READER_STATUSLINE_ID}`).style.display = '';
-		return Promise.resolve(readerPageContainer);
+		return readerPageContainer;
 	}
 	GM_addStyle([
 		`div#${POOL_READER_CONTAINER_ID} > a {`,
@@ -268,7 +269,7 @@ const enablePoolReaderMode = async () => {
 		if (pools.length > 1) {
 			throw new Error(`Site returned too many options (${pools.length})`);
 		}
-		if (pools < 1) {
+		if (pools.length < 1) {
 			throw new Error("Site returned no pools");
 		}
 		const pool = pools[0];
@@ -296,7 +297,8 @@ const enablePoolReaderMode = async () => {
 		state.posts = [];
 		await state.postIDs.reduce(async (ticker, postID) => {
 			await ticker;
-			await pause(1000);
+			status("Pausing to comply with site rules");
+			await pause(1500);
 			const current = state.posts.length + 1;
 			const total = state.postCount;
 			status(`Loading post #${postID} (${current}/${total})`);
@@ -331,12 +333,12 @@ const enablePoolReaderMode = async () => {
 	};
 	return request(`${location.origin}/pools.json?search[id]=${poolID}`, context)
 		.then(checkResponseValidity)
+		.catch(onPoolLoadingError)
 		.then(state => {
 			vanillaPageList.parentElement.append(readerPageContainer);
 			vanillaPageList.style.display = 'none';
 			return state;
 		})
-		.catch(onPoolLoadingError)
 		.then(insertImages)
 		.then(state => {
 			title(`${state.poolName} (#${state.poolID})`);
