@@ -53,6 +53,7 @@ function extractEndpoint(hookText) {
 	const given = String(hookText).trim();
 	const m = given
 		.replace(/^https?:\/\/([a-z]+\.)?discordapp\.com\/api\/webhooks\//ui, '')
+		.replace(/^https?:\/\/([a-z]+\.)?discord\.com\/api\/webhooks\//ui, '')
 		.match(/^([^/]+)\/(.+)$/u);
 	if (m) {
 		return m.slice(1, 3).join('/');
@@ -196,7 +197,7 @@ once(window, LOAD_EVENT, () => {
 				});
 				req.open(
 					"GET",
-					`https://cors-anywhere.herokuapp.com/https://www.discordapp.com/api/webhooks/${hook}`
+					`https://cors-anywhere.herokuapp.com/https://www.discord.com/api/webhooks/${hook}`
 				);
 				req.send();
 			}
