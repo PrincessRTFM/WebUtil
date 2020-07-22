@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E(nhanced)621
 // @namespace    Lilith
-// @version      1.3.2
+// @version      1.4.0
 // @description  Provides minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -25,6 +25,7 @@ v1.2.0 - added an indicator for parent/child posts on post pages
 v1.3.0 - added a tag entry for the post rating
 v1.3.1 - fixed a missing property access on sanity checking, removed an unnecessary Promise.resolve(), reordered the pool reader sequence
 v1.3.2 - clean up some element-contructor code
+v1.4.0 - add pool reader progress to tab title
 */
 /* eslint-enable max-len */
 
@@ -302,6 +303,7 @@ const enablePoolReaderMode = async () => {
 			await pause(1500);
 			const current = state.posts.length + 1;
 			const total = state.postCount;
+			title(`loading ${current}/${total} of ${name}... (#${state.poolID})`);
 			status(`Loading post #${postID} (${current}/${total})`);
 			const api = await request(`https://e621.net/posts/${postID}.json`);
 			state.posts.push({
