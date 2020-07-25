@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E(nhanced)621
 // @namespace    Lilith
-// @version      1.6.0
+// @version      1.6.1
 // @description  Provides minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -28,6 +28,7 @@ v1.3.2 - clean up some element-contructor code
 v1.4.0 - add pool reader progress to tab title
 v1.5.0 - make the "current search" text on post pages into a link to that search
 v1.6.0 - move searched-for tags on post pages to the top of their tag groups and italicise them
+v1.6.1 - searching for tags in the post page tag list is no longer confused by underscores
 */
 /* eslint-enable max-len */
 
@@ -536,7 +537,11 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 			.split(/\s+/u)
 			.filter(t => !t.includes(':'))
 			.filter(t => !t.includes('*')) // TODO find a way to handle wildcard tags in searches?
-			.map(t => t.replace(/^~/u, '').toLowerCase());
+			.map(t => t
+				.replace(/^~/u, '')
+				.replace(/_/gu, ' ')
+				.toLowerCase()
+			);
 		const originalTermCount = CURRENT_SEARCH.split(/\s+/u).length;
 		const difference = Math.abs(terms.length - originalTermCount);
 		if (terms.length != originalTermCount) {
