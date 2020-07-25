@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         E(nhanced)621
 // @namespace    Lilith
-// @version      1.4.0
+// @version      1.6.0
 // @description  Provides minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -26,6 +26,8 @@ v1.3.0 - added a tag entry for the post rating
 v1.3.1 - fixed a missing property access on sanity checking, removed an unnecessary Promise.resolve(), reordered the pool reader sequence
 v1.3.2 - clean up some element-contructor code
 v1.4.0 - add pool reader progress to tab title
+v1.5.0 - make the "current search" text on post pages into a link to that search
+v1.6.0 - move searched-for tags on post pages to the top of their tag groups and italicise them
 */
 /* eslint-enable max-len */
 
@@ -86,7 +88,7 @@ const warningBox = () => {
 		`#${ID} {`,
 		'position: fixed;',
 		'right: 0;',
-		`top: ${document.querySelector('#image-container').offsetTop}px;`,
+		`top: ${document.querySelector("#image-container").offsetTop}px;`,
 		'border-top-right-radius: 0;',
 		'border-bottom-right-radius: 0;',
 		'width: 350px;',
@@ -218,8 +220,17 @@ document.addEventListener('keydown', evt => {
 	}
 });
 
-const navbar = document.querySelector('#nav').children[0];
-const subnavbar = document.querySelector('#nav').children[1];
+const CURRENT_SEARCH = (() => {
+	const p = new URLSearchParams(location.search);
+	return void 0
+		|| p.get('q')
+		|| p.get('tags')
+		|| p.get('name')
+		|| '';
+})();
+
+const navbar = document.querySelector("#nav").children[0];
+const subnavbar = document.querySelector("#nav").children[1];
 
 const POOL_PATH_PREFIX = '/pools/';
 const POST_PATH_PREFIX = '/posts/';
@@ -231,7 +242,7 @@ const POOL_READER_STATUSLINE_ID = 'enhanced621-pool-reader-status';
 
 const enablePoolReaderMode = async () => {
 	location.hash = POOL_FRAG_READER;
-	const vanillaPageList = document.querySelector('div#posts');
+	const vanillaPageList = document.querySelector("div#posts");
 	let readerPageContainer = document.querySelector(`div#${POOL_READER_CONTAINER_ID}`);
 	if (!vanillaPageList) {
 		throw new Error("No post container found");
@@ -351,7 +362,7 @@ const enablePoolReaderMode = async () => {
 };
 const disablePoolReaderMode = () => {
 	location.hash = '';
-	const vanillaPageList = document.querySelector('div#posts');
+	const vanillaPageList = document.querySelector("div#posts");
 	const readerPageContainer = document.querySelector(`div#${POOL_READER_CONTAINER_ID}`);
 	if (!vanillaPageList || !readerPageContainer) {
 		return;
@@ -404,11 +415,12 @@ if (location.pathname.startsWith(POOL_PATH_PREFIX)) {
 else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 	const errorNoSource = "Could't find download/source link!";
 	const postRatingClassPrefix = 'post-rating-text-';
-	const sourceLink = document.querySelector('#image-download-link > a[href]');
-	const image = document.querySelector('#image');
-	const parentChildNotices = document.querySelector('.bottom-notices > .parent-children');
-	const postRatingElem = document.querySelector('#post-rating-text');
-	const tagList = document.querySelector('#tag-list');
+	const sourceLink = document.querySelector("#image-download-link > a[href]");
+	const image = document.querySelector("#image");
+	const parentChildNotices = document.querySelector(".bottom-notices > .parent-children");
+	const postRatingElem = document.querySelector("#post-rating-text");
+	const tagList = document.querySelector("#tag-list");
+	const curSearch = document.querySelector("#search-seq-nav span.search-name");
 	if (image) {
 		if (image.tagName.toLowerCase() == 'img') {
 			image.addEventListener('dblclick', evt => {
@@ -440,8 +452,8 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 		const scrollToNoticeLink = makeElem('a');
 		GM_addStyle('#enhanced621-parent-child-notices { position: absolute; right: 120px; cursor: pointer; }');
 		scrollToNoticeLink.textContent = [
-			document.querySelector('#has-parent-relationship-preview') ? 'Parent' : '',
-			document.querySelector('#has-children-relationship-preview') ? 'Children' : '',
+			document.querySelector("#has-parent-relationship-preview") ? 'Parent' : '',
+			document.querySelector("#has-children-relationship-preview") ? 'Children' : '',
 		].filter(e => e).join('/');
 		scrollToNoticeLink.href = '#';
 		scrollToNoticeLink.addEventListener('click', evt => {
@@ -513,8 +525,57 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 			console.error("Can't find post rating:", err);
 		}
 	}
+	if (curSearch) { // may not exist
+		const link = makeElem('a', 'enhanced621-current-search-link');
+		link.textContent = CURRENT_SEARCH;
+		link.href = `/posts?tags=${encodeURIComponent(CURRENT_SEARCH)}`;
+		curSearch.innerHTML = link.outerHTML;
+	}
+	if (CURRENT_SEARCH) { // may also be empty
+		const terms = CURRENT_SEARCH
+			.split(/\s+/u)
+			.filter(t => !t.includes(':'))
+			.filter(t => !t.includes('*')) // TODO find a way to handle wildcard tags in searches?
+			.map(t => t.replace(/^~/u, '').toLowerCase());
+		const originalTermCount = CURRENT_SEARCH.split(/\s+/u).length;
+		const difference = Math.abs(terms.length - originalTermCount);
+		if (terms.length != originalTermCount) {
+			console.info(`${difference} term${difference == 1 ? '' : 's'} can't be searched for!`);
+		}
+		if (terms.length) {
+			GM_addStyle([
+				".enhanced621-highlighted-tag {",
+				"font-style: italic;",
+				"}",
+			].join("\n"));
+			const tagElements = Array.from(tagList.querySelectorAll("a.search-tag")).reverse();
+			console.log(`Elevating all instances ${terms.length} searched tags in ${tagElements.length} listed`);
+			for (const tagElem of tagElements) {
+				try {
+					const tag = tagElem.textContent.toLowerCase();
+					const idx = terms.indexOf(tag);
+					if (idx >= 0) {
+						terms.splice(idx, 1);
+						console.log(`Elevating "${tag}"`);
+						const line = tagElem.parentElement;
+						const group = line.parentElement;
+						tagElem.classList.add("enhanced621-highlighted-tag");
+						group.insertAdjacentElement('afterbegin', line);
+					}
+				}
+				catch (err) {
+					console.error("Cannot examine tag element:", err);
+				}
+			}
+			if (terms.length) {
+				console.info(
+					`${terms.length} term${terms.length == 1 ? '' : 's'} did not appear: ${terms.join(", ")}`
+				);
+			}
+		}
+	}
 	try {
-		document.querySelector("#page").scrollIntoView();
+		subnavbar.scrollIntoView();
 	}
 	catch (err) {
 		console.error("Can't scroll to page content:", err);
