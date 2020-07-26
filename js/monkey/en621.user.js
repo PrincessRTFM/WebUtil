@@ -394,8 +394,6 @@ const togglePoolReaderMode = evt => {
 	}
 };
 
-log("Initialising");
-
 registerKeybind('!r', () => {
 	document.location = 'https://e621.net/posts/random';
 });
