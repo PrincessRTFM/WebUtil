@@ -540,8 +540,7 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 			.map(t => t
 				.replace(/^~/u, '')
 				.replace(/_/gu, ' ')
-				.toLowerCase()
-			);
+				.toLowerCase());
 		const originalTermCount = CURRENT_SEARCH.split(/\s+/u).length;
 		const difference = Math.abs(terms.length - originalTermCount);
 		if (terms.length != originalTermCount) {
