@@ -138,7 +138,10 @@ const blockEvent = evt => {
 	document.addEventListener('drop', blockEvent);
 	input.addEventListener('blur', munge);
 	output.addEventListener('focus', () => output.select());
-	const initialInput = (location.hash || '').replace(/^#+\/*/u, '').replace(/\/*(?:#.*)?$/u, '');
+	const initialInput = (location.hash || '')
+		.replace(/^[#\/]+/u, '')
+		.replace(/^r\//ui, '')
+		.replace(/\/*(?:#.*)?$/u, '');
 	if (initialInput) {
 		location.hash = initialInput;
 		input.value = initialInput;
