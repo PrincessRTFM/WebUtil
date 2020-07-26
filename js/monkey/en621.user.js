@@ -1,9 +1,9 @@
 /* eslint-disable max-len */
 // ==UserScript==
-// @name         E(nhanced)621
+// @name         en621
 // @namespace    Lilith
-// @version      1.6.2
-// @description  Provides minor-but-useful enhancements to e621
+// @version      2.0.0
+// @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
 // @updateURL    https://gh.princessrtfm.com/js/monkey/en621.user.js
@@ -30,6 +30,7 @@ v1.5.0 - make the "current search" text on post pages into a link to that search
 v1.6.0 - move searched-for tags on post pages to the top of their tag groups and italicise them
 v1.6.1 - searching for tags in the post page tag list is no longer confused by underscores
 v1.6.2 - changed script update URL so that users will update to this version and then be redirected to update to the new location
+v2.0.0 - changed script name and description, along with new update URL (technically possible to run alongside the old version, but they are NOT compatible - DO NOT INSTALL BOTH)
 */
 /* eslint-enable max-len */
 
