@@ -4,7 +4,7 @@
 -->
 <html>
 	<head>
-		<title>rEdit v1.4.0</title>
+		<title>rEdit v1.5.0</title>
 		<style type="text/css">
 			body, .row, .box {
 				display: flex;
@@ -41,6 +41,13 @@
 				border-color: silver;
 				color: silver;
 			}
+			#quickeditlink {
+				font-size: 1.2em;
+				position: absolute;
+				bottom: 5px;
+				right: 7px;
+				color: white;
+			}
 			#multireddit {
 				font-size: 1.2em;
 				position: absolute;
@@ -58,6 +65,7 @@
 		<div class="row">
 			<div class="box">
 				<textarea id="lined" placeholder="Put the subreddit names here, separated by anything that ISN'T a letter, number, or underscore ('_')"></textarea>
+				<a id="quickeditlink" title="This is a bookmarklet to quickly go from a multireddit page to an rEdit editor preloaded with the subreddits you were viewing." href="javascript:void location.assign(`https://gh.princessrtfm.com/r-edit.html#${location.pathname}`)">quick rEdit</a>
 			</div>
 			<div class="box">
 				<textarea id="collapsed" placeholder="This box will give you the multireddit collection"></textarea>

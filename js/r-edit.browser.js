@@ -24,6 +24,7 @@ const blockEvent = evt => {
 	const input = document.querySelector("#lined");
 	const output = document.querySelector("#collapsed");
 	const link = document.querySelector('#multireddit');
+	const marklet = document.querySelector('#quickeditlink');
 	const getSortedEntries = () => {
 		const seen = Object.create({});
 		return input
@@ -138,8 +139,14 @@ const blockEvent = evt => {
 	document.addEventListener('drop', blockEvent);
 	input.addEventListener('blur', munge);
 	output.addEventListener('focus', () => output.select());
+	marklet.href = "javascript:void location.assign(`" // eslint-disable-line no-script-url, prefer-template
+		+ location.protocol
+		+ '//'
+		+ location.host
+		+ location.pathname
+		+ "#${location.pathname}`);"; // eslint-disable-line no-template-curly-in-string
 	const initialInput = (location.hash || '')
-		.replace(/^[#\/]+/u, '')
+		.replace(/^[#/]+/u, '')
 		.replace(/^r\//ui, '')
 		.replace(/\/*(?:#.*)?$/u, '');
 	if (initialInput) {
