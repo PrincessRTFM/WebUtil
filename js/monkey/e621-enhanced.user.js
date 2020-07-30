@@ -316,7 +316,7 @@ const enablePoolReaderMode = async () => {
 			await pause(1500);
 			const current = state.posts.length + 1;
 			const total = state.postCount;
-			title(`loading ${current}/${total} of ${name}... (#${state.poolID})`);
+			title(`${current}/${total} loading ${name}... (#${state.poolID})`);
 			status(`Loading post #${postID} (${current}/${total})`);
 			const api = await request(`https://e621.net/posts/${postID}.json`);
 			state.posts.push({
