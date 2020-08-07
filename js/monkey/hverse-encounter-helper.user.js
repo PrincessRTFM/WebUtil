@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         HentaiVerse Encounter Unclicker
 // @namespace    PrincessRTFM
-// @version      3.1.1
+// @version      3.2.0
 // @description  Massively improves the useability/interface of the HentaiVerse random encounters system; tracks the time since the last event (and what it was), automatically opens random encounters, synchronises display updates, safe to open in multiple tabs (and will update all tabs accordingly)
 // @author       Lilith
 // @match        https://e-hentai.org/*
@@ -42,6 +42,7 @@ v2.0.1 - no longer operates on the hentaiverse pages, BroadcastChannels are not 
 v3.0.0 - un-stupified the backend (organic code growth is bad, kids)
 v3.1.0 - added an "enter the hentaiverse" link on the event pane if there isn't one already
 v3.1.1 - fixed a typo, cleaned the file, and bumped the version (forgot to set to 3.1.0)
+v3.2.0 - added a timer to reload the page (master page only) after 24 hours, for automated new day xp collection
 
 PLANNED:
 [MINOR] Make the master page post a notification (via GM.notification) when the timer runs out
@@ -129,11 +130,11 @@ const BUG_CHARS = Object.defineProperty([
 		event: message,
 		known: Array.from(REGISTRY.values()),
 	}); // So, you can lie about the source, for good reason! ...well, not GOOD reason.
-	RADIO.INITIAL_PING = 'ENQ';
-	RADIO.SET_SLAVE = 'SYN';
+	RADIO.INITIAL_PING = 'PING';
+	RADIO.SET_SLAVE = 'SYNC';
 	RADIO.NEW_MASTER = 'EXCH';
-	RADIO.INSTANCE_GONE = 'OO';
-	RADIO.TICK = 'EXE';
+	RADIO.INSTANCE_GONE = 'GONE';
+	RADIO.TICK = 'EXEC';
 	RADIO.initialise = () => {
 		console.log(`${SCRIPT_ID} << ${RADIO.INITIAL_PING}`);
 		broadcast(RADIO.INITIAL_PING);
@@ -275,6 +276,13 @@ const BUG_CHARS = Object.defineProperty([
 			$('#hentaiverse-unclicker-reload').remove();
 		}
 		console.timeEnd("Display update time");
+		// The new automatic reload ONLY reloads the master page.
+		// If you have more than one page, this means the master page will cycle through all of your
+		// open pages in the order of oldest to newest. If you only have one, it'll obviously not do that.
+		if (MASTER_ID == SCRIPT_ID && period.asDays() >= 1) {
+			console.log("24 hours passed, automatic reload triggered");
+			location.reload();
+		}
 	};
 	const ticker = () => {
 		updateDisplay();
@@ -287,14 +295,16 @@ const BUG_CHARS = Object.defineProperty([
 		start: true,
 	}, ticker);
 	$(window).on('unload', () => {
-		if (MASTER_ID == SCRIPT_ID) { // If we're the master and we're going away
-			REGISTRY.delete(SCRIPT_ID); // So we can't pick ourselves
-			// Send out an event with a fake source, to indicate to all slaved pages
-			// that they need to reset their master id
-			RADIO.switchMaster(REGISTRY.values().next().value);
-		}
-		else { // The master instance needs to remove us from the registry
-			RADIO.unloadSelf();
+		if (REGISTRY.size > 1) { // Only if we're not alone
+			if (MASTER_ID == SCRIPT_ID) { // If we're the master and we're going away
+				REGISTRY.delete(SCRIPT_ID); // So we can't pick ourselves
+				// Send out an event with a fake source, to indicate to all slaved pages
+				// that they need to reset their master id
+				RADIO.switchMaster(REGISTRY.values().next().value);
+			}
+			else { // The master instance needs to remove us from the registry
+				RADIO.unloadSelf();
+			}
 		}
 	});
 	RADIO.addEventListener('message', msgevt => {
