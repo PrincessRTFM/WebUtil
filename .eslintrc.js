@@ -126,7 +126,6 @@ const config = {
 				singleValue: false,
 			},
 		],
-		"require-atomic-updates": "error",
 		"no-func-assign": "error",
 		"guard-for-in": "error",
 		"space-before-function-paren": [
