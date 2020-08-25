@@ -498,6 +498,20 @@ const munge = () => {
 	cursive.value = cursiveMap.apply(original);
 	smallcaps.value = smallMap.apply(original);
 };
+const copyText = evt => {
+	try {
+		const box = evt.originalTarget || evt.target;
+		box.focus();
+		box.select();
+		document.execCommand("copy");
+	}
+	catch (err) {
+		console.error("copyText() failed:", err);
+	}
+};
 for (const box of document.querySelectorAll('textarea')) {
 	box.addEventListener('input', munge);
+	if (box.id != 'plain') {
+		box.addEventListener('focus', copyText);
+	}
 }
