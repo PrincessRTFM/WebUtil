@@ -5,17 +5,12 @@
 		"url": "/benedict.html"
 	},
 	{
-		"title": "Random Cape Generator - new and improved!",
+		"title": "Random Cape Generator",
 		"desc": "a Worm-style random parahuman power generator",
 		"url": "/cape.html"
 	},
 	{
-		"title": "DHook interface",
-		"desc": "a (mostly complete) visual interface for sending messages through Discord webhooks",
-		"url": "/dhook.html"
-	},
-	{
-		"title": "FontBox v1.0.0",
+		"title": "FontBox",
 		"desc": "a page to turn normal text into specially-fonted text",
 		"url": "/fontbox.html"
 	},
@@ -25,12 +20,12 @@
 		"url": "/niko.html"
 	},
 	{
-		"title": "rEdit v1.3.0",
+		"title": "rEdit",
 		"desc": "an easy way to sort and deduplicate subreddits for creating a multireddit list",
 		"url": "/r-edit.html"
 	},
 	{
-		"title": "TextMunge v1.2.1",
+		"title": "TextMunge",
 		"desc": "a general-purpose text-processing framework page, for writing your own JS functionality with prebuilt text inputs",
 		"url": "/textmunge.html"
 	},
