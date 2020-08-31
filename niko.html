@@ -5,10 +5,25 @@
 <html>
 	<head>
 		<meta charset="UTF-8" />
+		<!--
+			This font file is REQUIRED for the page to work. Rendering of text into
+			the generated image will not function properly without it, leaving the
+			font completely wrong. As such, use the standard prefetch link and the
+			experimental/proposed preload link to try and tell the browser to load
+			it as soon as possible, as well as the deprecated/removed Chrome-specific
+			subresource link for older versions.
+
+			As a side note, Chrome seems to whinge that this isn't used within a few
+			seconds from page load, even when text is autoloaded from the URL hash.
+			The fuck, Chrome.
+		-->
+		<link rel="prefetch" href="/css/terminus.ttf" as="font" />
+		<link rel="subresource" href="/css/terminus.ttf" as="font" />
+		<link rel="preload" href="/css/terminus.ttf" as="font" />
 		<title>NikoMaker - Niko died for our suns</title>
 		<link rel="shortcut icon" type="image/png" href="img/favicon/niko.png" />
+		<link rel="stylesheet" type="text/css" href="css/nikos.css" id="core-style" />
 		<link rel="stylesheet" type="text/css" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/ui-lightness/jquery-ui.css" />
-		<link rel="stylesheet" type="text/css" href="css/nikos.css" />
 		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
 		<script type="text/javascript" src="js/niko.browser.js"></script>

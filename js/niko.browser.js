@@ -11,59 +11,60 @@ $(() => {
 	/* eslint-enable max-len */
 	const FACES = {
 		Niko: [
-			'niko_normal',
+			'normal',
 			'niko2',
 			'niko3',
 			'niko4',
 			'niko5',
 			'niko6',
-			'niko_disgusted',
-			'niko_distressed',
-			'niko_distressed2',
-			'niko_distressed_talk',
-			'niko_shock',
-			'niko_shocked',
-			'niko_what',
-			'niko_what2',
-			'niko_wtf',
-			'niko_wtf2',
-			'niko_yawn',
-			'niko_eyeclosed',
-			'niko_eyeclosed_sigh',
-			'niko_sunglasses',
-			'niko_popcorn',
-			'niko_smile',
-			'niko_owo',
-			'niko_83c',
-			'niko_owoc',
-			'niko_uwu',
-			'niko_xwx',
-			'niko_wink',
-			'niko_winkc',
-			'niko_winkp',
-			'niko_derp',
-			'niko_speak',
-			'niko_pancakes',
-			'niko_surprise',
-			'niko_shy',
-			'niko_blush',
-			'niko_blushier',
-			'niko_oof',
-			'niko_ouch',
-			'niko_thinking',
-			'niko_fingerguns',
-			'niko_gasmask',
-			'niko_teary',
-			'niko_distressed_cry',
-			'niko_crying',
-			'niko_wipe_tears',
-			'niko_upset',
-			'niko_upset_meow',
-			'niko_upset2',
-			'niko_really',
+			'disgusted',
+			'distressed',
+			'distressed2',
+			'distressed_talk',
+			'shock',
+			'shocked',
+			'what',
+			'what2',
+			'wtf',
+			'wtf2',
+			'yawn',
+			'eyeclosed',
+			'eyeclosed_sigh',
+			'sunglasses',
+			'popcorn',
+			'smile',
+			'owo',
+			'83c',
+			'owoc',
+			'uwu',
+			'xwx',
+			'wink',
+			'winkc',
+			'winkp',
+			'derp',
+			'speak',
+			'pancakes',
+			'surprise',
+			'shy',
+			'blush',
+			'blushier',
+			'oof',
+			'ouch',
+			'thinking',
+			'fingerguns',
+			'gasmask',
+			'teary',
+			'distressed_cry',
+			'crying',
+			'wipe_tears',
+			'upset',
+			'upset_meow',
+			'upset2',
+			'really',
 		],
 		Other: ['rqst_other_sonicastle'],
 	};
+	const preloadTimers = [];
 	const initialHelpText = $('#helpText').html();
 	let unhelpTimer = false;
 	const setHelpText = function(text) {
@@ -87,25 +88,49 @@ $(() => {
 	const background = new Image();
 	const message = document.querySelector('#message');
 	const refreshRender = () => {
+		let oldData = '';
+		let canData = true;
+		try {
+			oldData = canvas.toDataURL();
+		}
+		catch (err) {
+			canData = false;
+		}
 		const MAX_LINE_LENGTH = 465; // Magic. Do not change.
 		draw.clearRect(0, 0, canvas.width, canvas.height);
 		if (background.complete) {
+			console.groupCollapsed("Beginning render");
 			draw.drawImage(background, 0, 0);
 		}
 		else {
 			// If we haven't got the background image loaded in yet, cancel the render entirely
+			console.warn("Aborting render, no background image loaded");
 			return;
 		}
 		// Render the chosen FACE at X=496 Y=16
 		// Technically, any 96x96 image will do... so this could be tweakable for future ideas pretty easily
-		if (document.querySelector('#selected')) {
+		const face = document.querySelector('#selected');
+		if (face) {
+			if (!face.complete) {
+				face.addEventListener('load', refreshRender);
+				console.warn("Selected face not loaded, deferring render");
+				console.groupEnd();
+				return;
+			}
+			const faceName = face.className.replace(/\bface\b/gui, '').trim().replace(/\s+/gu, '.');
+			console.log(`Drawing face ${faceName}`);
 			try {
-				draw.drawImage(document.querySelector('#selected'), 496, 16);
+				draw.drawImage(face, 496, 16);
 			}
 			catch (err) {
 				console.error(err);
-				console.dir(document.querySelector('#selected'));
+				console.dir(face);
+				console.groupEnd();
+				return;
 			}
+		}
+		else {
+			return;
 		}
 		// Render the text from X=20 Y=17 to X=485 (465px)
 		// This 465px is where the magic MAX_LINE_LENGTH constant came from,
@@ -115,6 +140,7 @@ $(() => {
 		// closest-approximation look, but if someone (hi there!) can send me the correct
 		// values, it's easy enough to update them in here.
 		if (message.value) {
+			console.log(`Rendering message:\n${message.value}`);
 			// Split on actual line breaks to keep any user-defined lines intact
 			const lines = message.value.split("\n");
 			// Iterate through the lines, NOT using a foreach loop
@@ -160,12 +186,17 @@ $(() => {
 		}
 		// See if we can render it to a proper image element, so people can select it on mobile and all browsers
 		// (IE is not a browser, do not complain about it being broken)
-		try {
+		if (canData) {
 			image.src = canvas.toDataURL();
 			image.style.display = 'block';
 			canvas.style.display = 'none';
+			if (oldData == image.src) { // no change
+				for (const timer of preloadTimers) {
+					clearTimeout(timer);
+				}
+			}
 		}
-		catch (err) {
+		else {
 			image.style.display = 'none';
 			canvas.style.display = 'block';
 		}
@@ -174,6 +205,12 @@ $(() => {
 		// In order to sneak around that little issue, the image element is only shown (and
 		// the canvas hidden automatically) if we CAN get the data URL. Otherwise, if we can't,
 		// the canvas element is shown and the image is automatically hidden.
+		console.log("Render finished");
+		location.hash = [
+			face.className.replace(/\bface\b/gui, '').trim(),
+			encodeURIComponent(message.value),
+		].join("|");
+		console.groupEnd();
 	};
 	const faceListContainer = $('#faces');
 	for (const [
@@ -184,7 +221,8 @@ $(() => {
 		const faceList = $('<div class="face-list"></div>');
 		header.text(title);
 		for (const filename of filenames) {
-			const face = $(`<img class="face" src="img/expressions/${filename}.png" />`);
+			const clazz = `face ${filename.replace(/[^\w-]+/gu, '-')}`;
+			const face = $(`<img class="${clazz}" src="img/expressions/${filename}.png" />`);
 			faceList.append(face);
 		}
 		header.on('click', () => {
@@ -214,9 +252,6 @@ $(() => {
 	draw.font = '20pt TerminusTTF'; // Loaded off the css/ directory, in case you don't have it natively
 	draw.textBaseline = 'top';
 	draw.fillStyle = '#ffffff';
-	// As soon as the background image loads, try to render
-	background.addEventListener('load', refreshRender, false);
-	background.src = "img/niko-background.png";
 	faceListContainer
 		.children('.face-header')
 		.not(':first()')
@@ -228,8 +263,39 @@ $(() => {
 			this.id = 'selected';
 			refreshRender();
 		});
-	message.addEventListener('input', refreshRender);
+	const boing = () => {
+		message.removeEventListener('input', boing);
+		message.addEventListener('input', refreshRender);
+		for (const timer of preloadTimers) {
+			clearTimeout(timer);
+		}
+		console.log("haha trampoline function wrapper go boing");
+		refreshRender();
+	};
+	message.addEventListener('input', boing);
 	message.focus();
+	const frag = location.hash.replace(/^#+/u, '');
+	if (frag) {
+		const parts = frag.match(/^([\w-]+)\|(.*)$/u);
+		if (parts) {
+			console.log(`Preloading face ${parts[1]} with message:\n${parts[2]}`);
+			const face = document.querySelector(`.face.${parts[1]}`);
+			if (face) {
+				console.log(`Found face ${parts[1]}`);
+				face.id = 'selected';
+				message.value = decodeURIComponent(parts[2]);
+				for (let i = 100; i <= 1000; i += 100) {
+					preloadTimers.push(setTimeout(refreshRender, i));
+				}
+			}
+			else {
+				console.error(`Can't find face ${parts[1]}`);
+			}
+		}
+	}
+	// As soon as the background image loads, try to render
+	background.addEventListener('load', refreshRender);
+	background.src = "img/niko-background.png";
 	for (const selector in HELP_TEXT) {
 		if (Object.prototype.hasOwnProperty.call(HELP_TEXT, selector)) {
 			help(selector, HELP_TEXT[selector]);
