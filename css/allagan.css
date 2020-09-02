@@ -1,0 +1,43 @@
+#allagan > div,
+#output {
+	font-size: 2.5em;
+}
+input {
+	font-size: inherit;
+	color: inherit;
+	background-color: inherit;
+	border-radius: 5px;
+	border: thin groove;
+}
+.count-stack, .count-extra {
+	font-family: monospace;
+	width: 3em;
+}
+
+body {
+	background-color: #131313;
+	color: #aaaaaa;
+}
+
+#allagan, #output {
+	width: fit-content;
+	margin: 40px auto;
+}
+#allagan {
+	margin-top: 25vh;
+}
+#allagan > div[id] {
+	display: flex;
+}
+.label {
+	flex: 1 0 0;
+	margin-right: 30px;
+}
+.content {
+	flex: 0 0 content;
+}
+
+#output, #allagan {
+	visibility: hidden;
+}
+
