@@ -41,12 +41,14 @@ for (const [
 	stacks.min = 0;
 	stacks.value = 0;
 	stacks.addEventListener('input', calculate);
+	stacks.addEventListener('focus', () => stacks.select());
 	stacks.className = "count-stack"; // eslint-disable-line unicorn/no-keyword-prefix
 	items.type = 'number';
 	items.min = 0;
 	items.max = 98;
 	items.value = 0;
 	items.addEventListener('input', calculate);
+	items.addEventListener('focus', () => items.select());
 	items.className = "count-extra"; // eslint-disable-line unicorn/no-keyword-prefix
 	lblStack.title = "Allagan pieces all stack to 99";
 	lblStack.textContent = "stacks";
