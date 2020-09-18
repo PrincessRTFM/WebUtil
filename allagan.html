@@ -5,11 +5,19 @@
 -->
 <html>
 	<head>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 		<title>FFXIV Allagan Pieces Calculator</title>
 		<link rel="stylesheet" type="text/css" href="css/allagan.css" />
 	</head>
 	<body>
-		<div id="allagan"></div>
+		<div id="allagan">
+			<div id="banking-container">
+				<input type="checkbox" id="banking" name="banking" />
+				<label for="banking">
+					<abbr title="Leave one allagan piece in each slot that has one, as if using a retainer to hold a 'bank' of pieces">Toggle banking mode</abbr>
+				</label>
+			</div>
+		</div>
 		<div id="output">You can sell your allagan pieces for <span id="gil">0</span> gil</div>
 		<script type="text/javascript" src="js/allagan.browser.js"></script>
 	</body>

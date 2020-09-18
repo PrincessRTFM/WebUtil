@@ -29,6 +29,24 @@ body {
 #allagan > div[id] {
 	display: flex;
 }
+#allagan > div#banking-container {
+	margin-top: 20px;
+	font-size: 1.4em;
+}
+#banking {
+	display: none;
+}
+input[type="checkbox"] + label::before {
+	content: "☒ ";
+	font-weight: 900;
+	color: red;
+}
+input[type="checkbox"]:checked + label::before {
+	content: "☑ ";
+	font-weight: 900;
+	color: green;
+}
+
 .label {
 	flex: 1 0 0;
 	margin-right: 30px;
