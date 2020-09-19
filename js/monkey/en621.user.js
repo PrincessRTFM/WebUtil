@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.0.0
+// @version      2.1.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -31,6 +31,7 @@ v1.6.0 - move searched-for tags on post pages to the top of their tag groups and
 v1.6.1 - searching for tags in the post page tag list is no longer confused by underscores
 v1.6.2 - changed script update URL so that users will update to this version and then be redirected to update to the new location
 v2.0.0 - changed script name and description, along with new update URL (technically possible to run alongside the old version, but they are NOT compatible - DO NOT INSTALL BOTH)
+v2.1.0 - added direct image link toggle on pool pages (reader and normal)
 */
 /* eslint-enable max-len */
 
@@ -240,22 +241,27 @@ const POST_PATH_PREFIX = '/posts/';
 
 const POOL_FRAG_READER = 'reader-mode';
 
-const POOL_READER_CONTAINER_ID = 'pool-reader';
-const POOL_READER_STATUSLINE_ID = 'enhanced621-pool-reader-status';
+const POOL_READER_CONTAINER_ID = "pool-reader";
+const POOL_READER_STATUSLINE_ID = "enhanced621-pool-reader-status";
+const POOL_READER_MODE_ID = "pool-reader-link-mode-toggle";
+const POOL_READER_LINK_CLASS = "pool-reader-post-link";
 
 const enablePoolReaderMode = async () => {
 	location.hash = POOL_FRAG_READER;
 	const vanillaPageList = document.querySelector("div#posts");
-	let readerPageContainer = document.querySelector(`div#${POOL_READER_CONTAINER_ID}`);
 	if (!vanillaPageList) {
 		throw new Error("No post container found");
 	}
+	let readerPageContainer = document.querySelector(`div#${POOL_READER_CONTAINER_ID}`);
 	if (readerPageContainer) {
 		vanillaPageList.style.display = 'none';
 		readerPageContainer.style.display = '';
 		document.querySelector(`#${POOL_READER_STATUSLINE_ID}`).style.display = '';
 		return readerPageContainer;
 	}
+	// If we get here, it's the first go and we're constructing it from scratch
+	readerPageContainer = makeElem('div', POOL_READER_CONTAINER_ID);
+	vanillaPageList.parentElement.append(readerPageContainer);
 	GM_addStyle([
 		`div#${POOL_READER_CONTAINER_ID} > a {`,
 		'display: block;',
@@ -264,12 +270,11 @@ const enablePoolReaderMode = async () => {
 		'}',
 		`div#${POOL_READER_CONTAINER_ID} > a > img.pool-image {`,
 		'display: block;',
-		'max-width: 85vw;',
-		'max-height: 120vh;',
+		'max-width: calc(100vw - 4rem);',
+		'max-height: 125vh;',
 		'}',
 	].join(''));
 	const poolID = parseInt(location.pathname.slice(POOL_PATH_PREFIX.length), 10);
-	readerPageContainer = makeElem('div', POOL_READER_CONTAINER_ID);
 	const statusLine = makeElem('menu', POOL_READER_STATUSLINE_ID);
 	subnavbar.parentElement.append(statusLine);
 	const status = statusText => {
@@ -312,6 +317,7 @@ const enablePoolReaderMode = async () => {
 	const insertImages = async state => {
 		state.posts = [];
 		await state.postIDs.reduce(async (ticker, postID) => {
+			const modeToggle = document.querySelector(`#${POOL_READER_MODE_ID}`);
 			await ticker;
 			status("Pausing to comply with site rules");
 			await pause(1500);
@@ -326,15 +332,18 @@ const enablePoolReaderMode = async () => {
 			});
 			return new Promise(resolve => {
 				const img = makeElem('img', '', 'pool-image');
-				const link = makeElem('a', `post-${postID}`);
-				link.href = `/posts/${postID}`;
+				const link = makeElem('a', `post-${postID}`, POOL_READER_LINK_CLASS);
+				const postURL = `/posts/${postID}`;
+				const sourceURL = api.response.post.file.url;
+				link.dataset.postlink = postURL;
 				link.title = `${state.poolName}, ${current}/${total}`;
 				link.append(img);
-				readerPageContainer.append(link);
 				img.addEventListener('load', resolve, {
 					once: true,
 				});
-				img.src = api.response.post.file.url;
+				img.src = sourceURL;
+				readerPageContainer.append(link);
+				link.href = modeToggle.checked ? sourceURL : postURL;
 			});
 		}, Promise.resolve());
 		return state;
@@ -352,7 +361,6 @@ const enablePoolReaderMode = async () => {
 		.then(checkResponseValidity)
 		.catch(onPoolLoadingError)
 		.then(state => {
-			vanillaPageList.parentElement.append(readerPageContainer);
 			vanillaPageList.style.display = 'none';
 			return state;
 		})
@@ -404,11 +412,65 @@ for (const link of document.querySelectorAll(`a[href^="${POOL_PATH_PREFIX}"]`)) 
 if (location.pathname.startsWith(POOL_PATH_PREFIX)) {
 	const readerItem = makeElem('li', 'enhanced621-pool-reader-toggle');
 	const readerLink = makeElem('a');
-	GM_addStyle('#enhanced621-pool-reader-toggle { position: absolute; right: 20px; cursor: pointer; }');
+	const modeBox = makeElem('div', `${POOL_READER_MODE_ID}-container`, "site-notice");
+	const modeToggle = makeElem('input', POOL_READER_MODE_ID);
+	const modeLabel = makeElem('label');
+	const poolID = parseInt(location.pathname.slice(POOL_PATH_PREFIX.length), 10);
+	GM_addStyle([
+		'#enhanced621-pool-reader-toggle {',
+		'position: absolute;',
+		'right: 20px;',
+		'cursor: pointer;',
+		'}',
+		`#${POOL_READER_MODE_ID}-container {`,
+		'position: fixed !important;',
+		'bottom: 15px;',
+		'left: calc(1rem + 15px);',
+		'border-radius: 7px;',
+		'}',
+		`#${POOL_READER_MODE_ID} {`,
+		'display: none;',
+		'}',
+		`#${POOL_READER_MODE_ID} + label::before {`,
+		'content: "☒ ";',
+		'font-weight: 900;',
+		'color: red;',
+		'}',
+		`#${POOL_READER_MODE_ID}:checked + label::before {`,
+		'content: "☑ ";',
+		'font-weight: 900;',
+		'color: green;',
+		'}',
+	].join("\n"));
 	readerLink.addEventListener('click', togglePoolReaderMode);
 	readerLink.textContent = 'Toggle reader';
 	readerItem.append(readerLink);
 	subnavbar.append(readerItem);
+	modeToggle.type = "checkbox";
+	modeLabel.htmlFor = POOL_READER_MODE_ID;
+	modeLabel.textContent = "Direct image links";
+	modeBox.append(modeToggle, modeLabel);
+	modeToggle.addEventListener('input', () => {
+		const links = document.querySelectorAll(`a.${POOL_READER_LINK_CLASS}`);
+		const previews = document.querySelectorAll("div#posts-container > article");
+		if (modeToggle.checked) {
+			for (const link of links) {
+				link.href = link.children[0].src;
+			}
+			for (const preview of previews) {
+				preview.children[0].href = preview.dataset.fileUrl;
+			}
+		}
+		else {
+			for (const link of links) {
+				link.href = link.dataset.postlink;
+			}
+			for (const preview of previews) {
+				preview.children[0].href = `/posts/${preview.dataset.id}?pool_id=${poolID}`;
+			}
+		}
+	});
+	document.querySelector("#page").append(modeBox);
 	if (location.hash.replace(/^#+/u, '') == POOL_FRAG_READER) {
 		enablePoolReaderMode();
 	}
