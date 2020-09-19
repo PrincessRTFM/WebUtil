@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.1.0
+// @version      2.1.1
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -32,6 +32,7 @@ v1.6.1 - searching for tags in the post page tag list is no longer confused by u
 v1.6.2 - changed script update URL so that users will update to this version and then be redirected to update to the new location
 v2.0.0 - changed script name and description, along with new update URL (technically possible to run alongside the old version, but they are NOT compatible - DO NOT INSTALL BOTH)
 v2.1.0 - added direct image link toggle on pool pages (reader and normal)
+v2.1.1 - fixed a bug where the post rating wouldn't be listed in the sidebar when there was no existing search
 */
 /* eslint-enable max-len */
 
@@ -551,11 +552,9 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 				const include = makeElem('a', 'search-inc-tag');
 				const exclude = makeElem('a', 'search-exl-tag');
 				const search = makeElem('a', 'search-tag');
-				const tagParam = new URL(location.href)
-					.searchParams
-					.get('q')
+				const tagParam = (new URL(location.href).searchParams.get('q') || '')
 					.replace(
-						new RegExp("\\s*-?rating(:|%3A)\\w+\\s*", 'iug'),
+						/\s*-?rating(:|%3A)\w+\s*/iug,
 						''
 					);
 				header.dataset.category = 'rating';
