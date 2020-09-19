@@ -4,62 +4,9 @@
 -->
 <html>
 	<head>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 		<title>rEdit</title>
-		<style type="text/css">
-			body, .row, .box {
-				display: flex;
-				align-items: stretch;
-				justify-content: stretch;
-				align-content: stretch;
-				flex-wrap: nowrap;
-			}
-			.row, .box, textarea {
-				flex: 1 1 auto;
-			}
-			body {
-				height: calc(100vh - 16px);
-				margin: 0;
-				padding: 8px;
-				flex-direction: column;
-				font-family: monospace;
-				background-color: grey;
-			}
-			.row {
-				width: 100%;
-				flex-direction: row;
-			}
-			.box {
-				position: relative;
-				flex-direction: row;
-			}
-			textarea {
-				resize: none;
-				font-size: 1.2em;
-				line-height: 1.2em;
-				min-height: 12em;
-				background-color: black;
-				border-color: silver;
-				color: silver;
-			}
-			#quickeditlink {
-				font-size: 1.2em;
-				position: absolute;
-				bottom: 5px;
-				right: 7px;
-				color: white;
-			}
-			#multireddit {
-				font-size: 1.2em;
-				position: absolute;
-				bottom: 5px;
-				right: 7px;
-				color: white;
-				display: none;
-			}
-			.dropping {
-				border: 3px dashed #3cb3da;
-			}
-		</style>
+		<link rel="stylesheet" type="text/css" href="css/r-edit.css" />
 	</head>
 	<body>
 		<div class="row">
