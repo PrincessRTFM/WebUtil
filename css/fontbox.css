@@ -1,0 +1,36 @@
+body, .row, .box {
+	display: flex;
+	align-items: stretch;
+	justify-content: stretch;
+	align-content: stretch;
+	flex-wrap: nowrap;
+}
+.row, .box, textarea {
+	flex: 1 1 auto;
+}
+body {
+	height: calc(100vh - 16px);
+	margin: 0;
+	padding: 8px;
+	flex-direction: column;
+	background-color: grey;
+}
+.row {
+	width: 100%;
+	flex-direction: row;
+}
+.box {
+	position: relative;
+	flex-direction: row;
+}
+textarea {
+	resize: none;
+	font-size: 1.1em;
+	line-height: 1.1em;
+	min-height: 11em;
+	background-color: black;
+	border-color: silver;
+	color: silver;
+	font-family: auto;
+}
+
