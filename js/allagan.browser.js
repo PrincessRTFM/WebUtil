@@ -21,7 +21,7 @@ const bank = q('#banking');
 const config = Object.create(null);
 const debug = Object.create(null);
 
-// Initialise the debug logger - basically console.* except it only runs if window.DEBUG is truthy
+// Initialise the debug logger - basically console.* except it only runs if window.DEBUG_MODE is truthy
 for (const k of Object.keys(console)) {
 	debug[k] = (...varargs) => {
 		if (window.DEBUG_MODE) {
