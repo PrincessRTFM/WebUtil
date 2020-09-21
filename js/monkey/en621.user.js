@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.1.1
+// @version      2.2.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -33,6 +33,13 @@ v1.6.2 - changed script update URL so that users will update to this version and
 v2.0.0 - changed script name and description, along with new update URL (technically possible to run alongside the old version, but they are NOT compatible - DO NOT INSTALL BOTH)
 v2.1.0 - added direct image link toggle on pool pages (reader and normal)
 v2.1.1 - fixed a bug where the post rating wouldn't be listed in the sidebar when there was no existing search
+v2.2.0 - extended tag elevation and direct image link toggling to post index pages, added alt-q keybind to focus search bar
+*/
+
+/* PLANS
+- Saved tags feature from the old (pre-site-update) version
+- Restore the +/- links next to tags in the sidebar even when there's no existing search
+- Maybe make the search box bigger? (Can it be turned into a textarea, or will that break the tag autocomplete?)
 */
 /* eslint-enable max-len */
 
@@ -179,7 +186,7 @@ const registerKeybind = (keys, handler) => {
 				modifiers |= KB_SHIFT;
 			}
 			else {
-				console.error(`Unknown modifier "${modifier}" in keystring, skipping`);
+				error(`Unknown modifier "${modifier}" in keystring, skipping`);
 				continue KEYSTRING;
 			}
 		}
@@ -194,7 +201,7 @@ const registerKeybind = (keys, handler) => {
 			+ (modifiers & KB_ALT ? 'alt-' : '')
 			+ (modifiers & KB_SHIFT ? 'shift-' : '')
 			+ key;
-		console.log(`Registered keybind handler for ${pretty}`);
+		log(`Registered keybind handler for ${pretty}`);
 	}
 };
 document.addEventListener('keydown', evt => {
@@ -239,13 +246,71 @@ const subnavbar = document.querySelector("#nav").children[1];
 
 const POOL_PATH_PREFIX = '/pools/';
 const POST_PATH_PREFIX = '/posts/';
+const POST_INDEX_PATH = '/posts';
 
 const POOL_FRAG_READER = 'reader-mode';
 
 const POOL_READER_CONTAINER_ID = "pool-reader";
 const POOL_READER_STATUSLINE_ID = "enhanced621-pool-reader-status";
-const POOL_READER_MODE_ID = "pool-reader-link-mode-toggle";
-const POOL_READER_LINK_CLASS = "pool-reader-post-link";
+const LINK_MODE_ID = "en621-link-mode-toggle";
+const POOL_READER_LINK_CLASS = "en621-post-link";
+
+const modeBox = makeElem('div', `${LINK_MODE_ID}-container`, "site-notice");
+const modeToggle = makeElem('input', LINK_MODE_ID);
+const modeLabel = makeElem('label');
+modeToggle.type = "checkbox";
+modeLabel.htmlFor = LINK_MODE_ID;
+modeLabel.textContent = "Direct image links";
+modeBox.append(modeToggle, modeLabel);
+modeToggle.addEventListener('input', () => {
+	const links = document.querySelectorAll(`a.${POOL_READER_LINK_CLASS}`);
+	const previews = document.querySelectorAll("div#posts-container > article");
+	const poolID = location.pathname.startsWith(POOL_PATH_PREFIX)
+		? parseInt(location.pathname.slice(POOL_PATH_PREFIX.length), 10)
+		: 0;
+	const urlTrail = poolID ? `?pool_id=${poolID}` : '';
+	if (modeToggle.checked) {
+		for (const link of links) {
+			link.href = link.children[0].src;
+		}
+		for (const preview of previews) {
+			preview.children[0].href = preview.dataset.fileUrl;
+		}
+	}
+	else {
+		for (const link of links) {
+			link.href = link.dataset.postlink;
+		}
+		for (const preview of previews) {
+			preview.children[0].href = `/posts/${preview.dataset.id}${urlTrail}`;
+		}
+	}
+});
+modeBox.inject = () => {
+	modeBox.inject = NOP;
+	document.querySelector("#page").append(modeBox);
+};
+GM_addStyle([
+	`#${LINK_MODE_ID}-container {`,
+	'position: fixed !important;',
+	'bottom: 10px;',
+	'right: calc(1rem + 10px);',
+	'border-radius: 7px;',
+	'}',
+	`#${LINK_MODE_ID} {`,
+	'display: none;',
+	'}',
+	`#${LINK_MODE_ID} + label::before {`,
+	'content: "☒ ";',
+	'font-weight: 900;',
+	'color: red;',
+	'}',
+	`#${LINK_MODE_ID}:checked + label::before {`,
+	'content: "☑ ";',
+	'font-weight: 900;',
+	'color: green;',
+	'}',
+].join("\n"));
 
 const enablePoolReaderMode = async () => {
 	location.hash = POOL_FRAG_READER;
@@ -318,7 +383,6 @@ const enablePoolReaderMode = async () => {
 	const insertImages = async state => {
 		state.posts = [];
 		await state.postIDs.reduce(async (ticker, postID) => {
-			const modeToggle = document.querySelector(`#${POOL_READER_MODE_ID}`);
 			await ticker;
 			status("Pausing to comply with site rules");
 			await pause(1500);
@@ -403,75 +467,81 @@ const togglePoolReaderMode = evt => {
 	}
 };
 
+const elevateSearchTerms = () => {
+	if (CURRENT_SEARCH) { // may be empty
+		const tagList = document.querySelector("#tag-box");
+		const terms = CURRENT_SEARCH
+			.split(/\s+/u)
+			.filter(t => !t.includes(':'))
+			.filter(t => !t.includes('*')) // TODO find a way to handle wildcard tags in searches?
+			.map(t => t
+				.replace(/^~/u, '')
+				.replace(/_/gu, ' ')
+				.toLowerCase());
+		const originalTermCount = CURRENT_SEARCH.split(/\s+/u).length;
+		const difference = Math.abs(terms.length - originalTermCount);
+		if (terms.length != originalTermCount) {
+			info(`${difference} term${difference == 1 ? '' : 's'} can't be scanned for!`);
+		}
+		if (terms.length) {
+			GM_addStyle([
+				".enhanced621-highlighted-tag {",
+				"font-style: italic;",
+				"}",
+			].join("\n"));
+			const tagElements = Array.from(tagList.querySelectorAll("a.search-tag")).reverse();
+			log(`Elevating all instances of searched tags (${terms.length}) in ${tagElements.length} listed`);
+			for (const tagElem of tagElements) {
+				try {
+					const tag = tagElem.textContent.toLowerCase();
+					const idx = terms.indexOf(tag);
+					if (idx >= 0) {
+						terms.splice(idx, 1);
+						log(`Elevating "${tag}"`);
+						const line = tagElem.parentElement;
+						const group = line.parentElement;
+						tagElem.classList.add("enhanced621-highlighted-tag");
+						group.insertAdjacentElement('afterbegin', line);
+					}
+				}
+				catch (err) {
+					error("Cannot examine tag element:", err);
+				}
+			}
+			if (terms.length) {
+				info(
+					`${terms.length} term${terms.length == 1 ? '' : 's'} did not appear: ${terms.join(", ")}`
+				);
+			}
+		}
+	}
+};
+
 registerKeybind('!r', () => {
 	document.location = 'https://e621.net/posts/random';
+});
+registerKeybind('!q', () => {
+	document.querySelector('#tags').focus();
 });
 
 for (const link of document.querySelectorAll(`a[href^="${POOL_PATH_PREFIX}"]`)) {
 	link.href = `${link.href}#${POOL_FRAG_READER}`;
 }
 if (location.pathname.startsWith(POOL_PATH_PREFIX)) {
+	modeBox.inject();
 	const readerItem = makeElem('li', 'enhanced621-pool-reader-toggle');
 	const readerLink = makeElem('a');
-	const modeBox = makeElem('div', `${POOL_READER_MODE_ID}-container`, "site-notice");
-	const modeToggle = makeElem('input', POOL_READER_MODE_ID);
-	const modeLabel = makeElem('label');
-	const poolID = parseInt(location.pathname.slice(POOL_PATH_PREFIX.length), 10);
 	GM_addStyle([
 		'#enhanced621-pool-reader-toggle {',
 		'position: absolute;',
 		'right: 20px;',
 		'cursor: pointer;',
 		'}',
-		`#${POOL_READER_MODE_ID}-container {`,
-		'position: fixed !important;',
-		'bottom: 15px;',
-		'left: calc(1rem + 15px);',
-		'border-radius: 7px;',
-		'}',
-		`#${POOL_READER_MODE_ID} {`,
-		'display: none;',
-		'}',
-		`#${POOL_READER_MODE_ID} + label::before {`,
-		'content: "☒ ";',
-		'font-weight: 900;',
-		'color: red;',
-		'}',
-		`#${POOL_READER_MODE_ID}:checked + label::before {`,
-		'content: "☑ ";',
-		'font-weight: 900;',
-		'color: green;',
-		'}',
 	].join("\n"));
 	readerLink.addEventListener('click', togglePoolReaderMode);
 	readerLink.textContent = 'Toggle reader';
 	readerItem.append(readerLink);
 	subnavbar.append(readerItem);
-	modeToggle.type = "checkbox";
-	modeLabel.htmlFor = POOL_READER_MODE_ID;
-	modeLabel.textContent = "Direct image links";
-	modeBox.append(modeToggle, modeLabel);
-	modeToggle.addEventListener('input', () => {
-		const links = document.querySelectorAll(`a.${POOL_READER_LINK_CLASS}`);
-		const previews = document.querySelectorAll("div#posts-container > article");
-		if (modeToggle.checked) {
-			for (const link of links) {
-				link.href = link.children[0].src;
-			}
-			for (const preview of previews) {
-				preview.children[0].href = preview.dataset.fileUrl;
-			}
-		}
-		else {
-			for (const link of links) {
-				link.href = link.dataset.postlink;
-			}
-			for (const preview of previews) {
-				preview.children[0].href = `/posts/${preview.dataset.id}?pool_id=${poolID}`;
-			}
-		}
-	});
-	document.querySelector("#page").append(modeBox);
 	if (location.hash.replace(/^#+/u, '') == POOL_FRAG_READER) {
 		enablePoolReaderMode();
 	}
@@ -484,7 +554,7 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 	const parentChildNotices = document.querySelector(".bottom-notices > .parent-children");
 	const postRatingElem = document.querySelector("#post-rating-text");
 	const tagList = document.querySelector("#tag-list");
-	const curSearch = document.querySelector("#search-seq-nav span.search-name");
+	const curSearchBanner = document.querySelector("#search-seq-nav span.search-name");
 	if (image) {
 		if (image.tagName.toLowerCase() == 'img') {
 			image.addEventListener('dblclick', evt => {
@@ -523,7 +593,7 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 		scrollToNoticeLink.addEventListener('click', evt => {
 			try {
 				parentChildNotices.scrollIntoView();
-				console.log("Scrolled to parent/child notices");
+				log("Scrolled to parent/child notices");
 			}
 			catch (err) {
 				putError("Scrolling failed");
@@ -584,66 +654,32 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 			}
 		}
 		catch (err) {
-			console.error("Can't find post rating:", err);
+			error("Can't find post rating:", err);
 		}
 	}
-	if (curSearch) { // may not exist
+	if (curSearchBanner) { // may not exist
 		const link = makeElem('a', 'enhanced621-current-search-link');
 		link.textContent = CURRENT_SEARCH;
 		link.href = `/posts?tags=${encodeURIComponent(CURRENT_SEARCH)}`;
-		curSearch.innerHTML = link.outerHTML;
+		curSearchBanner.innerHTML = link.outerHTML;
 	}
-	if (CURRENT_SEARCH) { // may also be empty
-		const terms = CURRENT_SEARCH
-			.split(/\s+/u)
-			.filter(t => !t.includes(':'))
-			.filter(t => !t.includes('*')) // TODO find a way to handle wildcard tags in searches?
-			.map(t => t
-				.replace(/^~/u, '')
-				.replace(/_/gu, ' ')
-				.toLowerCase());
-		const originalTermCount = CURRENT_SEARCH.split(/\s+/u).length;
-		const difference = Math.abs(terms.length - originalTermCount);
-		if (terms.length != originalTermCount) {
-			console.info(`${difference} term${difference == 1 ? '' : 's'} can't be searched for!`);
-		}
-		if (terms.length) {
-			GM_addStyle([
-				".enhanced621-highlighted-tag {",
-				"font-style: italic;",
-				"}",
-			].join("\n"));
-			const tagElements = Array.from(tagList.querySelectorAll("a.search-tag")).reverse();
-			console.log(`Elevating all instances ${terms.length} searched tags in ${tagElements.length} listed`);
-			for (const tagElem of tagElements) {
-				try {
-					const tag = tagElem.textContent.toLowerCase();
-					const idx = terms.indexOf(tag);
-					if (idx >= 0) {
-						terms.splice(idx, 1);
-						console.log(`Elevating "${tag}"`);
-						const line = tagElem.parentElement;
-						const group = line.parentElement;
-						tagElem.classList.add("enhanced621-highlighted-tag");
-						group.insertAdjacentElement('afterbegin', line);
-					}
-				}
-				catch (err) {
-					console.error("Cannot examine tag element:", err);
-				}
-			}
-			if (terms.length) {
-				console.info(
-					`${terms.length} term${terms.length == 1 ? '' : 's'} did not appear: ${terms.join(", ")}`
-				);
-			}
-		}
-	}
+	elevateSearchTerms();
 	try {
 		subnavbar.scrollIntoView();
 	}
 	catch (err) {
-		console.error("Can't scroll to page content:", err);
+		error("Can't scroll to page content:", err);
 	}
 }
+else if (location.pathname == POST_INDEX_PATH) {
+	modeBox.inject();
+	elevateSearchTerms();
+	try {
+		document.querySelector('div.blacklist-help').children[0].textContent = "(?)";
+	}
+	catch (err) {
+		error("Can't find `div.blacklist-help` to shorten text label:", err);
+	}
+}
+debug("Initialisation complete");
 
