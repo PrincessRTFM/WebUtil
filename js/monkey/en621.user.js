@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.3.0
+// @version      2.4.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -35,6 +35,7 @@ v2.1.0 - added direct image link toggle on pool pages (reader and normal)
 v2.1.1 - fixed a bug where the post rating wouldn't be listed in the sidebar when there was no existing search
 v2.2.0 - extended tag elevation and direct image link toggling to post index pages, added alt-q keybind to focus search bar
 v2.3.0 - made search box responsibly expand when hovered or focused
+v2.4.0 - direct link box is more out of the way, slides in smoothly when hovered
 */
 
 /* PLANS
@@ -294,8 +295,12 @@ GM_addStyle([
 	`#${LINK_MODE_ID}-container {`,
 	'position: fixed !important;',
 	'bottom: 10px;',
-	'right: calc(1rem + 10px);',
-	'border-radius: 7px;',
+	'right: -97px;',
+	'border-radius: 7px 0 0 7px;',
+	'transition: right 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);',
+	'}',
+	`#${LINK_MODE_ID}-container:hover {`,
+	'right: 0;',
 	'}',
 	`#${LINK_MODE_ID} {`,
 	'display: none;',
@@ -704,7 +709,7 @@ if (document.querySelector('#search-box')) {
 			"min-width: fit-content;",
 			"max-width: 50vw;",
 			"width: 0;",
-			"transition: width 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);",
+			"transition: width 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);",
 			"}",
 			"#search-line:hover, #search-line:focus, #search-line:focus-within {",
 			"width: 100vw;",
