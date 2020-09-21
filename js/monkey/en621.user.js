@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.2.0
+// @version      2.3.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -34,12 +34,12 @@ v2.0.0 - changed script name and description, along with new update URL (technic
 v2.1.0 - added direct image link toggle on pool pages (reader and normal)
 v2.1.1 - fixed a bug where the post rating wouldn't be listed in the sidebar when there was no existing search
 v2.2.0 - extended tag elevation and direct image link toggling to post index pages, added alt-q keybind to focus search bar
+v2.3.0 - made search box responsibly expand when hovered or focused
 */
 
 /* PLANS
 - Saved tags feature from the old (pre-site-update) version
 - Restore the +/- links next to tags in the sidebar even when there's no existing search
-- Maybe make the search box bigger? (Can it be turned into a textarea, or will that break the tag autocomplete?)
 */
 /* eslint-enable max-len */
 
@@ -681,5 +681,40 @@ else if (location.pathname == POST_INDEX_PATH) {
 		error("Can't find `div.blacklist-help` to shorten text label:", err);
 	}
 }
+
+if (document.querySelector('#search-box')) {
+	try {
+		const searchBox = document.querySelector("#search-box");
+		const form = searchBox.querySelector("form");
+		const searchLine = makeElem('div', "search-line");
+		searchLine.append(...form.children);
+		form.append(searchLine);
+		GM_addStyle([
+			"#search-line input {",
+			"flex: 1;",
+			"}",
+			"#search-line button {",
+			"flex: 0;",
+			"}",
+			"#search-line * {",
+			"z-index: 1;",
+			"}",
+			"#search-line {",
+			"display: flex;",
+			"min-width: fit-content;",
+			"max-width: 50vw;",
+			"width: 0;",
+			"transition: width 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);",
+			"}",
+			"#search-line:hover, #search-line:focus, #search-line:focus-within {",
+			"width: 100vw;",
+			"}",
+		].join("\n"));
+	}
+	catch (err) {
+		error("Can't make search box responsively expand:", err);
+	}
+}
+
 debug("Initialisation complete");
 
