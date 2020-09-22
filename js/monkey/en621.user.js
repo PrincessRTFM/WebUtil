@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.4.0
+// @version      2.4.1
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -36,6 +36,7 @@ v2.1.1 - fixed a bug where the post rating wouldn't be listed in the sidebar whe
 v2.2.0 - extended tag elevation and direct image link toggling to post index pages, added alt-q keybind to focus search bar
 v2.3.0 - made search box responsibly expand when hovered or focused
 v2.4.0 - direct link box is more out of the way, slides in smoothly when hovered
+v2.4.1 - fixed direct link toggle on post index pages not properly restoring post page URL when turned off
 */
 
 /* PLANS
@@ -269,7 +270,14 @@ modeToggle.addEventListener('input', () => {
 	const poolID = location.pathname.startsWith(POOL_PATH_PREFIX)
 		? parseInt(location.pathname.slice(POOL_PATH_PREFIX.length), 10)
 		: 0;
-	const urlTrail = poolID ? `?pool_id=${poolID}` : '';
+	const params = new URLSearchParams();
+	if (poolID && !isNaN(poolID)) {
+		params.set('pool_id', poolID);
+	}
+	if (CURRENT_SEARCH) {
+		params.set('q', CURRENT_SEARCH);
+	}
+	const urlTrail = s.toString() ? "?" + s.toString() : '';
 	if (modeToggle.checked) {
 		for (const link of links) {
 			link.href = link.children[0].src;
