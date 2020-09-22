@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.4.2
+// @version      2.5.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -38,11 +38,11 @@ v2.3.0 - made search box responsibly expand when hovered or focused
 v2.4.0 - direct link box is more out of the way, slides in smoothly when hovered
 v2.4.1 - fixed direct link toggle on post index pages not properly restoring post page URL when turned off
 v2.4.2 - fixed element ID being set instead of element class
+v2.5.0 - restore the +/- (include/exclude) links on post pages without an existing search
 */
 
 /* PLANS
 - Saved tags feature from the old (pre-site-update) version
-- Restore the +/- links next to tags in the sidebar even when there's no existing search
 */
 /* eslint-enable max-len */
 
@@ -278,7 +278,7 @@ modeToggle.addEventListener('input', () => {
 	if (CURRENT_SEARCH) {
 		params.set('q', CURRENT_SEARCH);
 	}
-	const urlTrail = s.toString() ? "?" + s.toString() : '';
+	const urlTrail = params.toString() ? `?${params.toString()}` : '';
 	if (modeToggle.checked) {
 		for (const link of links) {
 			link.href = link.children[0].src;
@@ -529,6 +529,31 @@ const elevateSearchTerms = () => {
 			}
 		}
 	}
+	else {
+		for (const line of document.querySelectorAll('#tag-list > ul > li[class^="category-"]')) {
+			// We'll use this - the search link - as the reference for inserting the new links
+			const search = line.children[1];
+			// But we can also use it to verify that this line actually needs to be fixed first
+			if (!search.classList.contains("search-tag")) {
+				continue;
+			}
+			// Need to create and inject the +/- links, which means first we need to know this tag
+			const tag = new URL(line.children[1].href).searchParams.get('tags');
+			// The wiki and search links already exist, we just need the include/exclude ones
+			const include = makeElem('a', '', 'search-inc-tag');
+			const exclude = makeElem('a', '', 'search-exl-tag');
+			include.href = `/posts?tags=${tag}`;
+			include.rel = 'nofollow';
+			include.textContent = '+';
+			exclude.href = `/posts?tags=-${tag}`;
+			exclude.rel = 'nofollow';
+			exclude.textContent = '-';
+			line.insertBefore(include, search);
+			line.insertBefore(document.createTextNode(" "), search);
+			line.insertBefore(exclude, search);
+			line.insertBefore(document.createTextNode(" "), search);
+		}
+	}
 };
 
 registerKeybind('!r', () => {
@@ -636,11 +661,7 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 				const include = makeElem('a', '', 'search-inc-tag');
 				const exclude = makeElem('a', '', 'search-exl-tag');
 				const search = makeElem('a', '', 'search-tag');
-				const tagParam = (new URL(location.href).searchParams.get('q') || '')
-					.replace(
-						/\s*-?rating(:|%3A)\w+\s*/iug,
-						''
-					);
+				const tagParam = CURRENT_SEARCH.replace(/\s*-?rating(:|%3A)\w+\s*/iug, '');
 				header.dataset.category = 'rating';
 				[
 					wiki,
