@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.4.1
+// @version      2.4.2
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -37,6 +37,7 @@ v2.2.0 - extended tag elevation and direct image link toggling to post index pag
 v2.3.0 - made search box responsibly expand when hovered or focused
 v2.4.0 - direct link box is more out of the way, slides in smoothly when hovered
 v2.4.1 - fixed direct link toggle on post index pages not properly restoring post page URL when turned off
+v2.4.2 - fixed element ID being set instead of element class
 */
 
 /* PLANS
@@ -632,9 +633,9 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 				const list = makeElem('ul', '', 'rating-tag-list');
 				const item = makeElem('li', '', 'category-0');
 				const wiki = makeElem('a', '', 'wiki-link');
-				const include = makeElem('a', 'search-inc-tag');
-				const exclude = makeElem('a', 'search-exl-tag');
-				const search = makeElem('a', 'search-tag');
+				const include = makeElem('a', '', 'search-inc-tag');
+				const exclude = makeElem('a', '', 'search-exl-tag');
+				const search = makeElem('a', '', 'search-tag');
 				const tagParam = (new URL(location.href).searchParams.get('q') || '')
 					.replace(
 						/\s*-?rating(:|%3A)\w+\s*/iug,
