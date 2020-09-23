@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.5.1
+// @version      2.5.2
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -40,6 +40,7 @@ v2.4.1 - fixed direct link toggle on post index pages not properly restoring pos
 v2.4.2 - fixed element ID being set instead of element class
 v2.5.0 - restore the +/- (include/exclude) links on post pages without an existing search
 v2.5.1 - pool reader mode no longer shits itself when a post doesn't exist or is a video
+v2.5.2 - fix NPE breaking search tag elevation
 */
 
 /* PLANS
@@ -358,13 +359,16 @@ const enablePoolReaderMode = async () => {
 		'}',
 		'.video-preview-indicator {',
 		'position: absolute;',
-		'top: 10px;',
+		'top: 5px;',
 		'left: 50%;',
 		'transform: translateX(-50%);',
 		'color: red;',
 		'font-weight: 900;',
-		'font-size: 2.5em;',
+		'font-size: 1.5em;',
 		'width: fit-content;',
+		'}',
+		'a.en621-post-link:hover > .video-preview-indicator {',
+		'display: none;',
 		'}',
 	].join(''));
 	const poolID = parseInt(location.pathname.slice(POOL_PATH_PREFIX.length), 10);
@@ -519,7 +523,7 @@ const togglePoolReaderMode = evt => {
 
 const elevateSearchTerms = () => {
 	if (CURRENT_SEARCH) { // may be empty
-		const tagList = document.querySelector("#tag-box");
+		const tagList = document.querySelector("#tag-box") || document.querySelector("#tag-list");
 		const terms = CURRENT_SEARCH
 			.split(/\s+/u)
 			.filter(t => !t.includes(':'))
@@ -598,6 +602,10 @@ registerKeybind('!r', () => {
 registerKeybind('!q', () => {
 	document.querySelector('#tags').focus();
 });
+registerKeybind('+d', () => {
+	modeToggle.checked = !modeToggle.checked;
+	modeToggle.dispatchEvent(new Event('input')); // For some reason, the above doesn't fire the input event.
+});
 
 for (const link of document.querySelectorAll(`a[href^="${POOL_PATH_PREFIX}"]`)) {
 	link.href = `${link.href}#${POOL_FRAG_READER}`;
@@ -620,10 +628,6 @@ if (location.pathname.startsWith(POOL_PATH_PREFIX)) {
 	if (location.hash.replace(/^#+/u, '') == POOL_FRAG_READER) {
 		enablePoolReaderMode();
 	}
-	registerKeybind('+d', () => {
-		modeToggle.checked = !modeToggle.checked;
-		modeToggle.dispatchEvent(new Event('input')); // For some reason, the above doesn't fire the input event.
-	});
 }
 else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 	const errorNoSource = "Could't find download/source link!";
