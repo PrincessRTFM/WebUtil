@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.5.0
+// @version      2.5.1
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -39,6 +39,7 @@ v2.4.0 - direct link box is more out of the way, slides in smoothly when hovered
 v2.4.1 - fixed direct link toggle on post index pages not properly restoring post page URL when turned off
 v2.4.2 - fixed element ID being set instead of element class
 v2.5.0 - restore the +/- (include/exclude) links on post pages without an existing search
+v2.5.1 - pool reader mode no longer shits itself when a post doesn't exist or is a video
 */
 
 /* PLANS
@@ -103,16 +104,17 @@ const warningBox = () => {
 		`#${ID} {`,
 		'position: fixed;',
 		'right: 0;',
-		`top: ${document.querySelector("#image-container").offsetTop}px;`,
-		'border-top-right-radius: 0;',
-		'border-bottom-right-radius: 0;',
-		'width: 350px;',
+		`top: ${document.querySelector("#page").offsetTop}px;`,
+		'border-radius: 0;',
+		'width: 300px;',
 		'z-index: 9999;',
 		'}',
 		`#${ID} > .enhanced621-message {`,
 		'display: block;',
-		'margin: 4px;',
-		'padding: 3px;',
+		'margin: 4px 0;',
+		'padding: 3px 0;',
+		'border-radius: 6px 0 0 6px;',
+		'text-align: initial !important;',
 		'}',
 		'.enhanced621-message-dismiss {',
 		'cursor: pointer;',
@@ -146,12 +148,12 @@ const warningBox = () => {
 		'}',
 	].join(''));
 	/* eslint-enable sonarjs/no-duplicate-string */
-	document.body.append(box);
+	document.querySelector('#page').append(box);
 	return box;
 };
 const putMessage = (content, type, icon) => {
 	const master = warningBox();
-	const messageContainer = makeElem('div', '', `enhanced621-message enhanced621-message-${type}`);
+	const messageContainer = makeElem('div', '', `enhanced621-message enhanced621-message-${type} site-notice`);
 	const messageText = makeElem('span', '', `enhanced621-message-content enhanced621-message-${type}`);
 	const messageClose = makeElem('span', '', `enhanced621-message-dismiss enhanced621-message-${type}`);
 	const messageIcon = makeElem('span', '', `enhanced621-message-icon enhanced621-message-${type}`);
@@ -266,6 +268,7 @@ modeLabel.htmlFor = LINK_MODE_ID;
 modeLabel.textContent = "Direct image links";
 modeBox.append(modeToggle, modeLabel);
 modeToggle.addEventListener('input', () => {
+	debug("Toggling direct image links mode");
 	const links = document.querySelectorAll(`a.${POOL_READER_LINK_CLASS}`);
 	const previews = document.querySelectorAll("div#posts-container > article");
 	const poolID = location.pathname.startsWith(POOL_PATH_PREFIX)
@@ -321,7 +324,6 @@ GM_addStyle([
 	'}',
 	`#${LINK_MODE_ID}:checked + label::before {`,
 	'content: "☑ ";',
-	'font-weight: 900;',
 	'color: green;',
 	'}',
 ].join("\n"));
@@ -347,11 +349,22 @@ const enablePoolReaderMode = async () => {
 		'display: block;',
 		'margin: 20px auto;',
 		'width: fit-content;',
+		'position: relative;',
 		'}',
 		`div#${POOL_READER_CONTAINER_ID} > a > img.pool-image {`,
 		'display: block;',
 		'max-width: calc(100vw - 4rem);',
 		'max-height: 125vh;',
+		'}',
+		'.video-preview-indicator {',
+		'position: absolute;',
+		'top: 10px;',
+		'left: 50%;',
+		'transform: translateX(-50%);',
+		'color: red;',
+		'font-weight: 900;',
+		'font-size: 2.5em;',
+		'width: fit-content;',
 		'}',
 	].join(''));
 	const poolID = parseInt(location.pathname.slice(POOL_PATH_PREFIX.length), 10);
@@ -405,21 +418,44 @@ const enablePoolReaderMode = async () => {
 			title(`loading ${current}/${total} of ${name}... (#${state.poolID})`);
 			status(`Loading post #${postID} (${current}/${total})`);
 			const api = await request(`https://e621.net/posts/${postID}.json`);
+			if (api.response.post.flags.deleted) {
+				warn(`Skipping deleted post #${postID}`);
+				putWarning(`Post #${postID} is marked as deleted.`);
+				state.posts.push({
+					url: null,
+					id: postID,
+				});
+				return Promise.resolve();
+			}
+			// TODO: deal with videos better - an actual player would be nice
+			// TODO: do we even bother with flash?
+			const sourceURL = api.response.post.file.url.match(/\.(?:mp4|webm|mov|m4a|flv)$/ui)
+				? api.response.post.sample.url
+				: api.response.post.file.url;
+			const postURL = `/posts/${postID}?pool_id=${poolID}`;
 			state.posts.push({
-				url: api.response.post.file.url,
-				id: api.response.post.id,
+				url: sourceURL,
+				id: postID,
 			});
 			return new Promise(resolve => {
-				const img = makeElem('img', '', 'pool-image');
 				const link = makeElem('a', `post-${postID}`, POOL_READER_LINK_CLASS);
-				const postURL = `/posts/${postID}`;
-				const sourceURL = api.response.post.file.url;
+				const img = makeElem('img', '', 'pool-image');
 				link.dataset.postlink = postURL;
 				link.title = `${state.poolName}, ${current}/${total}`;
-				link.append(img);
 				img.addEventListener('load', resolve, {
 					once: true,
 				});
+				link.append(img);
+				// Ugly hack
+				if (sourceURL != api.response.post.file.url) {
+					putWarning([
+						`Post #${postID} does not appear to be an image.`,
+						"Non-image posts are not yet fully supported. Only a preview will be shown.",
+					].join(" "));
+					const indicator = makeElem('div', '', 'video-preview-indicator');
+					indicator.textContent = "[VIDEO PREVIEW]";
+					link.append(indicator);
+				}
 				img.src = sourceURL;
 				readerPageContainer.append(link);
 				link.href = modeToggle.checked ? sourceURL : postURL;
@@ -584,6 +620,10 @@ if (location.pathname.startsWith(POOL_PATH_PREFIX)) {
 	if (location.hash.replace(/^#+/u, '') == POOL_FRAG_READER) {
 		enablePoolReaderMode();
 	}
+	registerKeybind('+d', () => {
+		modeToggle.checked = !modeToggle.checked;
+		modeToggle.dispatchEvent(new Event('input')); // For some reason, the above doesn't fire the input event.
+	});
 }
 else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 	const errorNoSource = "Could't find download/source link!";
