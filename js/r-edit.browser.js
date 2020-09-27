@@ -119,7 +119,11 @@ const blockEvent = evt => {
 	});
 	document.addEventListener('paste', evt => {
 		try {
-			const text = (evt.clipboardData || window.clipboardData).getData('text/plain').trim();
+			const text = (evt.clipboardData || window.clipboardData)
+				.getData('text/plain')
+				.trim()
+				.replace(/^https?:\/+(?:[a-z]+\.)?(?:reddit|imgur)\.com/ui, '')
+				.replace(/^\/+r\/+/ui, '');
 			if (text) {
 				input.value += `\n${text}`;
 				input.focus();
