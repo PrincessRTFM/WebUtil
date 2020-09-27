@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.6.0
+// @version      2.6.1
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -42,6 +42,7 @@ v2.5.0 - restore the +/- (include/exclude) links on post pages without an existi
 v2.5.1 - pool reader mode no longer shits itself when a post doesn't exist or is a video
 v2.5.2 - fix NPE breaking search tag elevation
 v2.6.0 - the search box collapses whitespace before searching
+v2.6.1 - increase the z-index of the search bar to ENSURE it's on top so it doesn't look weird
 */
 
 /* PLANS
@@ -787,7 +788,7 @@ if (document.querySelector('#search-box')) {
 			"flex: 0;",
 			"}",
 			"#search-line * {",
-			"z-index: 1;",
+			"z-index: 999999;",
 			"}",
 			"#search-line {",
 			"display: flex;",
