@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.5.2
+// @version      2.6.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -41,6 +41,7 @@ v2.4.2 - fixed element ID being set instead of element class
 v2.5.0 - restore the +/- (include/exclude) links on post pages without an existing search
 v2.5.1 - pool reader mode no longer shits itself when a post doesn't exist or is a video
 v2.5.2 - fix NPE breaking search tag elevation
+v2.6.0 - the search box collapses whitespace before searching
 */
 
 /* PLANS
@@ -762,10 +763,20 @@ else if (location.pathname == POST_INDEX_PATH) {
 }
 
 if (document.querySelector('#search-box')) {
+	const searchBox = document.querySelector("#search-box");
+	const form = searchBox.querySelector("form");
+	const searchLine = makeElem('div', "search-line");
 	try {
-		const searchBox = document.querySelector("#search-box");
-		const form = searchBox.querySelector("form");
-		const searchLine = makeElem('div', "search-line");
+		form.addEventListener('submit', () => {
+			info("Cleaning search input string");
+			const input = form.querySelector('#tags');
+			input.value = input.value.replace(/\s+/gu, ' ').trim();
+		});
+	}
+	catch (err) {
+		error("Can't auto-format search string on submit:", err);
+	}
+	try {
 		searchLine.append(...form.children);
 		form.append(searchLine);
 		GM_addStyle([
