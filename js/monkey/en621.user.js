@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.6.1
+// @version      2.7.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -313,9 +313,11 @@ GM_addStyle([
 	'right: -97px;',
 	'border-radius: 7px 0 0 7px;',
 	'transition: right 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);',
+	'transition-delay: 0.1s;',
 	'}',
 	`#${LINK_MODE_ID}-container:hover {`,
 	'right: 0;',
+	'transition-delay: 0.5s;',
 	'}',
 	`#${LINK_MODE_ID} {`,
 	'display: none;',
