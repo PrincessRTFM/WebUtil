@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.7.0
+// @version      2.7.1
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -43,6 +43,8 @@ v2.5.1 - pool reader mode no longer shits itself when a post doesn't exist or is
 v2.5.2 - fix NPE breaking search tag elevation
 v2.6.0 - the search box collapses whitespace before searching
 v2.6.1 - increase the z-index of the search bar to ENSURE it's on top so it doesn't look weird
+v2.7.0 - set css transition delays on the direct links toggle minitab
+v2.7.1 - added css transition delays to the search bar expansions (forgot last time) and fixed the missing changelog entry
 */
 
 /* PLANS
@@ -313,7 +315,7 @@ GM_addStyle([
 	'right: -97px;',
 	'border-radius: 7px 0 0 7px;',
 	'transition: right 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);',
-	'transition-delay: 0.1s;',
+	'transition-delay: 0.15s;',
 	'}',
 	`#${LINK_MODE_ID}-container:hover {`,
 	'right: 0;',
@@ -798,9 +800,11 @@ if (document.querySelector('#search-box')) {
 			"max-width: 50vw;",
 			"width: 0;",
 			"transition: width 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);",
+			'transition-delay: 0.15s;',
 			"}",
 			"#search-line:hover, #search-line:focus, #search-line:focus-within {",
 			"width: 100vw;",
+			'transition-delay: 0.5s;',
 			"}",
 		].join("\n"));
 	}
