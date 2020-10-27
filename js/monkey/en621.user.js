@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.7.1
+// @version      2.7.2
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -45,6 +45,7 @@ v2.6.0 - the search box collapses whitespace before searching
 v2.6.1 - increase the z-index of the search bar to ENSURE it's on top so it doesn't look weird
 v2.7.0 - set css transition delays on the direct links toggle minitab
 v2.7.1 - added css transition delays to the search bar expansions (forgot last time) and fixed the missing changelog entry
+v2.7.2 - fixed z-index override on search bar items so they aren't hidden under the anim/webm tags on post previews
 */
 
 /* PLANS
@@ -792,7 +793,7 @@ if (document.querySelector('#search-box')) {
 			"flex: 0;",
 			"}",
 			"#search-line * {",
-			"z-index: 999999;",
+			"z-index: 999999 !important;",
 			"}",
 			"#search-line {",
 			"display: flex;",
