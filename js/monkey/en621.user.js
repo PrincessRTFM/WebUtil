@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.7.2
+// @version      2.8.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -46,6 +46,7 @@ v2.6.1 - increase the z-index of the search bar to ENSURE it's on top so it does
 v2.7.0 - set css transition delays on the direct links toggle minitab
 v2.7.1 - added css transition delays to the search bar expansions (forgot last time) and fixed the missing changelog entry
 v2.7.2 - fixed z-index override on search bar items so they aren't hidden under the anim/webm tags on post previews
+v2.8.0 - added status tags to HTML `class` attribute of `body` tag to allow other scripts to check for features
 */
 
 /* PLANS
@@ -85,6 +86,47 @@ const request = (uri, ctx) => {
 		ontimeout: reject,
 		context: ctx || Object.create(null),
 	}));
+};
+
+const setFlag = flags => flags.replace(/\s+/gu, ' ')
+	.split(" ")
+	.forEach(flag => {
+		const clean = flag
+			.replace(/\s+/gu, '-')
+			.replace(/^en621-?/ui, '')
+			.toLowerCase();
+		document.body.classList.add(`en621-${clean}`);
+	});
+const unsetFlag = flags => flags.replace(/\s+/gu, ' ')
+	.split(" ")
+	.forEach(flag => {
+		const clean = flag
+			.replace(/\s+/gu, '-')
+			.replace(/^en621-?/ui, '')
+			.toLowerCase();
+		document.body.classList.remove(`en621-${clean}`);
+	});
+const toggleFlag = flags => flags.replace(/\s+/gu, ' ')
+	.split(" ")
+	.forEach(flag => {
+		const clean = flag
+			.replace(/\s+/gu, '-')
+			.replace(/^en621-?/ui, '')
+			.toLowerCase();
+		document.body.classList.toggle(`en621-${clean}`);
+	});
+const hasFlag = flags => {
+	const flagList = flags.replace(/\s+/gu, ' ').split(" ");
+	for (const flag of flagList) {
+		const clean = flag
+			.replace(/\s+/gu, '-')
+			.replace(/^en621-?/ui, '')
+			.toLowerCase();
+		if (!document.body.classList.contains(`en621-${clean}`)) {
+			return false;
+		}
+	}
+	return true;
 };
 
 const makeElem = (tag, id, clazz) => {
@@ -235,8 +277,8 @@ document.addEventListener('keydown', evt => {
 	const handlerMap = KEY_HANDLERS.get(key) || [];
 	const handler = handlerMap[modifiers];
 	if (typeof handler == 'function') {
-		const handled = handler(evt, key, modifiers);
-		if (handled === false) { // If you don't return a value, it'll assume you handled things fine
+		const unhandled = handler(evt, key, modifiers);
+		if (unhandled) { // If you don't return a value, it'll assume you handled things fine
 			evt.preventDefault();
 			evt.stopPropagation();
 		}
@@ -295,6 +337,7 @@ modeToggle.addEventListener('input', () => {
 		for (const preview of previews) {
 			preview.children[0].href = preview.dataset.fileUrl;
 		}
+		setFlag("has-direct-links");
 	}
 	else {
 		for (const link of links) {
@@ -303,6 +346,7 @@ modeToggle.addEventListener('input', () => {
 		for (const preview of previews) {
 			preview.children[0].href = `/posts/${preview.dataset.id}${urlTrail}`;
 		}
+		unsetFlag("has-direct-links");
 	}
 });
 modeBox.inject = () => {
@@ -347,6 +391,7 @@ const enablePoolReaderMode = async () => {
 		vanillaPageList.style.display = 'none';
 		readerPageContainer.style.display = '';
 		document.querySelector(`#${POOL_READER_STATUSLINE_ID}`).style.display = '';
+		setFlag("pool-reader-mode"); // eslint-disable-line sonarjs/no-duplicate-string
 		return readerPageContainer;
 	}
 	// If we get here, it's the first go and we're constructing it from scratch
@@ -439,7 +484,7 @@ const enablePoolReaderMode = async () => {
 				return Promise.resolve();
 			}
 			// TODO: deal with videos better - an actual player would be nice
-			// TODO: do we even bother with flash?
+			// not bothering with flash, support's being dropped for it
 			const sourceURL = api.response.post.file.url.match(/\.(?:mp4|webm|mov|m4a|flv)$/ui)
 				? api.response.post.sample.url
 				: api.response.post.file.url;
@@ -472,17 +517,21 @@ const enablePoolReaderMode = async () => {
 				link.href = modeToggle.checked ? sourceURL : postURL;
 			});
 		}, Promise.resolve());
+		setFlag("pool-reader-loaded");
 		return state;
 	};
 	const onPoolLoadingError = err => {
 		title(`pool loading failed`);
 		status(err.toString().replace(/^error:\s+/ui, ''));
+		setFlag("pool-reader-failed");
+		setFlag("has-error");
 	};
 	title(`loading pool #${poolID}...`);
 	status(`Loading pool data for pool #${poolID}...`);
 	const context = {
 		pool: poolID,
 	};
+	setFlag("pool-reader-mode");
 	return request(`${location.origin}/pools.json?search[id]=${poolID}`, context)
 		.then(checkResponseValidity)
 		.catch(onPoolLoadingError)
@@ -507,6 +556,7 @@ const disablePoolReaderMode = () => {
 	readerPageContainer.style.display = 'none';
 	vanillaPageList.style.display = '';
 	document.querySelector(`#${POOL_READER_STATUSLINE_ID}`).style.display = 'none';
+	unsetFlag("pool-reader-mode");
 };
 const togglePoolReaderMode = evt => {
 	const readerPageContainer = document.querySelector(`div#${POOL_READER_CONTAINER_ID}`);
@@ -617,6 +667,8 @@ registerKeybind('+d', () => {
 for (const link of document.querySelectorAll(`a[href^="${POOL_PATH_PREFIX}"]`)) {
 	link.href = `${link.href}#${POOL_FRAG_READER}`;
 }
+setFlag("automatic-pool-reader-links");
+
 if (location.pathname.startsWith(POOL_PATH_PREFIX)) {
 	modeBox.inject();
 	const readerItem = makeElem('li', 'enhanced621-pool-reader-toggle');
@@ -657,6 +709,10 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 				evt.preventDefault();
 				evt.stopPropagation();
 			});
+			setFlag("has-quick-source");
+		}
+		else {
+			setFlag("no-quick-source");
 		}
 		if (sourceLink && sourceLink.href) {
 			const directSourceItem = makeElem('li', 'enhanced621-direct-source');
@@ -666,18 +722,27 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 			directSourceLink.href = sourceLink.href;
 			directSourceItem.append(directSourceLink);
 			subnavbar.append(directSourceItem);
+			setFlag("has-source-link");
 		}
 		else {
 			putError(errorNoSource);
+			setFlag("no-source-link");
 		}
 	}
 	if (parentChildNotices) {
+		setFlag("has-related-posts");
+		if (document.querySelector("#has-parent-relationship-preview")) {
+			setFlag("has-parent-post");
+		}
+		if (document.querySelector("#has-children-relationship-preview")) {
+			setFlag("has-child-post");
+		}
 		const scrollToNoticeItem = makeElem('li', 'enhanced621-parent-child-notices');
 		const scrollToNoticeLink = makeElem('a');
 		GM_addStyle('#enhanced621-parent-child-notices { position: absolute; right: 120px; cursor: pointer; }');
 		scrollToNoticeLink.textContent = [
-			document.querySelector("#has-parent-relationship-preview") ? 'Parent' : '',
-			document.querySelector("#has-children-relationship-preview") ? 'Children' : '',
+			hasFlag("has-parent-post") ? 'Parent' : '',
+			hasFlag("has-child-post") ? 'Children' : '',
 		].filter(e => e).join('/');
 		scrollToNoticeLink.href = '#';
 		scrollToNoticeLink.addEventListener('click', evt => {
@@ -737,17 +802,30 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 				header.textContent = "Rating";
 				tagList.insertBefore(list, tagList.children[0]);
 				tagList.insertBefore(header, tagList.children[0]);
+				setFlag("has-post-rating-link");
+			}
+			else {
+				setFlag("missing-post-rating");
 			}
 		}
 		catch (err) {
 			error("Can't find post rating:", err);
+			setFlag("missing-post-rating");
+			setFlag("has-error");
 		}
+	}
+	else {
+		setFlag("no-post-rating");
 	}
 	if (curSearchBanner) { // may not exist
 		const link = makeElem('a', 'enhanced621-current-search-link');
 		link.textContent = CURRENT_SEARCH;
 		link.href = `/posts?tags=${encodeURIComponent(CURRENT_SEARCH)}`;
 		curSearchBanner.innerHTML = link.outerHTML;
+		setFlag("has-search-banner-link");
+	}
+	else {
+		setFlag("no-search-banner");
 	}
 	elevateSearchTerms();
 	try {
@@ -778,9 +856,12 @@ if (document.querySelector('#search-box')) {
 			const input = form.querySelector('#tags');
 			input.value = input.value.replace(/\s+/gu, ' ').trim();
 		});
+		setFlag("has-autocleaning-searchbox");
 	}
 	catch (err) {
 		error("Can't auto-format search string on submit:", err);
+		setFlag("no-autocleaning-searchbox");
+		setFlag("has-error");
 	}
 	try {
 		searchLine.append(...form.children);
@@ -808,11 +889,15 @@ if (document.querySelector('#search-box')) {
 			'transition-delay: 0.5s;',
 			"}",
 		].join("\n"));
+		setFlag("has-flexible-search-box");
 	}
 	catch (err) {
 		error("Can't make search box responsively expand:", err);
+		setFlag("no-flexible-search-box");
+		setFlag("has-error");
 	}
 }
 
+setFlag("loaded");
 debug("Initialisation complete");
 
