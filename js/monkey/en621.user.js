@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.9.0
+// @version      2.10.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -48,6 +48,7 @@ v2.7.1 - added css transition delays to the search bar expansions (forgot last t
 v2.7.2 - fixed z-index override on search bar items so they aren't hidden under the anim/webm tags on post previews
 v2.8.0 - added status tags to HTML `class` attribute of `body` tag to allow other scripts to check for features
 v2.9.0 - removed automatic pool reader mode link editing to reduce network load
+v2.10.0 - added `window.EN621_CONSOLE_TOOLS` for functions designed to be called from the dev console
 */
 
 /* PLANS
@@ -72,6 +73,9 @@ const KB_NONE = 0;
 const KB_ALT = 1;
 const KB_CTRL = 2;
 const KB_SHIFT = 4;
+
+const CONSOLE_TOOLS = Object.create(null);
+CONSOLE_TOOLS.SCRIPT_VERSION = Object.freeze(GM_info.script.version.split(".").map(i => parseInt(i, 10)));
 
 
 const pause = delay => new Promise(resolve => setTimeout(resolve.bind(resolve, delay), delay));
@@ -683,6 +687,10 @@ if (location.pathname.startsWith(POOL_PATH_PREFIX)) {
 	if (location.hash.replace(/^#+/u, '') == POOL_FRAG_READER) {
 		enablePoolReaderMode();
 	}
+	CONSOLE_TOOLS.getVisiblePostURLs = () => {
+		const set = Array.from(document.querySelectorAll('#posts-container > article[id^="post_"]'));
+		return set.map(e => e.dataset.largeFileUrl);
+	};
 }
 else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 	const errorNoSource = "Could't find download/source link!";
@@ -840,6 +848,10 @@ else if (location.pathname == POST_INDEX_PATH) {
 	catch (err) {
 		error("Can't find `div.blacklist-help` to shorten text label:", err);
 	}
+	CONSOLE_TOOLS.getVisiblePostURLs = () => {
+		const set = Array.from(document.querySelectorAll('#posts-container > article[id^="post_"]'));
+		return set.map(e => e.dataset.largeFileUrl);
+	};
 }
 
 if (document.querySelector('#search-box')) {
@@ -894,6 +906,10 @@ if (document.querySelector('#search-box')) {
 	}
 }
 
+Object.defineProperty(unsafeWindow, "EN621_CONSOLE_TOOLS", {
+	value: Object.freeze(CONSOLE_TOOLS),
+	enumerable: true,
+});
 setFlag("loaded");
 debug("Initialisation complete");
 
