@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.8.0
+// @version      2.9.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -47,6 +47,7 @@ v2.7.0 - set css transition delays on the direct links toggle minitab
 v2.7.1 - added css transition delays to the search bar expansions (forgot last time) and fixed the missing changelog entry
 v2.7.2 - fixed z-index override on search bar items so they aren't hidden under the anim/webm tags on post previews
 v2.8.0 - added status tags to HTML `class` attribute of `body` tag to allow other scripts to check for features
+v2.9.0 - removed automatic pool reader mode link editing to reduce network load
 */
 
 /* PLANS
@@ -663,11 +664,6 @@ registerKeybind('+d', () => {
 	modeToggle.checked = !modeToggle.checked;
 	modeToggle.dispatchEvent(new Event('input')); // For some reason, the above doesn't fire the input event.
 });
-
-for (const link of document.querySelectorAll(`a[href^="${POOL_PATH_PREFIX}"]`)) {
-	link.href = `${link.href}#${POOL_FRAG_READER}`;
-}
-setFlag("automatic-pool-reader-links");
 
 if (location.pathname.startsWith(POOL_PATH_PREFIX)) {
 	modeBox.inject();
