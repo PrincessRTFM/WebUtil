@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.10.0
+// @version      2.10.1
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -49,6 +49,7 @@ v2.7.2 - fixed z-index override on search bar items so they aren't hidden under 
 v2.8.0 - added status tags to HTML `class` attribute of `body` tag to allow other scripts to check for features
 v2.9.0 - removed automatic pool reader mode link editing to reduce network load
 v2.10.0 - added `window.EN621_CONSOLE_TOOLS` for functions designed to be called from the dev console
+v2.10.1 - updated selector to fix the search bar not linking on post pages
 */
 
 /* PLANS
@@ -700,7 +701,7 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 	const parentChildNotices = document.querySelector(".bottom-notices > .parent-children");
 	const postRatingElem = document.querySelector("#post-rating-text");
 	const tagList = document.querySelector("#tag-list");
-	const curSearchBanner = document.querySelector("#search-seq-nav span.search-name");
+	const curSearchBanner = document.querySelector("#nav-links-top > .search-seq-nav span.search-name");
 	if (image) {
 		if (image.tagName.toLowerCase() == 'img') {
 			image.addEventListener('dblclick', evt => {
@@ -833,7 +834,7 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 	}
 	elevateSearchTerms();
 	try {
-		subnavbar.scrollIntoView();
+		image.scrollIntoView();
 	}
 	catch (err) {
 		error("Can't scroll to page content:", err);
