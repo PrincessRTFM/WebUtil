@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         HentaiVerse Encounter Unclicker
 // @namespace    PrincessRTFM
-// @version      3.2.0
+// @version      3.2.1
 // @description  Massively improves the useability/interface of the HentaiVerse random encounters system; tracks the time since the last event (and what it was), automatically opens random encounters, synchronises display updates, safe to open in multiple tabs (and will update all tabs accordingly)
 // @author       Lilith
 // @match        https://e-hentai.org/*
@@ -43,6 +43,7 @@ v3.0.0 - un-stupified the backend (organic code growth is bad, kids)
 v3.1.0 - added an "enter the hentaiverse" link on the event pane if there isn't one already
 v3.1.1 - fixed a typo, cleaned the file, and bumped the version (forgot to set to 3.1.0)
 v3.2.0 - added a timer to reload the page (master page only) after 24 hours, for automated new day xp collection
+v3.2.1 - fixed a nasty edge case bug causing an infinite reload loop
 
 PLANNED:
 [MINOR] Make the master page post a notification (via GM.notification) when the timer runs out
@@ -231,6 +232,7 @@ const BUG_CHARS = Object.defineProperty([
 	let eventKey = GM_getValue(LAST_EVENT_NAME_KEY, 'NO_EVENT');
 	const headerText = header.text();
 	console.log(`Retrieved event header: ${headerText}`);
+	let foundHeader = false;
 	for (const [
 		key,
 		value,
@@ -238,8 +240,7 @@ const BUG_CHARS = Object.defineProperty([
 		if (headerText.match(value)) {
 			start = moment();
 			eventKey = key;
-			GM_setValue(LAST_EVENT_TIMESTAMP_KEY, start.valueOf());
-			GM_setValue(LAST_EVENT_NAME_KEY, eventKey);
+			foundHeader = true;
 			break;
 		}
 	}
@@ -280,6 +281,9 @@ const BUG_CHARS = Object.defineProperty([
 		// If you have more than one page, this means the master page will cycle through all of your
 		// open pages in the order of oldest to newest. If you only have one, it'll obviously not do that.
 		if (MASTER_ID == SCRIPT_ID && period.asDays() >= 1) {
+			if (!foundHeader) {
+				GM_setValue(LAST_EVENT_TIMESTAMP_KEY, moment().valueOf()); // Fix a nasty edge case I found
+			}
 			console.log("24 hours passed, automatic reload triggered");
 			location.reload();
 		}
