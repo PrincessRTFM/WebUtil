@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.10.1
+// @version      2.10.2
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -50,6 +50,7 @@ v2.8.0 - added status tags to HTML `class` attribute of `body` tag to allow othe
 v2.9.0 - removed automatic pool reader mode link editing to reduce network load
 v2.10.0 - added `window.EN621_CONSOLE_TOOLS` for functions designed to be called from the dev console
 v2.10.1 - updated selector to fix the search bar not linking on post pages
+v2.10.2 - fix CSS `width: fit-content` rules to add `width: -moz-fit-content` as well
 */
 
 /* PLANS
@@ -408,6 +409,7 @@ const enablePoolReaderMode = async () => {
 		'display: block;',
 		'margin: 20px auto;',
 		'width: fit-content;',
+		'width: -moz-fit-content;',
 		'position: relative;',
 		'}',
 		`div#${POOL_READER_CONTAINER_ID} > a > img.pool-image {`,
@@ -424,6 +426,7 @@ const enablePoolReaderMode = async () => {
 		'font-weight: 900;',
 		'font-size: 1.5em;',
 		'width: fit-content;',
+		'width: -moz-fit-content;',
 		'}',
 		'a.en621-post-link:hover > .video-preview-indicator {',
 		'display: none;',
@@ -888,6 +891,7 @@ if (document.querySelector('#search-box')) {
 			"#search-line {",
 			"display: flex;",
 			"min-width: fit-content;",
+			"min-width: -moz-fit-content;",
 			"max-width: 50vw;",
 			"width: 0;",
 			"transition: width 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);",
