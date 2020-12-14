@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      3.1.0
+// @version      3.2.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v3.2.0 - scrolling to related posts now aligns it with the bottom of the screen, not the top
 v3.1.0 - minor fixes, minor improvements, notices are now shown for parent/child posts and pools
 v3.0.0 - now includes a `SCRIPT_API` and some events that can be listened for (and also reversed the changelog)
 
@@ -829,7 +830,7 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 	).id.slice(poolLinkIdLead.length), 10);
 	const scrollToRelated = evt => {
 		try {
-			parentChildNotices.scrollIntoView();
+			parentChildNotices.scrollIntoView(false);
 			log("Scrolled to parent/child notices");
 		}
 		catch (err) {
