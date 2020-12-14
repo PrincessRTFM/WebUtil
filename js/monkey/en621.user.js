@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      2.10.2
+// @version      3.0.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,38 +19,41 @@
 // ==/UserScript==
 
 /* CHANGELOG
-v1.0.0 - initial script, minimal functionality, mostly ripped apart from three old scripts broken in the site update
-v1.1.0 - added keybind features; currently only alt-r for random but more can be easily added
-v1.2.0 - added an indicator for parent/child posts on post pages
-v1.3.0 - added a tag entry for the post rating
-v1.3.1 - fixed a missing property access on sanity checking, removed an unnecessary Promise.resolve(), reordered the pool reader sequence
-v1.3.2 - clean up some element-contructor code
-v1.4.0 - add pool reader progress to tab title
-v1.5.0 - make the "current search" text on post pages into a link to that search
-v1.6.0 - move searched-for tags on post pages to the top of their tag groups and italicise them
-v1.6.1 - searching for tags in the post page tag list is no longer confused by underscores
-v1.6.2 - changed script update URL so that users will update to this version and then be redirected to update to the new location
-v2.0.0 - changed script name and description, along with new update URL (technically possible to run alongside the old version, but they are NOT compatible - DO NOT INSTALL BOTH)
-v2.1.0 - added direct image link toggle on pool pages (reader and normal)
-v2.1.1 - fixed a bug where the post rating wouldn't be listed in the sidebar when there was no existing search
-v2.2.0 - extended tag elevation and direct image link toggling to post index pages, added alt-q keybind to focus search bar
-v2.3.0 - made search box responsibly expand when hovered or focused
-v2.4.0 - direct link box is more out of the way, slides in smoothly when hovered
-v2.4.1 - fixed direct link toggle on post index pages not properly restoring post page URL when turned off
-v2.4.2 - fixed element ID being set instead of element class
-v2.5.0 - restore the +/- (include/exclude) links on post pages without an existing search
-v2.5.1 - pool reader mode no longer shits itself when a post doesn't exist or is a video
-v2.5.2 - fix NPE breaking search tag elevation
-v2.6.0 - the search box collapses whitespace before searching
-v2.6.1 - increase the z-index of the search bar to ENSURE it's on top so it doesn't look weird
-v2.7.0 - set css transition delays on the direct links toggle minitab
-v2.7.1 - added css transition delays to the search bar expansions (forgot last time) and fixed the missing changelog entry
-v2.7.2 - fixed z-index override on search bar items so they aren't hidden under the anim/webm tags on post previews
-v2.8.0 - added status tags to HTML `class` attribute of `body` tag to allow other scripts to check for features
-v2.9.0 - removed automatic pool reader mode link editing to reduce network load
-v2.10.0 - added `window.EN621_CONSOLE_TOOLS` for functions designed to be called from the dev console
-v2.10.1 - updated selector to fix the search bar not linking on post pages
+v3.0.0 - now includes a `SCRIPT_API` and some events that can be listened for (and also reversed the changelog)
+
 v2.10.2 - fix CSS `width: fit-content` rules to add `width: -moz-fit-content` as well
+v2.10.1 - updated selector to fix the search bar not linking on post pages
+v2.10.0 - added `window.EN621_CONSOLE_TOOLS` for functions designed to be called from the dev console
+v2.9.0 - removed automatic pool reader mode link editing to reduce network load
+v2.8.0 - added status tags to HTML `class` attribute of `body` tag to allow other scripts to check for features
+v2.7.2 - fixed z-index override on search bar items so they aren't hidden under the anim/webm tags on post previews
+v2.7.1 - added css transition delays to the search bar expansions (forgot last time) and fixed the missing changelog entry
+v2.7.0 - set css transition delays on the direct links toggle minitab
+v2.6.1 - increase the z-index of the search bar to ENSURE it's on top so it doesn't look weird
+v2.6.0 - the search box collapses whitespace before searching
+v2.5.2 - fix NPE breaking search tag elevation
+v2.5.1 - pool reader mode no longer shits itself when a post doesn't exist or is a video
+v2.5.0 - restore the +/- (include/exclude) links on post pages without an existing search
+v2.4.2 - fixed element ID being set instead of element class
+v2.4.1 - fixed direct link toggle on post index pages not properly restoring post page URL when turned off
+v2.4.0 - direct link box is more out of the way, slides in smoothly when hovered
+v2.3.0 - made search box responsibly expand when hovered or focused
+v2.2.0 - extended tag elevation and direct image link toggling to post index pages, added alt-q keybind to focus search bar
+v2.1.1 - fixed a bug where the post rating wouldn't be listed in the sidebar when there was no existing search
+v2.1.0 - added direct image link toggle on pool pages (reader and normal)
+v2.0.0 - changed script name and description, along with new update URL (technically possible to run alongside the old version, but they are NOT compatible - DO NOT INSTALL BOTH)
+
+v1.6.2 - changed script update URL so that users will update to this version and then be redirected to update to the new location
+v1.6.1 - searching for tags in the post page tag list is no longer confused by underscores
+v1.6.0 - move searched-for tags on post pages to the top of their tag groups and italicise them
+v1.5.0 - make the "current search" text on post pages into a link to that search
+v1.4.0 - add pool reader progress to tab title
+v1.3.2 - clean up some element-contructor code
+v1.3.1 - fixed a missing property access on sanity checking, removed an unnecessary Promise.resolve(), reordered the pool reader sequence
+v1.3.0 - added a tag entry for the post rating
+v1.2.0 - added an indicator for parent/child posts on post pages
+v1.1.0 - added keybind features; currently only alt-r for random but more can be easily added
+v1.0.0 - initial script, minimal functionality, mostly ripped apart from three old scripts broken in the site update
 */
 
 /* PLANS
@@ -58,6 +61,8 @@ v2.10.2 - fix CSS `width: fit-content` rules to add `width: -moz-fit-content` as
 */
 /* eslint-enable max-len */
 
+
+const START_TIME_MS = new Date().valueOf();
 
 const SCRIPT_NAME = GM_info.script.name;
 const SCRIPT_VERSION = `V${GM_info.script.version || '???'}`;
@@ -95,33 +100,80 @@ const request = (uri, ctx) => {
 	}));
 };
 
-const setFlag = flags => flags.replace(/\s+/gu, ' ')
-	.split(" ")
-	.forEach(flag => {
+const sendEvent = async (name, extra, cancelable) => {
+	const clean = String(name)
+		.replace(/\s+/gu, '-')
+		.replace(/^en621-?/ui, '')
+		.toLowerCase();
+	const detail = {
+		name: clean,
+	};
+	if (typeof extra != 'undefined') {
+		detail.data = extra;
+	}
+	if (typeof cancelable == 'undefined') {
+		cancelable = false;
+	}
+	Object.freeze(detail);
+	const evt = new CustomEvent(`en621`, {
+		detail,
+		cancelable,
+	});
+	document.dispatchEvent(evt);
+	return evt;
+};
+const EV_POOL_READER_STATE = "pool-reader-state";
+const EV_MESSAGE_BOX = "user-message";
+const EV_DIRECT_LINKS = "direct-link-mode";
+const EV_POST_DELETED = "missing-post";
+const EV_POST_LOADED = "post-loaded";
+const EV_SCRIPT_LOADED = "loaded";
+// Register a debugging listener for all events
+document.addEventListener('en621', evt => {
+	const type = `${evt.cancelable ? '' : 'non-'}cancelable`;
+	const {
+		name,
+		data,
+	} = evt.detail;
+	const leader = `Event (${type}) - ${name}`;
+	if (typeof data == 'undefined') {
+		debug(leader);
+	}
+	else {
+		debug(`${leader}:`, data);
+	}
+});
+
+const setFlag = flagstr => {
+	const flags = flagstr.replace(/\s+/gu, ' ').split(" ");
+	flags.forEach(flag => {
 		const clean = flag
 			.replace(/\s+/gu, '-')
 			.replace(/^en621-?/ui, '')
 			.toLowerCase();
 		document.body.classList.add(`en621-${clean}`);
 	});
-const unsetFlag = flags => flags.replace(/\s+/gu, ' ')
-	.split(" ")
-	.forEach(flag => {
+};
+const unsetFlag = flagstr => {
+	const flags = flagstr.replace(/\s+/gu, ' ').split(" ");
+	flags.forEach(flag => {
 		const clean = flag
 			.replace(/\s+/gu, '-')
 			.replace(/^en621-?/ui, '')
 			.toLowerCase();
 		document.body.classList.remove(`en621-${clean}`);
 	});
-const toggleFlag = flags => flags.replace(/\s+/gu, ' ')
-	.split(" ")
-	.forEach(flag => {
+};
+const toggleFlag = flagstr => {
+	const flags = flagstr.replace(/\s+/gu, ' ').split(" ");
+	flags.forEach(flag => {
 		const clean = flag
 			.replace(/\s+/gu, '-')
 			.replace(/^en621-?/ui, '')
 			.toLowerCase();
 		document.body.classList.toggle(`en621-${clean}`);
 	});
+};
 const hasFlag = flags => {
 	const flagList = flags.replace(/\s+/gu, ' ').split(" ");
 	for (const flag of flagList) {
@@ -224,6 +276,11 @@ const putMessage = (content, type, icon) => {
 	});
 	master.append(messageContainer);
 	master.style.display = 'block';
+	sendEvent(EV_MESSAGE_BOX, {
+		content,
+		type,
+		icon,
+	});
 };
 const putError = content => putMessage(content, 'error', '⚠');
 const putWarning = content => putMessage(content, 'warning', '⚠');
@@ -304,6 +361,8 @@ const CURRENT_SEARCH = (() => {
 const navbar = document.querySelector("#nav").children[0];
 const subnavbar = document.querySelector("#nav").children[1];
 
+const PATH = location.pathname;
+
 const POOL_PATH_PREFIX = '/pools/';
 const POST_PATH_PREFIX = '/posts/';
 const POST_INDEX_PATH = '/posts';
@@ -323,11 +382,11 @@ modeLabel.htmlFor = LINK_MODE_ID;
 modeLabel.textContent = "Direct image links";
 modeBox.append(modeToggle, modeLabel);
 modeToggle.addEventListener('input', () => {
-	debug("Toggling direct image links mode");
+	info("Toggling direct image links mode");
 	const links = document.querySelectorAll(`a.${POOL_READER_LINK_CLASS}`);
 	const previews = document.querySelectorAll("div#posts-container > article");
-	const poolID = location.pathname.startsWith(POOL_PATH_PREFIX)
-		? parseInt(location.pathname.slice(POOL_PATH_PREFIX.length), 10)
+	const poolID = PATH.startsWith(POOL_PATH_PREFIX)
+		? parseInt(PATH.slice(POOL_PATH_PREFIX.length), 10)
 		: 0;
 	const params = new URLSearchParams();
 	if (poolID && !isNaN(poolID)) {
@@ -355,6 +414,9 @@ modeToggle.addEventListener('input', () => {
 		}
 		unsetFlag("has-direct-links");
 	}
+	sendEvent(EV_DIRECT_LINKS, {
+		active: modeToggle.checked,
+	});
 });
 modeBox.inject = () => {
 	modeBox.inject = NOP;
@@ -388,6 +450,9 @@ GM_addStyle([
 ].join("\n"));
 
 const enablePoolReaderMode = async () => {
+	if (!PATH.startsWith(POOL_PATH_PREFIX) || !PATH.slice(POOL_PATH_PREFIX.length).match(/^\d+/u)) {
+		throw new Error("This is not a pool page!");
+	}
 	location.hash = POOL_FRAG_READER;
 	const vanillaPageList = document.querySelector("div#posts");
 	if (!vanillaPageList) {
@@ -399,6 +464,9 @@ const enablePoolReaderMode = async () => {
 		readerPageContainer.style.display = '';
 		document.querySelector(`#${POOL_READER_STATUSLINE_ID}`).style.display = '';
 		setFlag("pool-reader-mode"); // eslint-disable-line sonarjs/no-duplicate-string
+		sendEvent(EV_POOL_READER_STATE, {
+			active: true,
+		});
 		return readerPageContainer;
 	}
 	// If we get here, it's the first go and we're constructing it from scratch
@@ -432,11 +500,10 @@ const enablePoolReaderMode = async () => {
 		'display: none;',
 		'}',
 	].join(''));
-	const poolID = parseInt(location.pathname.slice(POOL_PATH_PREFIX.length), 10);
+	const poolID = parseInt(PATH.slice(POOL_PATH_PREFIX.length), 10);
 	const statusLine = makeElem('menu', POOL_READER_STATUSLINE_ID);
 	subnavbar.parentElement.append(statusLine);
 	const status = statusText => {
-		debug("Status:", statusText);
 		statusLine.textContent = statusText;
 	};
 	const title = subtitle => {
@@ -490,6 +557,9 @@ const enablePoolReaderMode = async () => {
 					url: null,
 					id: postID,
 				});
+				sendEvent(EV_POST_DELETED, {
+					id: postID,
+				});
 				return Promise.resolve();
 			}
 			// TODO: deal with videos better - an actual player would be nice
@@ -507,7 +577,16 @@ const enablePoolReaderMode = async () => {
 				const img = makeElem('img', '', 'pool-image');
 				link.dataset.postlink = postURL;
 				link.title = `${state.poolName}, ${current}/${total}`;
-				img.addEventListener('load', resolve, {
+				img.addEventListener('load', () => {
+					sendEvent(EV_POST_LOADED, {
+						id: postID,
+						source: sourceURL,
+						post: postURL,
+						count: current,
+						total,
+					});
+					resolve();
+				}, {
 					once: true,
 				});
 				link.append(img);
@@ -527,6 +606,9 @@ const enablePoolReaderMode = async () => {
 			});
 		}, Promise.resolve());
 		setFlag("pool-reader-loaded");
+		sendEvent(EV_POOL_READER_STATE, {
+			loaded: true,
+		});
 		return state;
 	};
 	const onPoolLoadingError = err => {
@@ -534,6 +616,10 @@ const enablePoolReaderMode = async () => {
 		status(err.toString().replace(/^error:\s+/ui, ''));
 		setFlag("pool-reader-failed");
 		setFlag("has-error");
+		sendEvent(EV_POOL_READER_STATE, {
+			failed: true,
+			error: err,
+		});
 	};
 	title(`loading pool #${poolID}...`);
 	status(`Loading pool data for pool #${poolID}...`);
@@ -541,6 +627,9 @@ const enablePoolReaderMode = async () => {
 		pool: poolID,
 	};
 	setFlag("pool-reader-mode");
+	sendEvent(EV_POOL_READER_STATE, {
+		active: true,
+	});
 	return request(`${location.origin}/pools.json?search[id]=${poolID}`, context)
 		.then(checkResponseValidity)
 		.catch(onPoolLoadingError)
@@ -566,6 +655,9 @@ const disablePoolReaderMode = () => {
 	vanillaPageList.style.display = '';
 	document.querySelector(`#${POOL_READER_STATUSLINE_ID}`).style.display = 'none';
 	unsetFlag("pool-reader-mode");
+	sendEvent(EV_POOL_READER_STATE, {
+		active: false,
+	});
 };
 const togglePoolReaderMode = evt => {
 	const readerPageContainer = document.querySelector(`div#${POOL_READER_CONTAINER_ID}`);
@@ -673,7 +765,7 @@ registerKeybind('+d', () => {
 	modeToggle.dispatchEvent(new Event('input')); // For some reason, the above doesn't fire the input event.
 });
 
-if (location.pathname.startsWith(POOL_PATH_PREFIX)) {
+if (PATH.startsWith(POOL_PATH_PREFIX) && PATH.slice(POOL_PATH_PREFIX.length).match(/^\d+/u)) {
 	modeBox.inject();
 	const readerItem = makeElem('li', 'enhanced621-pool-reader-toggle');
 	const readerLink = makeElem('a');
@@ -696,7 +788,7 @@ if (location.pathname.startsWith(POOL_PATH_PREFIX)) {
 		return set.map(e => e.dataset.largeFileUrl);
 	};
 }
-else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
+else if (PATH.startsWith(POST_PATH_PREFIX)) {
 	const errorNoSource = "Could't find download/source link!";
 	const postRatingClassPrefix = 'post-rating-text-';
 	const sourceLink = document.querySelector("#image-download-link > a[href]");
@@ -840,10 +932,10 @@ else if (location.pathname.startsWith(POST_PATH_PREFIX)) {
 		image.scrollIntoView();
 	}
 	catch (err) {
-		error("Can't scroll to page content:", err);
+		error("Can't scroll to post content:", err);
 	}
 }
-else if (location.pathname == POST_INDEX_PATH) {
+else if (PATH == POST_INDEX_PATH) {
 	modeBox.inject();
 	elevateSearchTerms();
 	try {
@@ -911,10 +1003,30 @@ if (document.querySelector('#search-box')) {
 	}
 }
 
-Object.defineProperty(unsafeWindow, "EN621_CONSOLE_TOOLS", {
-	value: Object.freeze(CONSOLE_TOOLS),
-	enumerable: true,
+Object.defineProperties(unsafeWindow, {
+	EN621_CONSOLE_TOOLS: {
+		value: Object.freeze(CONSOLE_TOOLS),
+		enumerable: true,
+	},
+	EN621_API: {
+		value: Object.freeze({
+			VERSION: CONSOLE_TOOLS.SCRIPT_VERSION,
+			hasFlag,
+			putError,
+			putWarning,
+			putHelp,
+			registerKeybind,
+			searchString: () => CURRENT_SEARCH,
+			enablePoolReaderMode,
+			disablePoolReaderMode,
+			togglePoolReaderMode,
+		}),
+		enumerable: true,
+	},
 });
 setFlag("loaded");
-debug("Initialisation complete");
+info("Initialisation complete");
+setTimeout(() => sendEvent(EV_SCRIPT_LOADED, {
+	loadTimeMs: new Date().valueOf() - START_TIME_MS,
+}));
 
