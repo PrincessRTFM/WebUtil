@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      3.0.0
+// @version      3.1.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v3.1.0 - minor fixes, minor improvements, notices are now shown for parent/child posts and pools
 v3.0.0 - now includes a `SCRIPT_API` and some events that can be listened for (and also reversed the changelog)
 
 v2.10.2 - fix CSS `width: fit-content` rules to add `width: -moz-fit-content` as well
@@ -124,6 +125,7 @@ const sendEvent = async (name, extra, cancelable) => {
 };
 const EV_POOL_READER_STATE = "pool-reader-state";
 const EV_MESSAGE_BOX = "user-message";
+const EV_MESSAGE_CLOSE = "close-message";
 const EV_DIRECT_LINKS = "direct-link-mode";
 const EV_POST_DELETED = "missing-post";
 const EV_POST_LOADED = "post-loaded";
@@ -211,7 +213,7 @@ const warningBox = () => {
 		`#${ID} {`,
 		'position: fixed;',
 		'right: 0;',
-		`top: ${document.querySelector("#page").offsetTop}px;`,
+		`top: ${document.querySelector("#image-container").offsetTop}px;`,
 		'border-radius: 0;',
 		'width: 300px;',
 		'z-index: 9999;',
@@ -229,7 +231,6 @@ const warningBox = () => {
 		'color: #999999;',
 		'font-size: 17px;',
 		'position: relative;',
-		'top: 2px;',
 		'}',
 		'.enhanced621-message-icon {',
 		'cursor: default;',
@@ -237,7 +238,6 @@ const warningBox = () => {
 		'margin-right: 2px;',
 		'font-size: 16px;',
 		'position: relative;',
-		'top: 1px;',
 		'}',
 		'.enhanced621-message-icon.enhanced621-message-error {',
 		'color: #EE0000;',
@@ -258,33 +258,56 @@ const warningBox = () => {
 	document.querySelector('#page').append(box);
 	return box;
 };
-const putMessage = (content, type, icon) => {
+const putMessage = (content, type, icon, timeout) => {
+	timeout = parseInt(String(timeout), 10);
 	const master = warningBox();
 	const messageContainer = makeElem('div', '', `enhanced621-message enhanced621-message-${type} site-notice`);
 	const messageText = makeElem('span', '', `enhanced621-message-content enhanced621-message-${type}`);
 	const messageClose = makeElem('span', '', `enhanced621-message-dismiss enhanced621-message-${type}`);
 	const messageIcon = makeElem('span', '', `enhanced621-message-icon enhanced621-message-${type}`);
-	messageText.innerHTML = content;
+	if (typeof content == 'string') {
+		messageText.innerHTML = content;
+	}
+	else if (Array.isArray(content)) {
+		messageText.append(...content);
+	}
+	else {
+		messageText.append(content);
+	}
 	messageClose.textContent = '✖';
 	messageIcon.textContent = icon;
 	messageContainer.append(messageClose, messageIcon, messageText);
-	messageClose.addEventListener('click', () => {
+	const removeMsg = cause => {
 		messageContainer.remove();
+		sendEvent(EV_MESSAGE_CLOSE, {
+			content,
+			type,
+			icon,
+			timeout,
+			cause,
+		});
 		if (!master.children.length) {
 			master.style.display = 'none';
 		}
+	};
+	messageClose.addEventListener('click', () => {
+		removeMsg('click');
 	});
 	master.append(messageContainer);
 	master.style.display = 'block';
+	if (!isNaN(timeout) && timeout > 0) {
+		setTimeout(() => removeMsg('timeout'), timeout * 1000);
+	}
 	sendEvent(EV_MESSAGE_BOX, {
 		content,
 		type,
 		icon,
+		timeout,
 	});
 };
-const putError = content => putMessage(content, 'error', '⚠');
-const putWarning = content => putMessage(content, 'warning', '⚠');
-const putHelp = content => putMessage(content, 'help', '🛈');
+const putError = (content, timeout) => putMessage(content, 'error', '⚠', timeout);
+const putWarning = (content, timeout) => putMessage(content, 'warning', '⚠', timeout);
+const putHelp = (content, timeout) => putMessage(content, 'help', '🛈', timeout);
 
 const KEY_HANDLERS = new Map();
 const registerKeybind = (keys, handler) => {
@@ -797,6 +820,27 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 	const postRatingElem = document.querySelector("#post-rating-text");
 	const tagList = document.querySelector("#tag-list");
 	const curSearchBanner = document.querySelector("#nav-links-top > .search-seq-nav span.search-name");
+	const poolLinkIdLead = "nav-link-for-pool-";
+	const poolLink = document.querySelector(`#nav-links-top > .pool-nav > ul > li[id^="${poolLinkIdLead}"]`);
+	const linkedPool = parseInt((
+		poolLink || {
+			id: `${poolLinkIdLead}0`,
+		}
+	).id.slice(poolLinkIdLead.length), 10);
+	const scrollToRelated = evt => {
+		try {
+			parentChildNotices.scrollIntoView();
+			log("Scrolled to parent/child notices");
+		}
+		catch (err) {
+			putError("Scrolling failed");
+			err("Can't scroll to parent/child notices:", err);
+		}
+		if (evt) {
+			evt.preventDefault();
+			evt.stopPropagation();
+		}
+	};
 	if (image) {
 		if (image.tagName.toLowerCase() == 'img') {
 			image.addEventListener('dblclick', evt => {
@@ -829,7 +873,7 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 			setFlag("no-source-link");
 		}
 	}
-	if (parentChildNotices) {
+	if (parentChildNotices.children.length) {
 		setFlag("has-related-posts");
 		if (document.querySelector("#has-parent-relationship-preview")) {
 			setFlag("has-parent-post");
@@ -845,20 +889,12 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 			hasFlag("has-child-post") ? 'Children' : '',
 		].filter(e => e).join('/');
 		scrollToNoticeLink.href = '#';
-		scrollToNoticeLink.addEventListener('click', evt => {
-			try {
-				parentChildNotices.scrollIntoView();
-				log("Scrolled to parent/child notices");
-			}
-			catch (err) {
-				putError("Scrolling failed");
-				console.err("Can't scroll to parent/child notices:", err);
-			}
-			evt.preventDefault();
-			evt.stopPropagation();
-		});
+		scrollToNoticeLink.addEventListener('click', scrollToRelated);
 		scrollToNoticeItem.append(scrollToNoticeLink);
 		subnavbar.append(scrollToNoticeItem);
+	}
+	if (linkedPool) {
+		setFlag("post-in-pool");
 	}
 	if (postRatingElem) {
 		try {
@@ -930,6 +966,30 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 	elevateSearchTerms();
 	try {
 		image.scrollIntoView();
+		if (hasFlag("has-related-posts")) {
+			const msg = [
+				"This post has ",
+				makeElem('a'),
+			];
+			msg[1].href = '#';
+			msg[1].textContent = "related posts";
+			msg[1].addEventListener('click', scrollToRelated);
+			putHelp(msg);
+		}
+		if (linkedPool) {
+			const msg = [
+				"This post is in ",
+				makeElem('a'),
+			];
+			msg[1].href = '#';
+			msg[1].textContent = "a pool";
+			msg[1].addEventListener('click', evt => {
+				document.querySelector("#nav-links-top").scrollIntoView();
+				evt.preventDefault();
+				evt.stopPropagation();
+			});
+			putHelp(msg);
+		}
 	}
 	catch (err) {
 		error("Can't scroll to post content:", err);
