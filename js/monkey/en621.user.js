@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      3.2.1
+// @version      3.3.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v3.3.0 - pool reader progress is more visible
 v3.2.1 - not every page has an `#image-container` element, whoopsy
 v3.2.0 - scrolling to related posts now aligns it with the bottom of the screen, not the top
 v3.1.0 - minor fixes, minor improvements, notices are now shown for parent/child posts and pools
@@ -60,6 +61,7 @@ v1.0.0 - initial script, minimal functionality, mostly ripped apart from three o
 */
 
 /* PLANS
+- Set up an inter-tab queue for pool reader mode?
 - Saved tags feature from the old (pre-site-update) version
 */
 /* eslint-enable max-len */
@@ -532,7 +534,7 @@ const enablePoolReaderMode = async () => {
 		statusLine.textContent = statusText;
 	};
 	const title = subtitle => {
-		document.title = `Pool Reader: ${subtitle} - e621`;
+		document.title = `Reader: ${subtitle} - e621`;
 	};
 	const checkResponseValidity = async poolData => {
 		const pools = poolData.response;
@@ -568,16 +570,16 @@ const enablePoolReaderMode = async () => {
 		state.posts = [];
 		await state.postIDs.reduce(async (ticker, postID) => {
 			await ticker;
-			status("Pausing to comply with site rules");
-			await pause(1500);
 			const current = state.posts.length + 1;
 			const total = state.postCount;
+			status(`[${current - 1}/${total}] Pausing to comply with site rules`);
+			await pause(1500);
 			title(`loading ${current}/${total} of ${name}... (#${state.poolID})`);
-			status(`Loading post #${postID} (${current}/${total})`);
+			status(`[${current}/${total}] Loading post #${postID}`);
 			const api = await request(`https://e621.net/posts/${postID}.json`);
 			if (api.response.post.flags.deleted) {
 				warn(`Skipping deleted post #${postID}`);
-				putWarning(`Post #${postID} is marked as deleted.`);
+				putWarning(`Post #${postID} (${current}/${total}) is marked as deleted.`);
 				state.posts.push({
 					url: null,
 					id: postID,
