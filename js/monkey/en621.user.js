@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      3.4.0
+// @version      3.5.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v3.5.0 - implemented proper system for status/control tabs like the direct link toggle, exposed via API
 v3.4.0 - removed pool reader auto-init on page load
 v3.3.0 - pool reader progress is more visible
 v3.2.1 - not every page has an `#image-container` element, whoopsy
@@ -400,6 +401,55 @@ const POOL_READER_STATUSLINE_ID = "enhanced621-pool-reader-status";
 const LINK_MODE_ID = "en621-link-mode-toggle";
 const POOL_READER_LINK_CLASS = "en621-post-link";
 
+const controlTabsContainer = makeElem('div', 'control-tabs-container');
+const addControlTab = (...parts) => {
+	if (!parts.length) {
+		return false;
+	}
+	let tab;
+	if (parts.length > 1 || (parts[0].nodeName || '').toLowerCase() != 'div') {
+		tab = makeElem('div');
+		tab.append(...parts);
+	}
+	else {
+		tab = parts[0];
+	}
+	tab.classList.add("site-notice");
+	controlTabsContainer.prepend(tab);
+	return tab;
+};
+/* eslint-disable sonarjs/no-duplicate-string */
+GM_addStyle([
+	"#control-tabs-container {",
+	"position: fixed;",
+	"right: 0;",
+	"bottom: 10px;",
+	"border-radius: 0;",
+	"display: flex;",
+	"flex-direction: column;",
+	"justify-content: flex-end;",
+	"align-items: flex-end;",
+	"}",
+	"#control-tabs-container > div {",
+	"flex: 0 0 auto;",
+	"margin-top: 5px;",
+	"border-radius: 7px 0 0 7px;",
+	"z-index: 9999;",
+	"max-width: 300px;",
+	"width: -moz-fit-content;",
+	"width: fit-content;",
+	"text-align: left !important;",
+	"transition: right 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);",
+	"transition-delay: 0.15;",
+	"}",
+	"#control-tabs-container > div:hover {",
+	"right: 0;",
+	"transition-delay: 0.5s;",
+	"}",
+].join(''));
+/* eslint-enable sonarjs/no-duplicate-string */
+document.querySelector("#page").append(controlTabsContainer);
+
 const modeBox = makeElem('div', `${LINK_MODE_ID}-container`, "site-notice");
 const modeToggle = makeElem('input', LINK_MODE_ID);
 const modeLabel = makeElem('label');
@@ -444,36 +494,24 @@ modeToggle.addEventListener('input', () => {
 		active: modeToggle.checked,
 	});
 });
-modeBox.inject = () => {
-	modeBox.inject = NOP;
-	document.querySelector("#page").append(modeBox);
-};
 GM_addStyle([
 	`#${LINK_MODE_ID}-container {`,
-	'position: fixed !important;',
-	'bottom: 10px;',
-	'right: -97px;',
-	'border-radius: 7px 0 0 7px;',
-	'transition: right 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);',
-	'transition-delay: 0.15s;',
-	'}',
-	`#${LINK_MODE_ID}-container:hover {`,
-	'right: 0;',
-	'transition-delay: 0.5s;',
-	'}',
+	"right: -97px;",
+	"}",
 	`#${LINK_MODE_ID} {`,
-	'display: none;',
-	'}',
+	"display: none;",
+	"}",
 	`#${LINK_MODE_ID} + label::before {`,
-	'content: "☒ ";',
-	'font-weight: 900;',
-	'color: red;',
-	'}',
+	"content: \"☒ \";",
+	"font-weight: 900;",
+	"color: red;",
+	"}",
 	`#${LINK_MODE_ID}:checked + label::before {`,
-	'content: "☑ ";',
-	'color: green;',
-	'}',
+	"content: \"☑ \";",
+	"color: green;",
+	"}",
 ].join("\n"));
+addControlTab(modeBox);
 
 const enablePoolReaderMode = async () => {
 	if (!PATH.startsWith(POOL_PATH_PREFIX) || !PATH.slice(POOL_PATH_PREFIX.length).match(/^\d+/u)) {
@@ -527,6 +565,7 @@ const enablePoolReaderMode = async () => {
 	].join(''));
 	const poolID = parseInt(PATH.slice(POOL_PATH_PREFIX.length), 10);
 	const statusLine = makeElem('menu', POOL_READER_STATUSLINE_ID);
+	const statusTab = addControlTab("Working...");
 	subnavbar.parentElement.append(statusLine);
 	const status = statusText => {
 		statusLine.textContent = statusText;
@@ -578,6 +617,7 @@ const enablePoolReaderMode = async () => {
 			if (api.response.post.flags.deleted) {
 				warn(`Skipping deleted post #${postID}`);
 				putWarning(`Post #${postID} (${current}/${total}) is marked as deleted.`);
+				statusTab.textContent = `${current}/${total} done`;
 				state.posts.push({
 					url: null,
 					id: postID,
@@ -603,6 +643,7 @@ const enablePoolReaderMode = async () => {
 				link.dataset.postlink = postURL;
 				link.title = `${state.poolName}, ${current}/${total}`;
 				img.addEventListener('load', () => {
+					statusTab.textContent = `${current}/${total} done`;
 					sendEvent(EV_POST_LOADED, {
 						id: postID,
 						source: sourceURL,
@@ -645,6 +686,7 @@ const enablePoolReaderMode = async () => {
 			failed: true,
 			error: err,
 		});
+		statusTab.textContent = "⚠ Error!";
 	};
 	title(`loading pool #${poolID}...`);
 	status(`Loading pool data for pool #${poolID}...`);
@@ -667,6 +709,13 @@ const enablePoolReaderMode = async () => {
 			title(`${state.poolName} (#${state.poolID})`);
 			status(`Finished loading images for pool ${state.poolID} (${state.postCount} total)`);
 			return state;
+		})
+		.catch(err => {
+			statusTab.textContent = "⚠ Error!";
+			sendEvent(EV_POOL_READER_STATE, {
+				failed: true,
+				error: err,
+			});
 		});
 };
 const disablePoolReaderMode = () => {
@@ -791,7 +840,6 @@ registerKeybind('+d', () => {
 });
 
 if (PATH.startsWith(POOL_PATH_PREFIX) && PATH.slice(POOL_PATH_PREFIX.length).match(/^\d+/u)) {
-	modeBox.inject();
 	const readerItem = makeElem('li', 'enhanced621-pool-reader-toggle');
 	const readerLink = makeElem('a');
 	GM_addStyle([
@@ -995,7 +1043,6 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 	}
 }
 else if (PATH == POST_INDEX_PATH) {
-	modeBox.inject();
 	elevateSearchTerms();
 	try {
 		document.querySelector('div.blacklist-help').children[0].textContent = "(?)";
@@ -1079,6 +1126,7 @@ Object.defineProperties(unsafeWindow, {
 			enablePoolReaderMode,
 			disablePoolReaderMode,
 			togglePoolReaderMode,
+			addControlTab,
 		}),
 		enumerable: true,
 	},
