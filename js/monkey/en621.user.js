@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      3.3.0
+// @version      3.4.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v3.4.0 - removed pool reader auto-init on page load
 v3.3.0 - pool reader progress is more visible
 v3.2.1 - not every page has an `#image-container` element, whoopsy
 v3.2.0 - scrolling to related posts now aligns it with the bottom of the screen, not the top
@@ -394,8 +395,6 @@ const POOL_PATH_PREFIX = '/pools/';
 const POST_PATH_PREFIX = '/posts/';
 const POST_INDEX_PATH = '/posts';
 
-const POOL_FRAG_READER = 'reader-mode';
-
 const POOL_READER_CONTAINER_ID = "pool-reader";
 const POOL_READER_STATUSLINE_ID = "enhanced621-pool-reader-status";
 const LINK_MODE_ID = "en621-link-mode-toggle";
@@ -480,7 +479,6 @@ const enablePoolReaderMode = async () => {
 	if (!PATH.startsWith(POOL_PATH_PREFIX) || !PATH.slice(POOL_PATH_PREFIX.length).match(/^\d+/u)) {
 		throw new Error("This is not a pool page!");
 	}
-	location.hash = POOL_FRAG_READER;
 	const vanillaPageList = document.querySelector("div#posts");
 	if (!vanillaPageList) {
 		throw new Error("No post container found");
@@ -807,9 +805,6 @@ if (PATH.startsWith(POOL_PATH_PREFIX) && PATH.slice(POOL_PATH_PREFIX.length).mat
 	readerLink.textContent = 'Toggle reader';
 	readerItem.append(readerLink);
 	subnavbar.append(readerItem);
-	if (location.hash.replace(/^#+/u, '') == POOL_FRAG_READER) {
-		enablePoolReaderMode();
-	}
 	CONSOLE_TOOLS.getVisiblePostURLs = () => {
 		const set = Array.from(document.querySelectorAll('#posts-container > article[id^="post_"]'));
 		return set.map(e => e.dataset.largeFileUrl);
