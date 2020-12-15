@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      3.5.1
+// @version      4.0.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,8 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v4.0.0 - rewrote notice tabs to be less dumb using the same implementation as controls, shortened CSS class names
+
 v3.5.1 - HELLA documentation (not really) and a handful of minor bugfixes and optimisations
 v3.5.0 - implemented proper system for status/control tabs like the direct link toggle, exposed via API
 v3.4.0 - removed pool reader auto-init on page load
@@ -219,66 +221,110 @@ const makeElem = (tag, id, clazz) => {
 	}
 	return elem;
 };
-const warningBox = () => {
-	// If the message box container (upper right) already exists, it will be returned.
-	// Otherwise, it will be created, injected, and THEN returned.
-	const ID = 'enhanced621-message-box';
-	let box = document.querySelector(`#${ID}`);
-	if (box) {
-		return box;
+
+// These two are practically the same thing (at least generally and structurally) so set them up together here.
+// Control tabs are on the BOTTOM right, message tags on the TOP right. Message tabs have an icon and can be
+// closed, control tabs can't. That's about it.
+
+const controlTabsContainer = makeElem("div", "control-tabs-container", "en621-side-tab-container");
+const messageTabsContainer = makeElem("div", "message-tabs-container", "en621-side-tab-container");
+/* eslint-disable sonarjs/no-duplicate-string */
+GM_addStyle([
+	".en621-side-tab-container {",
+	"position: fixed;",
+	"right: 0;",
+	"border-radius: 0;",
+	"display: flex;",
+	"flex-direction: column;",
+	"justify-content: flex-end;",
+	"align-items: flex-end;",
+	"pointer-events: none;",
+	"}",
+	"#message-tabs-container {",
+	`top: ${(document.querySelector("#image-container") || document.querySelector("#page")).offsetTop}px;`,
+	"}",
+	"#control-tabs-container {",
+	"bottom: 10px;",
+	"}",
+	".en621-message-tab, .en621-control-tab {",
+	"flex: 0 0 auto;",
+	"margin-top: 5px;",
+	"padding: 3px 0;",
+	"border-radius: 7px 0 0 7px;",
+	"z-index: 9999;",
+	"max-width: 300px;",
+	"width: -moz-fit-content;",
+	"width: fit-content;",
+	"text-align: left !important;",
+	"pointer-events: auto;",
+	"}",
+	".en621-message-dismiss {",
+	"cursor: pointer;",
+	"margin-right: 4px;",
+	"color: #999999;",
+	"font-size: 17px;",
+	"position: relative;",
+	"}",
+	".en621-message-icon {",
+	"cursor: default;",
+	"margin-left: 3px;",
+	"margin-right: 2px;",
+	"font-size: 16px;",
+	"position: relative;",
+	"}",
+	".en621-message-icon.en621-message-error {",
+	"color: #EE0000;",
+	"}",
+	".en621-message-icon.en621-message-warning {",
+	"color: #EEEE00;",
+	"}",
+	".en621-message-icon.en621-message-help {",
+	"color: #00EE44;",
+	"}",
+	".en621-message-content {",
+	"cursor: default;",
+	"margin-left: 2px;",
+	"font-size: 16px;",
+	"}",
+	".en621-control-tab {",
+	"transition: right 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);",
+	"transition-delay: 0.15;",
+	"}",
+	".en621-control-tab:hover {",
+	"right: 0;",
+	"transition-delay: 0.5s;",
+	"}",
+].join(''));
+/* eslint-enable sonarjs/no-duplicate-string */
+document.querySelector("#page").append(controlTabsContainer);
+document.querySelector("#page").append(messageTabsContainer);
+
+// This is how you add a "control" tab. It doesn't have to actually do anything, like the pool reader ministatus
+// tab which is Somewhere(tm) in the `enablePoolReaderMode` function. It's (semi-)intelligent about what you pass
+// it: if you give it more than one thing or a thing that is NOT a `<div>` element, it wraps it in a new div tag.
+// That's for the CSS that handles the styling of it. If you pass it a single div, it just uses that directly.
+// Either way, the tab (the div) is given the necessary classes and then PREpended inside the container, so that
+// new tabs are on TOP of old ones. Finally, and this is important, the tab that was inserted will be returned.
+// If you want to remove it later, you need to save that to call `.remove()` on it, likewise for adding any
+// event handlers on the tab instead of on some bit of the content.
+const addControlTab = (...parts) => {
+	if (!parts.length) {
+		return false;
 	}
-	box = makeElem('div', ID, 'status-notice');
-	box.style.display = 'none';
-	/* eslint-disable sonarjs/no-duplicate-string */
-	GM_addStyle([
-		`#${ID} {`,
-		'position: fixed;',
-		'right: 0;',
-		`top: ${(document.querySelector("#image-container") || document.querySelector("#page")).offsetTop}px;`,
-		'border-radius: 0;',
-		'width: 300px;',
-		'z-index: 9999;',
-		'}',
-		`#${ID} > .enhanced621-message {`,
-		'display: block;',
-		'margin: 4px 0;',
-		'padding: 3px 0;',
-		'border-radius: 6px 0 0 6px;',
-		'text-align: initial !important;',
-		'}',
-		'.enhanced621-message-dismiss {',
-		'cursor: pointer;',
-		'margin-right: 4px;',
-		'color: #999999;',
-		'font-size: 17px;',
-		'position: relative;',
-		'}',
-		'.enhanced621-message-icon {',
-		'cursor: default;',
-		'margin-left: 3px;',
-		'margin-right: 2px;',
-		'font-size: 16px;',
-		'position: relative;',
-		'}',
-		'.enhanced621-message-icon.enhanced621-message-error {',
-		'color: #EE0000;',
-		'}',
-		'.enhanced621-message-icon.enhanced621-message-warning {',
-		'color: #EEEE00;',
-		'}',
-		'.enhanced621-message-icon.enhanced621-message-help {',
-		'color: #00EE44;',
-		'}',
-		'.enhanced621-message-content {',
-		'cursor: default;',
-		'margin-left: 2px;',
-		'font-size: 16px;',
-		'}',
-	].join(''));
-	/* eslint-enable sonarjs/no-duplicate-string */
-	document.querySelector('#page').append(box);
-	return box;
+	let tab;
+	if (parts.length > 1 || (parts[0].nodeName || '').toLowerCase() != 'div') {
+		tab = makeElem('div');
+		tab.append(...parts);
+	}
+	else {
+		tab = parts[0];
+	}
+	tab.classList.add("site-notice");
+	tab.classList.add("en621-control-tab");
+	controlTabsContainer.prepend(tab);
+	return tab;
 };
+
 // This places a side-tab-style message as an overlay on the upper right of the page, using the warning box
 // container from the above method. The content is your user-defined stuff to put in it - a string of HTML,
 // an array of content, or just a single thing - but the type is used in the CSS class. If you don't use one
@@ -290,11 +336,13 @@ const warningBox = () => {
 // may delay it longer - but they'll also trash the UX in other ways, and there's nothing I can do anyway.
 const putMessage = (content, type, icon, timeout) => {
 	timeout = parseInt(String(timeout), 10);
-	const master = warningBox();
-	const messageContainer = makeElem('div', '', `enhanced621-message enhanced621-message-${type} site-notice`);
-	const messageText = makeElem('span', '', `enhanced621-message-content enhanced621-message-${type}`);
-	const messageClose = makeElem('span', '', `enhanced621-message-dismiss enhanced621-message-${type}`);
-	const messageIcon = makeElem('span', '', `enhanced621-message-icon enhanced621-message-${type}`);
+	if (isNaN(timeout) || timeout < 0) {
+		timeout = 0;
+	}
+	const messageContainer = makeElem('div', '', `en621-message-tab en621-message-${type} site-notice`);
+	const messageText = makeElem('span', '', `en621-message-content en621-message-${type}`);
+	const messageClose = makeElem('span', '', `en621-message-dismiss en621-message-${type}`);
+	const messageIcon = makeElem('span', '', `en621-message-icon en621-message-${type}`);
 	if (typeof content == 'string') {
 		messageText.innerHTML = content;
 	}
@@ -316,16 +364,12 @@ const putMessage = (content, type, icon, timeout) => {
 			timeout,
 			cause,
 		});
-		if (!master.children.length) {
-			master.style.display = 'none';
-		}
 	};
 	messageClose.addEventListener('click', () => {
 		removeMsg('click');
 	});
-	master.append(messageContainer);
-	master.style.display = 'block';
-	if (!isNaN(timeout) && timeout > 0) {
+	messageTabsContainer.append(messageContainer);
+	if (timeout) {
 		setTimeout(() => removeMsg('timeout'), timeout * 1000);
 	}
 	sendEvent(EV_MESSAGE_BOX, {
@@ -334,6 +378,7 @@ const putMessage = (content, type, icon, timeout) => {
 		icon,
 		timeout,
 	});
+	return messageContainer;
 };
 // These three are just convenience helpers for the above. You'll probably want to use these instead.
 const putError = (content, timeout) => putMessage(content, 'error', '⚠', timeout);
@@ -431,70 +476,9 @@ const POST_PATH_PREFIX = '/posts/';
 const POST_INDEX_PATH = '/posts';
 
 const POOL_READER_CONTAINER_ID = "pool-reader";
-const POOL_READER_STATUSLINE_ID = "enhanced621-pool-reader-status";
+const POOL_READER_STATUSLINE_ID = "en621-pool-reader-status";
 const LINK_MODE_ID = "en621-link-mode-toggle";
 const POOL_READER_LINK_CLASS = "en621-post-link";
-
-// This is... kinda like the message box thing, and I'll probably fix the message boxes to be done the same way,
-// but that's coming in a future update. TODO, you know how it is. These are on the BOTTOM right, and do NOT have
-// a close button - or an icon, for that matter - because they're intended to do things, or at least to stick
-// around. The "toggle direct image links" box is in here, as you can see below the setup.
-const controlTabsContainer = makeElem('div', 'control-tabs-container');
-// This is how you add a "control" tab. It doesn't have to actually do anything, like the pool reader ministatus
-// tab which is Somewhere(tm) in the `enablePoolReaderMode` function. It's (semi-)intelligent about what you pass
-// it: if you give it more than one thing or a thing that is NOT a `<div>` element, it wraps it in a new div tag.
-// That's for the CSS that handles the styling of it. If you pass it a single div, it just uses that directly.
-// Either way, the tab (the div) is given the necessary class and then PREpended inside the container, so that
-// new tabs are on TOP of old ones. Finally, and this is important, the tab that was inserted will be returned.
-// If you want to remove it later, you need to save that to call `.remove()` on it, likewise for adding any
-// event handlers on the tab instead of on some bit of the content.
-const addControlTab = (...parts) => {
-	if (!parts.length) {
-		return false;
-	}
-	let tab;
-	if (parts.length > 1 || (parts[0].nodeName || '').toLowerCase() != 'div') {
-		tab = makeElem('div');
-		tab.append(...parts);
-	}
-	else {
-		tab = parts[0];
-	}
-	tab.classList.add("site-notice");
-	controlTabsContainer.prepend(tab);
-	return tab;
-};
-/* eslint-disable sonarjs/no-duplicate-string */
-GM_addStyle([
-	"#control-tabs-container {",
-	"position: fixed;",
-	"right: 0;",
-	"bottom: 10px;",
-	"border-radius: 0;",
-	"display: flex;",
-	"flex-direction: column;",
-	"justify-content: flex-end;",
-	"align-items: flex-end;",
-	"}",
-	"#control-tabs-container > div {",
-	"flex: 0 0 auto;",
-	"margin-top: 5px;",
-	"border-radius: 7px 0 0 7px;",
-	"z-index: 9999;",
-	"max-width: 300px;",
-	"width: -moz-fit-content;",
-	"width: fit-content;",
-	"text-align: left !important;",
-	"transition: right 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);",
-	"transition-delay: 0.15;",
-	"}",
-	"#control-tabs-container > div:hover {",
-	"right: 0;",
-	"transition-delay: 0.5s;",
-	"}",
-].join(''));
-/* eslint-enable sonarjs/no-duplicate-string */
-document.querySelector("#page").append(controlTabsContainer);
 
 // This is the toggle for direct image links, now updated to use the above control tabs mechanism. It's an
 // example of doing a tab with custom content that you don't need to remove later.
@@ -872,7 +856,7 @@ const elevateSearchTerms = () => {
 		}
 		if (terms.length) {
 			GM_addStyle([
-				".enhanced621-highlighted-tag {",
+				".en621-highlighted-tag {",
 				"font-style: italic;",
 				"}",
 			].join("\n"));
@@ -889,7 +873,7 @@ const elevateSearchTerms = () => {
 						log(`Elevating "${tag}"`);
 						const line = tagElem.parentElement;
 						const group = line.parentElement;
-						tagElem.classList.add("enhanced621-highlighted-tag");
+						tagElem.classList.add("en621-highlighted-tag");
 						group.insertAdjacentElement('afterbegin', line);
 					}
 				}
@@ -945,10 +929,10 @@ registerKeybind('+d', () => {
 
 if (PATH.startsWith(POOL_PATH_PREFIX) && PATH.slice(POOL_PATH_PREFIX.length).match(/^\d+/u)) {
 	// If this is a pool page, set up the pool-specific run-once features
-	const readerItem = makeElem('li', 'enhanced621-pool-reader-toggle');
+	const readerItem = makeElem('li', 'en621-pool-reader-toggle');
 	const readerLink = makeElem('a');
 	GM_addStyle([
-		'#enhanced621-pool-reader-toggle {',
+		'#en621-pool-reader-toggle {',
 		'position: absolute;',
 		'right: 20px;',
 		'cursor: pointer;',
@@ -1018,9 +1002,9 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 		}
 		// And whatever it is, we add a link on the subnavbar to go to the direct link too
 		if (sourceLink && sourceLink.href) {
-			const directSourceItem = makeElem('li', 'enhanced621-direct-source');
+			const directSourceItem = makeElem('li', 'en621-direct-source');
 			const directSourceLink = makeElem('a');
-			GM_addStyle('#enhanced621-direct-source { position: absolute; right: 20px; cursor: pointer; }');
+			GM_addStyle('#en621-direct-source { position: absolute; right: 20px; cursor: pointer; }');
 			directSourceLink.textContent = 'Direct Link';
 			directSourceLink.href = sourceLink.href;
 			directSourceItem.append(directSourceLink);
@@ -1042,9 +1026,9 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 		if (document.querySelector("#has-children-relationship-preview")) {
 			setFlag("has-child-post");
 		}
-		const scrollToNoticeItem = makeElem('li', 'enhanced621-parent-child-notices');
+		const scrollToNoticeItem = makeElem('li', 'en621-parent-child-notices');
 		const scrollToNoticeLink = makeElem('a');
-		GM_addStyle('#enhanced621-parent-child-notices { position: absolute; right: 120px; cursor: pointer; }');
+		GM_addStyle('#en621-parent-child-notices { position: absolute; right: 120px; cursor: pointer; }');
 		scrollToNoticeLink.textContent = [
 			hasFlag("has-parent-post") ? 'Parent' : '',
 			hasFlag("has-child-post") ? 'Children' : '',
@@ -1119,7 +1103,7 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 	if (curSearchBanner) { // may not exist
 		// This is the banner over a post showing the current search that led you to it.
 		// For some reason, it's plain text. That's not very useful. Let's make it a link!
-		const link = makeElem('a', 'enhanced621-current-search-link');
+		const link = makeElem('a', 'en621-current-search-link');
 		link.textContent = CURRENT_SEARCH;
 		link.href = `/posts?tags=${encodeURIComponent(CURRENT_SEARCH)}`;
 		curSearchBanner.innerHTML = link.outerHTML;
