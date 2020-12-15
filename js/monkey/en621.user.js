@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      3.5.0
+// @version      3.5.1
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v3.5.1 - HELLA documentation (not really) and a handful of minor bugfixes and optimisations
 v3.5.0 - implemented proper system for status/control tabs like the direct link toggle, exposed via API
 v3.4.0 - removed pool reader auto-init on page load
 v3.3.0 - pool reader progress is more visible
@@ -108,6 +109,10 @@ const request = (uri, ctx) => {
 };
 
 const sendEvent = async (name, extra, cancelable) => {
+	// Events are sent as `en621` with `detail.name` set to the given `name`
+	// Any extra data is set on `detail.data` AS-IS
+	// If the event is cancelable, you'll probably want to `.then()` on this function, since
+	// it returns a promise that resolves to the event object once all handlers finish running.
 	const clean = String(name)
 		.replace(/\s+/gu, '-')
 		.replace(/^en621-?/ui, '')
@@ -153,10 +158,12 @@ document.addEventListener('en621', evt => {
 });
 
 const setFlag = flagstr => {
+	// Flags are set as classes on the body tag, prefixed with `en621-` and forced to lowercase
+	// This allows checking for flags easily enough (see `hasFlag()` for that) and also applying
+	// conditional CSS based on the presence (or, with `:not()`, absence) of various flags.
 	const flags = flagstr.replace(/\s+/gu, ' ').split(" ");
 	flags.forEach(flag => {
 		const clean = flag
-			.replace(/\s+/gu, '-')
 			.replace(/^en621-?/ui, '')
 			.toLowerCase();
 		document.body.classList.add(`en621-${clean}`);
@@ -166,7 +173,6 @@ const unsetFlag = flagstr => {
 	const flags = flagstr.replace(/\s+/gu, ' ').split(" ");
 	flags.forEach(flag => {
 		const clean = flag
-			.replace(/\s+/gu, '-')
 			.replace(/^en621-?/ui, '')
 			.toLowerCase();
 		document.body.classList.remove(`en621-${clean}`);
@@ -176,17 +182,24 @@ const toggleFlag = flagstr => {
 	const flags = flagstr.replace(/\s+/gu, ' ').split(" ");
 	flags.forEach(flag => {
 		const clean = flag
-			.replace(/\s+/gu, '-')
 			.replace(/^en621-?/ui, '')
 			.toLowerCase();
 		document.body.classList.toggle(`en621-${clean}`);
 	});
 };
+// Note that the `flagstr` passed to this is SPLIT ON WHITESPACE!
+// If you pass a string like "this is my flag" then FOUR flags will be checked:
+// `en621-this`
+// `en621-is`
+// `en621-my`
+// `en621-flag`
+// The return value is true if and ONLY if ALL flags are found.
+// NON-whitespace is left entirely unchanged. Also note that `en621-` is prefixed to each flag,
+// but will NOT be duplicated if your passed flag already has it.
 const hasFlag = flags => {
 	const flagList = flags.replace(/\s+/gu, ' ').split(" ");
 	for (const flag of flagList) {
 		const clean = flag
-			.replace(/\s+/gu, '-')
 			.replace(/^en621-?/ui, '')
 			.toLowerCase();
 		if (!document.body.classList.contains(`en621-${clean}`)) {
@@ -207,6 +220,8 @@ const makeElem = (tag, id, clazz) => {
 	return elem;
 };
 const warningBox = () => {
+	// If the message box container (upper right) already exists, it will be returned.
+	// Otherwise, it will be created, injected, and THEN returned.
 	const ID = 'enhanced621-message-box';
 	let box = document.querySelector(`#${ID}`);
 	if (box) {
@@ -264,6 +279,15 @@ const warningBox = () => {
 	document.querySelector('#page').append(box);
 	return box;
 };
+// This places a side-tab-style message as an overlay on the upper right of the page, using the warning box
+// container from the above method. The content is your user-defined stuff to put in it - a string of HTML,
+// an array of content, or just a single thing - but the type is used in the CSS class. If you don't use one
+// of the predefined helpers (see below this function) then you'll need to add your own CSS for it. The icon
+// is treated as plaintext and positioned between the close button and the `content` in the tab. If you don't
+// pass a timeout (or if it's not a number that is greater than zero) then it'll stay up until the user closes
+// it with the button. Otherwise, the timeout is how many SECONDS (not milliseconds!) it should stay up before
+// autoclosing. Keep in mind that `setTimeout()` uses the delay as a MINIMUM, so poorly-made scripts on the page
+// may delay it longer - but they'll also trash the UX in other ways, and there's nothing I can do anyway.
 const putMessage = (content, type, icon, timeout) => {
 	timeout = parseInt(String(timeout), 10);
 	const master = warningBox();
@@ -311,10 +335,16 @@ const putMessage = (content, type, icon, timeout) => {
 		timeout,
 	});
 };
+// These three are just convenience helpers for the above. You'll probably want to use these instead.
 const putError = (content, timeout) => putMessage(content, 'error', '⚠', timeout);
 const putWarning = (content, timeout) => putMessage(content, 'warning', '⚠', timeout);
 const putHelp = (content, timeout) => putMessage(content, 'help', '🛈', timeout);
 
+// Rather than defining a whole arseload of keydown handlers and duplicating the checks against editable content
+// and the like, en621 offers its own keybind manager: you register a keybind with `registerKeybind` (shocking!)
+// and then it handles the actual checks. The `keys` string is kinda taken from AutoHotkey - modifiers like
+// control, shift, and alt are all indicated with special characters. Yes, that currently means you can't bind
+// those characters. I'll fix that.
 const KEY_HANDLERS = new Map();
 const registerKeybind = (keys, handler) => {
 	let modifiers = KB_NONE;
@@ -350,6 +380,7 @@ const registerKeybind = (keys, handler) => {
 		log(`Registered keybind handler for ${pretty}`);
 	}
 };
+// This is en621's keybind handler - a single event checks the map to find your handler.
 document.addEventListener('keydown', evt => {
 	// eslint-disable-next-line array-bracket-newline, array-element-newline
 	if (evt.target.isContentEditable || [ 'input', 'textarea' ].includes(evt.target.tagName.toLowerCase())) {
@@ -378,6 +409,9 @@ document.addEventListener('keydown', evt => {
 	}
 });
 
+// Somewhat irritatingly, e621 uses different query parameters for the tag search depending on where you are.
+// This is an anonymous function that's immediately run, which just tries the (known) parameters it uses and
+// returns the (decoded) search, or an empty string if one wasn't found.
 const CURRENT_SEARCH = (() => {
 	const p = new URLSearchParams(location.search);
 	return void 0
@@ -401,7 +435,19 @@ const POOL_READER_STATUSLINE_ID = "enhanced621-pool-reader-status";
 const LINK_MODE_ID = "en621-link-mode-toggle";
 const POOL_READER_LINK_CLASS = "en621-post-link";
 
+// This is... kinda like the message box thing, and I'll probably fix the message boxes to be done the same way,
+// but that's coming in a future update. TODO, you know how it is. These are on the BOTTOM right, and do NOT have
+// a close button - or an icon, for that matter - because they're intended to do things, or at least to stick
+// around. The "toggle direct image links" box is in here, as you can see below the setup.
 const controlTabsContainer = makeElem('div', 'control-tabs-container');
+// This is how you add a "control" tab. It doesn't have to actually do anything, like the pool reader ministatus
+// tab which is Somewhere(tm) in the `enablePoolReaderMode` function. It's (semi-)intelligent about what you pass
+// it: if you give it more than one thing or a thing that is NOT a `<div>` element, it wraps it in a new div tag.
+// That's for the CSS that handles the styling of it. If you pass it a single div, it just uses that directly.
+// Either way, the tab (the div) is given the necessary class and then PREpended inside the container, so that
+// new tabs are on TOP of old ones. Finally, and this is important, the tab that was inserted will be returned.
+// If you want to remove it later, you need to save that to call `.remove()` on it, likewise for adding any
+// event handlers on the tab instead of on some bit of the content.
 const addControlTab = (...parts) => {
 	if (!parts.length) {
 		return false;
@@ -450,6 +496,8 @@ GM_addStyle([
 /* eslint-enable sonarjs/no-duplicate-string */
 document.querySelector("#page").append(controlTabsContainer);
 
+// This is the toggle for direct image links, now updated to use the above control tabs mechanism. It's an
+// example of doing a tab with custom content that you don't need to remove later.
 const modeBox = makeElem('div', `${LINK_MODE_ID}-container`, "site-notice");
 const modeToggle = makeElem('input', LINK_MODE_ID);
 const modeLabel = makeElem('label');
@@ -458,12 +506,15 @@ modeLabel.htmlFor = LINK_MODE_ID;
 modeLabel.textContent = "Direct image links";
 modeBox.append(modeToggle, modeLabel);
 modeToggle.addEventListener('input', () => {
-	info("Toggling direct image links mode");
-	const links = document.querySelectorAll(`a.${POOL_READER_LINK_CLASS}`);
-	const previews = document.querySelectorAll("div#posts-container > article");
+	// This bit was a little complicated to wrangle together, but it should be easy enough to follow:
+	const links = document.querySelectorAll(`a.${POOL_READER_LINK_CLASS}`); // for pool reader pages...
+	const previews = document.querySelectorAll("div#posts-container > article"); // for pools and post searches...
+	// If you're looking at a pool, we need to save the ID for restoring the proper post URL.
+	// Might be able to do that a better way, actually... TODO that.
 	const poolID = PATH.startsWith(POOL_PATH_PREFIX)
 		? parseInt(PATH.slice(POOL_PATH_PREFIX.length), 10)
 		: 0;
+	// This is for the current search / pool ID params for post links
 	const params = new URLSearchParams();
 	if (poolID && !isNaN(poolID)) {
 		params.set('pool_id', poolID);
@@ -472,6 +523,7 @@ modeToggle.addEventListener('input', () => {
 		params.set('q', CURRENT_SEARCH);
 	}
 	const urlTrail = params.toString() ? `?${params.toString()}` : '';
+	// Need to prod the relevant pages, see what the datasets contain...
 	if (modeToggle.checked) {
 		for (const link of links) {
 			link.href = link.children[0].src;
@@ -494,6 +546,7 @@ modeToggle.addEventListener('input', () => {
 		active: modeToggle.checked,
 	});
 });
+// This just styles the control tab's content
 GM_addStyle([
 	`#${LINK_MODE_ID}-container {`,
 	"right: -97px;",
@@ -513,14 +566,18 @@ GM_addStyle([
 ].join("\n"));
 addControlTab(modeBox);
 
+// Here be dragons.
 const enablePoolReaderMode = async () => {
+	// If it's not a pool page, just cut out now. It ain't happening, chief.
 	if (!PATH.startsWith(POOL_PATH_PREFIX) || !PATH.slice(POOL_PATH_PREFIX.length).match(/^\d+/u)) {
 		throw new Error("This is not a pool page!");
 	}
+	// If we can't find the posts, we're not gonna be able to do anything.
 	const vanillaPageList = document.querySelector("div#posts");
 	if (!vanillaPageList) {
 		throw new Error("No post container found");
 	}
+	// If the pool reader content has already been set up, just switch to it.
 	let readerPageContainer = document.querySelector(`div#${POOL_READER_CONTAINER_ID}`);
 	if (readerPageContainer) {
 		vanillaPageList.style.display = 'none';
@@ -533,6 +590,7 @@ const enablePoolReaderMode = async () => {
 		return readerPageContainer;
 	}
 	// If we get here, it's the first go and we're constructing it from scratch
+	// This is done on-demand so we don't have to do the setup when it's not needed
 	readerPageContainer = makeElem('div', POOL_READER_CONTAINER_ID);
 	vanillaPageList.parentElement.append(readerPageContainer);
 	GM_addStyle([
@@ -565,6 +623,7 @@ const enablePoolReaderMode = async () => {
 	].join(''));
 	const poolID = parseInt(PATH.slice(POOL_PATH_PREFIX.length), 10);
 	const statusLine = makeElem('menu', POOL_READER_STATUSLINE_ID);
+	// This here is an example of a "control" tab with simple text content that DOES get changed later
 	const statusTab = addControlTab("Working...");
 	subnavbar.parentElement.append(statusLine);
 	const status = statusText => {
@@ -573,9 +632,10 @@ const enablePoolReaderMode = async () => {
 	const title = subtitle => {
 		document.title = `Reader: ${subtitle} - e621`;
 	};
+	// We have a bunch of handlers here, so let's break it down a little...
 	const checkResponseValidity = async poolData => {
+		// Step one - this handler - is making sure the data we get back from the site is what we expect
 		const pools = poolData.response;
-		// pools is an array of pool objects
 		if (pools.length > 1) {
 			throw new Error(`Site returned too many options (${pools.length})`);
 		}
@@ -596,6 +656,8 @@ const enablePoolReaderMode = async () => {
 		}
 		title(`loading ${name}... (#${id})`);
 		status(`Loading ${total} post${total == 1 ? '' : 's'} from pool #${id}...`);
+		// This object is passed through the chain of handlers to hold all of the necessary into
+		// It probably also has some unnecessary info too, tbh
 		const state = Object.create(null);
 		state.poolID = id;
 		state.poolName = name;
@@ -604,10 +666,14 @@ const enablePoolReaderMode = async () => {
 		return state;
 	};
 	const insertImages = async state => {
+		// This one runs long (but async) because it sequentially inserts each image, waiting for it to finish
+		// loading before continuing to the next one. Also it has to pause between hits in order to comply with
+		// e621's API rules (and to avoid rudely hammering the server) too.
 		state.posts = [];
+		// This is a little trick to resolve promises sequentially, finishing each before starting the next
 		await state.postIDs.reduce(async (ticker, postID) => {
-			await ticker;
-			const current = state.posts.length + 1;
+			await ticker; // Wait for the last one to finish BEFORE continuing
+			const current = state.posts.length + 1; // This is the ordinal number of the post we are NOW loading
 			const total = state.postCount;
 			status(`[${current - 1}/${total}] Pausing to comply with site rules`);
 			await pause(1500);
@@ -615,6 +681,7 @@ const enablePoolReaderMode = async () => {
 			status(`[${current}/${total}] Loading post #${postID}`);
 			const api = await request(`https://e621.net/posts/${postID}.json`);
 			if (api.response.post.flags.deleted) {
+				// If the post is deleted, then we tell the user and skip to the next, nothing more to be done
 				warn(`Skipping deleted post #${postID}`);
 				putWarning(`Post #${postID} (${current}/${total}) is marked as deleted.`);
 				statusTab.textContent = `${current}/${total} done`;
@@ -638,11 +705,17 @@ const enablePoolReaderMode = async () => {
 				id: postID,
 			});
 			return new Promise(resolve => {
+				// Each image is wrapped in a link to the post it's from, though the direct-mode toggle can
+				// switch that to link to the image itself. Each link also has a unique ID containing the
+				// post it's from. Technically, you could CSS-style specific posts if you wanted to.
 				const link = makeElem('a', `post-${postID}`, POOL_READER_LINK_CLASS);
 				const img = makeElem('img', '', 'pool-image');
 				link.dataset.postlink = postURL;
+				// The link also tells you the pool name and how far through it is on hover!
 				link.title = `${state.poolName}, ${current}/${total}`;
 				img.addEventListener('load', () => {
+					// Once the image loads, update the status tab and post an event for any addon scripts,
+					// then resolve the promise to move on.
 					statusTab.textContent = `${current}/${total} done`;
 					sendEvent(EV_POST_LOADED, {
 						id: postID,
@@ -656,28 +729,46 @@ const enablePoolReaderMode = async () => {
 					once: true,
 				});
 				link.append(img);
-				// Ugly hack
+				// Ugly hack for non-images, I might improve this sometime...
 				if (sourceURL != api.response.post.file.url) {
 					putWarning([
 						`Post #${postID} does not appear to be an image.`,
 						"Non-image posts are not yet fully supported. Only a preview will be shown.",
-					].join(" "));
+					].join(" "), 10); // Only show the message for 10 seconds
+					// There's also a big honkin banner over the preview too!
 					const indicator = makeElem('div', '', 'video-preview-indicator');
 					indicator.textContent = "[VIDEO PREVIEW]";
 					link.append(indicator);
 				}
+				// Set the source, slap it in there, and define the link depending on the current mode
 				img.src = sourceURL;
 				readerPageContainer.append(link);
 				link.href = modeToggle.checked ? sourceURL : postURL;
 			});
 		}, Promise.resolve());
+		// Once we get here, because of the await/reduce trick up there, we know that every image is loaded (or
+		// skipped, for deleted ones) so we'll let any addons know...
 		setFlag("pool-reader-loaded");
 		sendEvent(EV_POOL_READER_STATE, {
 			loaded: true,
 		});
+		// ...and continue the state chain. Whee, promises.
 		return state;
 	};
+	// Now, something might go wrong. If it does, there's not much we can actually DO, but we can at least tell
+	// the user so they don't sit there wondering.
 	const onPoolLoadingError = err => {
+		const msg = [
+			"Something went wrong. ",
+			makeElem('a'),
+		];
+		msg[1].href = '#';
+		msg[1].textContent = "Copy details?";
+		msg[1].addEventListener('click', () => {
+			GM_setClipboard(err.toString());
+			putHelp("Error message copied to clipboard!", 2);
+		});
+		putError(msg);
 		title(`pool loading failed`);
 		status(err.toString().replace(/^error:\s+/ui, ''));
 		setFlag("pool-reader-failed");
@@ -688,6 +779,7 @@ const enablePoolReaderMode = async () => {
 		});
 		statusTab.textContent = "⚠ Error!";
 	};
+	// That's the handlers, now we actually start working!
 	title(`loading pool #${poolID}...`);
 	status(`Loading pool data for pool #${poolID}...`);
 	const context = {
@@ -697,32 +789,31 @@ const enablePoolReaderMode = async () => {
 	sendEvent(EV_POOL_READER_STATE, {
 		active: true,
 	});
-	return request(`${location.origin}/pools.json?search[id]=${poolID}`, context)
-		.then(checkResponseValidity)
-		.catch(onPoolLoadingError)
+	// WHEE, PROMISES
+	return request(`${location.origin}/pools.json?search[id]=${poolID}`, context) // Get the pool details!
+		.then(checkResponseValidity) // Validate the response!
 		.then(state => {
+			// Hide the normal list because we're switching to reader mode now!
 			vanillaPageList.style.display = 'none';
 			return state;
 		})
-		.then(insertImages)
+		.then(insertImages) // Put the images on the page! (This'll take a while)
 		.then(state => {
+			// Tell the user we're done loading!
 			title(`${state.poolName} (#${state.poolID})`);
 			status(`Finished loading images for pool ${state.poolID} (${state.postCount} total)`);
 			return state;
 		})
-		.catch(err => {
-			statusTab.textContent = "⚠ Error!";
-			sendEvent(EV_POOL_READER_STATE, {
-				failed: true,
-				error: err,
-			});
-		});
-};
+		.catch(onPoolLoadingError); // Any errors will skip down to here, aborting the chain of handlers.
+}; // And that's the end of constructing/enabling pool reader mode!
 const disablePoolReaderMode = () => {
-	location.hash = '';
+	// This one's really simple. Everything's already there - the normal page content - so we just need to
+	// hide pool reader and show the normal stuff.
 	const vanillaPageList = document.querySelector("div#posts");
 	const readerPageContainer = document.querySelector(`div#${POOL_READER_CONTAINER_ID}`);
 	if (!vanillaPageList || !readerPageContainer) {
+		// Although if we somehow get here without pool reader being enabled (or if we somehow can't find the
+		// normal page...) then we just silently die. Bleh.
 		return;
 	}
 	readerPageContainer.style.display = 'none';
@@ -734,6 +825,8 @@ const disablePoolReaderMode = () => {
 	});
 };
 const togglePoolReaderMode = evt => {
+	// If pool reader's on, turn it off. If it's off, turn it on.
+	// Shocking that a function named `togglePoolReaderMode` would toggle pool reader mode, I know.
 	const readerPageContainer = document.querySelector(`div#${POOL_READER_CONTAINER_ID}`);
 	if (readerPageContainer && readerPageContainer.style.display) {
 		// Exists, hidden
@@ -747,6 +840,7 @@ const togglePoolReaderMode = evt => {
 		// Doesn't exist
 		enablePoolReaderMode();
 	}
+	// You can just slap this in as an event handler, or call it directly. It's on the API, after all.
 	if (evt) {
 		evt.preventDefault();
 		evt.stopPropagation();
@@ -754,18 +848,25 @@ const togglePoolReaderMode = evt => {
 };
 
 const elevateSearchTerms = () => {
-	if (CURRENT_SEARCH) { // may be empty
+	// This looks through the tag list sidebar to find tags that were searched for, highlights them, and moves
+	// them up to the top of their category section. If there isn't a search, then it fixes a site failure where
+	// the +/- buttons aren't shown, which means you can't search for "does not have tag" unless you already have
+	// a search query.
+	if (CURRENT_SEARCH) { // may be an empty string, if there's no search
+		// Standardise yer fucking HTML, e6.
 		const tagList = document.querySelector("#tag-box") || document.querySelector("#tag-list");
 		const terms = CURRENT_SEARCH
 			.split(/\s+/u)
-			.filter(t => !t.includes(':'))
+			.filter(t => !t.includes(':')) // We don't look at metadata searches here
 			.filter(t => !t.includes('*')) // TODO find a way to handle wildcard tags in searches?
 			.map(t => t
 				.replace(/^~/u, '')
 				.replace(/_/gu, ' ')
 				.toLowerCase());
+		// As noted above, I'd /like/ to handle wildcards, but... that would require doing some kind of
+		// pattern matching against every single tag in the sidebars.
 		const originalTermCount = CURRENT_SEARCH.split(/\s+/u).length;
-		const difference = Math.abs(terms.length - originalTermCount);
+		const difference = originalTermCount - terms.length;
 		if (terms.length != originalTermCount) {
 			info(`${difference} term${difference == 1 ? '' : 's'} can't be scanned for!`);
 		}
@@ -775,6 +876,8 @@ const elevateSearchTerms = () => {
 				"font-style: italic;",
 				"}",
 			].join("\n"));
+			// Reverse cause we're looking bottom-up so that when we `.prepend()` the element to move it up,
+			// the original ordering is maintained.
 			const tagElements = Array.from(tagList.querySelectorAll("a.search-tag")).reverse();
 			log(`Elevating all instances of searched tags (${terms.length}) in ${tagElements.length} listed`);
 			for (const tagElem of tagElements) {
@@ -801,7 +904,7 @@ const elevateSearchTerms = () => {
 			}
 		}
 	}
-	else {
+	else { // if there ISN'T a current search...
 		for (const line of document.querySelectorAll('#tag-list > ul > li[class^="category-"]')) {
 			// We'll use this - the search link - as the reference for inserting the new links
 			const search = line.children[1];
@@ -828,6 +931,7 @@ const elevateSearchTerms = () => {
 	}
 };
 
+// Register a few keybinds of our own...
 registerKeybind('!r', () => {
 	document.location = 'https://e621.net/posts/random';
 });
@@ -840,6 +944,7 @@ registerKeybind('+d', () => {
 });
 
 if (PATH.startsWith(POOL_PATH_PREFIX) && PATH.slice(POOL_PATH_PREFIX.length).match(/^\d+/u)) {
+	// If this is a pool page, set up the pool-specific run-once features
 	const readerItem = makeElem('li', 'enhanced621-pool-reader-toggle');
 	const readerLink = makeElem('a');
 	GM_addStyle([
@@ -857,6 +962,9 @@ if (PATH.startsWith(POOL_PATH_PREFIX) && PATH.slice(POOL_PATH_PREFIX.length).mat
 		const set = Array.from(document.querySelectorAll('#posts-container > article[id^="post_"]'));
 		return set.map(e => e.dataset.largeFileUrl);
 	};
+	// There are not many pool-specific run-once features.
+	// YET?
+	// [ominous music]
 }
 else if (PATH.startsWith(POST_PATH_PREFIX)) {
 	const errorNoSource = "Could't find download/source link!";
@@ -888,8 +996,11 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 			evt.stopPropagation();
 		}
 	};
+	// Technically, this variable is poorly named. It COULD be a video instead. Code evolves, you know?
 	if (image) {
+		// But if it IS an image...
 		if (image.tagName.toLowerCase() == 'img') {
+			// Doubleclicking the image goes right to the direct link
 			image.addEventListener('dblclick', evt => {
 				if (sourceLink && sourceLink.href) {
 					location.assign(sourceLink.href);
@@ -905,6 +1016,7 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 		else {
 			setFlag("no-quick-source");
 		}
+		// And whatever it is, we add a link on the subnavbar to go to the direct link too
 		if (sourceLink && sourceLink.href) {
 			const directSourceItem = makeElem('li', 'enhanced621-direct-source');
 			const directSourceLink = makeElem('a');
@@ -916,11 +1028,13 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 			setFlag("has-source-link");
 		}
 		else {
+			// Unless we somehow CAN'T get the source, which would be really weird since there's SOMETHING there
 			putError(errorNoSource);
 			setFlag("no-source-link");
 		}
 	}
-	if (parentChildNotices.children.length) {
+	// The container is apparently there even when empty, but if it's NOT empty then there are related posts
+	if (parentChildNotices && parentChildNotices.children.length) {
 		setFlag("has-related-posts");
 		if (document.querySelector("#has-parent-relationship-preview")) {
 			setFlag("has-parent-post");
@@ -944,6 +1058,7 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 		setFlag("post-in-pool");
 	}
 	if (postRatingElem) {
+		// If we found the post rating, then add a metatag for it to the VERY top of the tag list
 		try {
 			const postRating = Array.from(postRatingElem.classList)
 				.filter(cl => cl.startsWith(postRatingClassPrefix))
@@ -951,6 +1066,7 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 				.slice(postRatingClassPrefix.length)
 				.toLowerCase();
 			if (postRating) {
+				// And it looks like a normal tag and everything, with all the meta links!
 				const ratingTag = `rating:${postRating}`;
 				const ratingURI = encodeURIComponent(ratingTag);
 				const header = makeElem('h2', '', 'rating-tag-list-header tag-list-header');
@@ -1001,6 +1117,8 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 		setFlag("no-post-rating");
 	}
 	if (curSearchBanner) { // may not exist
+		// This is the banner over a post showing the current search that led you to it.
+		// For some reason, it's plain text. That's not very useful. Let's make it a link!
 		const link = makeElem('a', 'enhanced621-current-search-link');
 		link.textContent = CURRENT_SEARCH;
 		link.href = `/posts?tags=${encodeURIComponent(CURRENT_SEARCH)}`;
@@ -1012,7 +1130,9 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 	}
 	elevateSearchTerms();
 	try {
+		// Try to scroll to the top of the content (which, again, might not be an actual image...)
 		image.scrollIntoView();
+		// And now that we're scrolled below the nav bar bits, show notices for pools and relations
 		if (hasFlag("has-related-posts")) {
 			const msg = [
 				"This post has ",
@@ -1020,6 +1140,7 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 			];
 			msg[1].href = '#';
 			msg[1].textContent = "related posts";
+			// You can click it to go right to the related posts though!
 			msg[1].addEventListener('click', scrollToRelated);
 			putHelp(msg);
 		}
@@ -1030,6 +1151,7 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 			];
 			msg[1].href = '#';
 			msg[1].textContent = "a pool";
+			// This one goes up to show you the pool(s) since there may be more than one
 			msg[1].addEventListener('click', evt => {
 				document.querySelector("#nav-links-top").scrollIntoView();
 				evt.preventDefault();
@@ -1043,8 +1165,10 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 	}
 }
 else if (PATH == POST_INDEX_PATH) {
+	// If you're on a post SEARCH page, rather than a POST page...
 	elevateSearchTerms();
 	try {
+		// This just annoyed me :v
 		document.querySelector('div.blacklist-help').children[0].textContent = "(?)";
 	}
 	catch (err) {
@@ -1057,23 +1181,28 @@ else if (PATH == POST_INDEX_PATH) {
 }
 
 if (document.querySelector('#search-box')) {
+	// Now, WHEREVER you are, make the search box less shitty
 	const searchBox = document.querySelector("#search-box");
 	const form = searchBox.querySelector("form");
 	const searchLine = makeElem('div', "search-line");
 	try {
-		form.addEventListener('submit', () => {
+		// It automatically cleans up the contents a little
+		const cleanSearchBox = () => {
 			info("Cleaning search input string");
 			const input = form.querySelector('#tags');
 			input.value = input.value.replace(/\s+/gu, ' ').trim();
-		});
+		};
+		form.addEventListener('submit', cleanSearchBox);
+		form.addEventListener('blur', cleanSearchBox);
 		setFlag("has-autocleaning-searchbox");
 	}
 	catch (err) {
-		error("Can't auto-format search string on submit:", err);
+		error("Can't auto-format search string:", err);
 		setFlag("no-autocleaning-searchbox");
 		setFlag("has-error");
 	}
 	try {
+		// And also make the box bigger when you're using it
 		searchLine.append(...form.children);
 		form.append(searchLine);
 		GM_addStyle([
@@ -1109,15 +1238,20 @@ if (document.querySelector('#search-box')) {
 	}
 }
 
+// Last but not least...
 Object.defineProperties(unsafeWindow, {
 	EN621_CONSOLE_TOOLS: {
+		// These aren't really advertised, it's for dev/debug work mostly
 		value: Object.freeze(CONSOLE_TOOLS),
 		enumerable: true,
 	},
 	EN621_API: {
+		// This will be documented Eventually(tm) but it's intended to allow addon scripts to easily make use
+		// of callable functionality from en621 without needing some kind of ugly hacks.
 		value: Object.freeze({
 			VERSION: CONSOLE_TOOLS.SCRIPT_VERSION,
 			hasFlag,
+			putMessage,
 			putError,
 			putWarning,
 			putHelp,
@@ -1131,8 +1265,11 @@ Object.defineProperties(unsafeWindow, {
 		enumerable: true,
 	},
 });
-setFlag("loaded");
 info("Initialisation complete");
+setFlag("loaded");
+// This uses the default timeout of 0, which means basically "as soon as nothing else is busy"
+// Addons can look for `document.body.classList.contains("en621-loaded")` and if it's not found,
+// add a listener for the `en621` event to wait for en621 to finish loading.
 setTimeout(() => sendEvent(EV_SCRIPT_LOADED, {
 	loadTimeMs: new Date().valueOf() - START_TIME_MS,
 }));
