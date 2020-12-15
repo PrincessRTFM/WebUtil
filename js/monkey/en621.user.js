@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.0.0
+// @version      4.1.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v4.1.0 - add a label to the navbar to show the loaded version, clicking does an inter-tab version check
 v4.0.0 - rewrote notice tabs to be less dumb using the same implementation as controls, shortened CSS class names
 
 v3.5.1 - HELLA documentation (not really) and a handful of minor bugfixes and optimisations
@@ -1221,6 +1222,129 @@ if (document.querySelector('#search-box')) {
 		setFlag("has-error");
 	}
 }
+
+// Stick a little thing on the navbar to show that we're loaded and our version
+// The clever bit is that is does an inter-tab version check!
+const versionChannel = new BroadcastChannel('en621-versioncheck');
+versionChannel.addEventListener("message", evt => {
+	try {
+		const my = GM_info.script.version;
+		const version = evt.data;
+		// The simple case: nothing to do
+		if (my == version) {
+			info("Got a version ping, version matches current");
+			return;
+		}
+		const remote = version.match(/^(\d+)\.(\d+)\.(\d+)-([^+]+)/u) || version.match(/^(\d+)\.(\d+)\.(\d+)/u);
+		const local = my.match(/^(\d+)\.(\d+)\.(\d+)-([^+]+)/u) || my.match(/^(\d+)\.(\d+)\.(\d+)/u);
+		// The second simple case: this is garbage data
+		if (!remote) {
+			warn("Got a version ping with junk data");
+			return;
+		}
+		// The complex case: WHAT do we do?
+		const lMajor = parseInt(local[1], 10);
+		const lMinor = parseInt(local[2], 10);
+		const lPatch = parseInt(local[3], 10);
+		const lPre = local[4] || '';
+		const rMajor = parseInt(remote[1], 10);
+		const rMinor = parseInt(remote[2], 10);
+		const rPatch = parseInt(remote[3], 10);
+		const rPre = remote[4] || '';
+		const reply = () => versionChannel.postMessage(my);
+		if (lMajor > rMajor) { // Our MAJOR is higher
+			reply();
+		}
+		else if (lMajor < rMajor) { // Our MAJOR is lower
+			location.reload();
+		}
+		else if (lMinor > rMinor) { // MAJOR matches, our MINOR is higher
+			reply();
+		}
+		else if (lMinor < rMinor) { // MAJOR matches, our MINOR is lower
+			location.reload();
+		}
+		else if (lPatch > rPatch) { // MAJOR and MINOR match, our PATCH is higher
+			reply();
+		}
+		else if (lPatch < rPatch) { // MAJOR and MINOR match, our PATCH is lower
+			location.reload();
+		}
+		else if (!lPre && rPre) { // They're a PR, we're not
+			reply(); // Prereleases are considered earlier when all else matches
+		}
+		else if (lPre && !rPre) { // We're a PR, they're not
+			location.reload();
+		}
+		else { // Can't be the same version, so by here only the PR data can differ
+			// According to https://semver.org/ the prerelease data may be structured as follows:
+			// ASCII alphanumerics and hyphens, dot-separated, no leading zero, not empty
+			// Comparison follows these rules:
+			// Compare each dot-separated identifier, left-to-right, until a difference is found, as such:
+			// Numbers-only are compared numerically, others lexically in ASCII order, numbers below others,
+			// empty sorts below (earlier than) non-empty.
+			const pL = lPre.split('.');
+			const pR = rPre.split('.');
+			const limit = Math.max(pL.length, pR.length);
+			for (let i = 0; i < limit; ++i) {
+				const l = pL[i] || '';
+				const r = pR[i] || '';
+				if (l === '') {
+					// We are the earlier version
+					location.reload();
+					break;
+				}
+				else if (r === '') {
+					// We are the later version
+					reply();
+					break;
+				}
+				else {
+					const nl = parseInt(l, 10);
+					const nr = parseInt(r, 10);
+					if (isNaN(nl) || isNaN(nr)) {
+						// Lexical ASCII sort order
+						const comp = (l > r) - (l < r);
+						// -1 = local earlier
+						//  0 = match
+						// +1 = local later
+						if (comp < 0) {
+							location.reload();
+							break;
+						}
+						else if (comp > 0) {
+							reply();
+							break;
+						}
+					}
+					// Numeric order, nice and simple
+					else if (nl < nr) { // We're earlier
+						location.reload();
+						break;
+					}
+					else if (nl > nr) { // We're later
+						reply();
+						break;
+					}
+				}
+			}
+		}
+	}
+	catch (err) {
+		error("Error in version channel handler:", err);
+	}
+});
+const navbarVersionContainer = makeElem("li", "nav-en621-version-label");
+const navbarVersionLabel = makeElem("a", "nav-en621-version-link"); // ...link to where?
+navbarVersionContainer.style.float = "right";
+navbarVersionLabel.textContent = SCRIPT_TITLE;
+navbarVersionLabel.href = "#";
+navbarVersionLabel.addEventListener("click", () => {
+	versionChannel.postMessage(GM_info.script.version);
+});
+// And put it on the page
+navbarVersionContainer.append(navbarVersionLabel);
+navbar.append(navbarVersionContainer);
 
 // Last but not least...
 Object.defineProperties(unsafeWindow, {
