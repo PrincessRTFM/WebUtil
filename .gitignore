@@ -1,2 +1,5 @@
 node_modules/
 _site/
+
+# universal ctags can operate on js files
+tags
