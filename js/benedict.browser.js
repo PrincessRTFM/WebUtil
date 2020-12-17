@@ -23,7 +23,14 @@ function roll() {
 		reason.textContent = next;
 	}
 	const timer = setInterval(() => {
-		const opacity = parseFloat(container.style.opacity || container.computedStyleMap().get('opacity').value);
+		const opacity = parseFloat(
+			container.style.opacity
+			|| (container.computedStyleMap
+				? container.computedStyleMap().get('opacity').value
+				: void 0
+			)
+			|| window.getComputedStyle(container).opacity
+		);
 		if (fading) {
 			container.style.opacity = opacity - 0.05;
 			if (opacity <= 0) {
