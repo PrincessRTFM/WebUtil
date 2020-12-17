@@ -206,7 +206,7 @@
 			enumerable: true,
 		},
 	});
-	document.addEventListener('load', () => {
+	const setup = () => {
 		const globalKeyHandler = evt => {
 			if (evt.ctrlKey && 'osd'.includes(evt.key.toLowerCase()) || ['tab'].includes(evt.key.toLowerCase())) {
 				evt.block();
@@ -272,5 +272,6 @@
 				unknownParameters
 			);
 		}
-	});
+	};
+	window.addEventListener('load', setup);
 })();
