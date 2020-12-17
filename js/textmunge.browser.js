@@ -1,8 +1,7 @@
-/* eslint-env jquery */
 /* globals initialise initialize boxes reset loadScript */
 (() => {
 	const autoloadScriptPrefix = 'load=';
-	const jqKeypress = event => {
+	const keypressLabel = event => {
 		let pressed = '';
 		if (event.ctrlKey) {
 			pressed += '^';
@@ -45,9 +44,9 @@
 	};
 	const pageInitialiser = function pageInitialiser(count) {
 		const ids = 'abcdefghijklmnopqrstuvwxyz';
-		const body = $('body');
+		const body = document.body;
 		count = parseInt(count, 10);
-		if (Number.isNaN(count)) {
+		if (isNaN(count)) {
 			console.error("Initialisation count must be a valid number");
 			return;
 		}
@@ -59,20 +58,24 @@
 			console.error(`Initialisation count cannot exceed ${ids.length}`);
 			return;
 		}
-		body.empty();
+		while (body.firstChild) {
+			body.firstChild.remove();
+		}
 		ids.split('').forEach((id, index) => {
 			delete window[id];
 			delete window[`$${id}`];
 			if (index < count) {
-				let row = $('.row').last();
-				if (!row.length || index % 4 == 0) {
-					row = $('<div class="row"></div>');
+				let row = Array.from(document.querySelectorAll('.row')).pop();
+				if (!row || index % 4 == 0) {
+					row = document.createElement('div');
+					row.className = "row"; // eslint-disable-line unicorn/no-keyword-prefix
 					body.append(row);
 				}
-				const box = $('<div class="box"></div>');
-				const label = $('<span class="label"></span>');
+				const box = document.createElement('div');
+				box.className = "box"; // eslint-disable-line unicorn/no-keyword-prefix
+				const label = document.createElement('span');
+				label.className = "label"; // eslint-disable-line unicorn/no-keyword-prefix
 				const textarea = document.createElement('textarea');
-				const input = $(textarea);
 				let reader = new FileReader();
 				reader.addEventListener('load', evt => {
 					textarea.value = evt.target.result;
@@ -81,28 +84,28 @@
 				reader.addEventListener('error', evt => {
 					console.error(evt);
 				});
-				reader.onloadend = () => {
+				reader.addEventListener('loadend', () => {
 					reader = new FileReader();
-				};
+				});
 				textarea.id = id;
 				textarea.process = "function(textarea, pressed, event)";
-				label.text(id);
-				input.on('dragenter', evt => {
+				label.textContent = id;
+				textarea.addEventListener('dragenter', evt => {
 					evt.block();
-					input.addClass('dropping');
+					textarea.classList.add('dropping');
 				});
-				input.on('dragover', evt => {
+				textarea.addEventListener('dragover', evt => {
 					evt.block();
-					input.addClass('dropping');
+					textarea.classList.add('dropping');
 				});
-				input.on('dragleave', evt => {
+				textarea.addEventListener('dragleave', evt => {
 					evt.block();
-					input.removeClass('dropping');
+					textarea.classList.remove('dropping');
 				});
-				input.on('drop', evt => {
+				textarea.addEventListener('drop', evt => {
 					evt.block();
-					input.removeClass('dropping');
-					const files = Array.from(evt.originalEvent.dataTransfer.files);
+					textarea.classList.remove('dropping');
+					const files = Array.from(evt.dataTransfer.files);
 					console.log(`File drop event on input #${index + 1} with ${files.length} file(s)`);
 					if (!files.length) {
 						return;
@@ -112,8 +115,8 @@
 					textarea.value = '';
 					reader.readAsText(file);
 				});
-				input.on('keydown', evtKeyDown => {
-					const hit = jqKeypress(evtKeyDown);
+				textarea.addEventListener('keydown', evtKeyDown => {
+					const hit = keypressLabel(evtKeyDown);
 					if (hit == '^o') {
 						evtKeyDown.block();
 						const picker = document.createElement('input');
@@ -155,19 +158,7 @@
 						value: () => textarea.value,
 					},
 				});
-				Object.defineProperties(input, {
-					munge: {
-						enumerable: true,
-						value: munger => {
-							input.val(munger(input.val()) || input.val());
-						},
-					},
-					toString: {
-						value: () => input.val(),
-					},
-				});
 				window[id] = textarea;
-				window[`$${id}`] = input;
 				box.append(textarea, label);
 				row.append(box);
 			}
@@ -177,7 +168,6 @@
 		this.preventDefault();
 		this.stopPropagation();
 	};
-	jQuery.Event.prototype.block = blockEvent;
 	Event.prototype.block = blockEvent;
 	Object.defineProperties(window, {
 		initialise: {
@@ -188,7 +178,7 @@
 			value: pageInitialiser,
 		},
 		boxes: {
-			get: () => $('textarea').length,
+			get: () => document.querySelectorAll('textarea').length,
 			set: amount => window.initialise(amount),
 			enumerable: true,
 		},
@@ -204,29 +194,33 @@
 				script.type = "text/javascript";
 				script.addEventListener('load', () => {
 					console.info(`Loaded script from ${src}`);
-					$(script).remove();
+					script.remove();
 				});
 				script.addEventListener('error', () => {
 					console.error(`Unable to load script from ${src} (did your browser block the request?)`);
-					$(script).remove();
+					script.remove();
 				});
-				$('head')
-					.first()
-					.append(script);
+				document.head.append(script);
 				script.src = src;
 			},
 			enumerable: true,
 		},
 	});
-	$(() => {
-		$(document).on('keydown keyup', evt => {
+	document.addEventListener('load', () => {
+		const globalKeyHandler = evt => {
 			if (evt.ctrlKey && 'osd'.includes(evt.key.toLowerCase()) || ['tab'].includes(evt.key.toLowerCase())) {
 				evt.block();
 			}
-		})
-			.on('dragenter dragover dragleave drop', evt => {
-				evt.preventDefault();
-			});
+		};
+		const globalDragDropHandler = evt => {
+			evt.preventDefault();
+		};
+		document.addEventListener('dragenter', globalDragDropHandler);
+		document.addEventListener('dragleave', globalDragDropHandler);
+		document.addEventListener('dragover', globalDragDropHandler);
+		document.addEventListener('drop', globalDragDropHandler);
+		document.addEventListener('keydown', globalKeyHandler);
+		document.addEventListener('keyup', globalKeyHandler);
 		reset();
 		window.process = "function(textarea, pressed, event)";
 		const unknownParameters = [];
@@ -250,7 +244,7 @@
 		console.groupCollapsed("Basic Usage");
 		console.info("Call `initialise(<numberOfTextBoxes>)` (or `initialize` - both spellings do the same thing!) to reset the page and produce the given number of textareas, or just set `window.boxes` to a number. Calling `reset()` is the same as initialising to a single box.");
 		console.info("When changing the number of boxes on the page, the page is entirely cleared and brand new boxes are created, so all custom properties event handlers are lost!");
-		console.info("All textarea are tagged in the lower right corner with their ID - which is also defined as a global variable pair: `window.<id>` is the box itself, and `window.$<id>` is the jQuery wrapper.");
+		console.info("All textarea are tagged in the lower right corner with their ID - which is also defined as a global variable pair: `window.<id>` is the box with that ID.");
 		console.info("Pressing CONTROL-S in a box will select all contents and copy them to the clipboard, and pressing CONTROL-D will clear it.");
 		console.groupEnd();
 		console.groupCollapsed("Automatic Input Handling");
@@ -260,7 +254,7 @@
 		console.info("Since per-input handlers are instance properties, changing the number of textareas on the page will destroy them. The global handler will not be touched.");
 		console.info("All automatic handlers are triggered on KEYDOWN, and apply to ANYTHING not already defined to do something.");
 		console.info("Pressed key combo strings take the form of `[^][!][+][#]<key name>`, with the four flags corresponding to CONTROL, ALT, SHIFT, and META, respectively, and any modifiers not pressed will just be left out.");
-		console.info("You can call `eventObject.block()` to prevent the default effect AND stop event propagation in one go, on both vanilla events and jQuery wrapped ones.");
+		console.info("You can call `eventObject.block()` to prevent the default effect AND stop event propagation in one go.");
 		console.groupEnd();
 		console.groupCollapsed("Loading Files From Disk");
 		console.info("You can press CONTROL-O in a box to select a file and load its contents into the box, or just drag-and-drop a file onto the one you want to load it into.");
@@ -269,7 +263,6 @@
 		console.groupCollapsed("External Scripts");
 		console.info("If you want to load an external script, pass the source to the global `loadScript(<source>)` function.");
 		console.info(`You can pass script URLs in the page URI hash as \`${autoloadScriptPrefix}<url>\` and they will automatically call \`loadScript(<url>)\`. Each url must be passed as its own parameter, separated with commas.`);
-		console.info("You don't need to load jQuery yourself, as this page already uses it on its own.");
 		console.groupEnd();
 		console.groupEnd();
 		/* eslint-enable max-len */
