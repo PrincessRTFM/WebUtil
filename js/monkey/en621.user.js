@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.1.1
+// @version      4.1.2
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v4.1.2 - the various pool reader control functions are now properly marked as async and resolve/throw correctly
 v4.1.1 - the `putMessage` timeout now supports floats instead of forcing to integers
 v4.1.0 - add a label to the navbar to show the loaded version, clicking does an inter-tab version check
 v4.0.0 - rewrote notice tabs to be less dumb using the same implementation as controls, shortened CSS class names
@@ -792,15 +793,19 @@ const enablePoolReaderMode = async () => {
 		})
 		.catch(onPoolLoadingError); // Any errors will skip down to here, aborting the chain of handlers.
 }; // And that's the end of constructing/enabling pool reader mode!
-const disablePoolReaderMode = () => {
+const disablePoolReaderMode = async () => {
+	// If it's not a pool page, just cut out now. It ain't happening, chief.
+	if (!PATH.startsWith(POOL_PATH_PREFIX) || !PATH.slice(POOL_PATH_PREFIX.length).match(/^\d+/u)) {
+		throw new Error("This is not a pool page!");
+	}
 	// This one's really simple. Everything's already there - the normal page content - so we just need to
 	// hide pool reader and show the normal stuff.
 	const vanillaPageList = document.querySelector("div#posts");
 	const readerPageContainer = document.querySelector(`div#${POOL_READER_CONTAINER_ID}`);
 	if (!vanillaPageList || !readerPageContainer) {
 		// Although if we somehow get here without pool reader being enabled (or if we somehow can't find the
-		// normal page...) then we just silently die. Bleh.
-		return;
+		// normal page...) then we just die. Bleh.
+		throw new Error("Cannot find pool reader OR pool display");
 	}
 	readerPageContainer.style.display = 'none';
 	vanillaPageList.style.display = '';
@@ -811,25 +816,25 @@ const disablePoolReaderMode = () => {
 	});
 };
 const togglePoolReaderMode = evt => {
+	// You can just slap this in as an event handler, or call it directly. It's on the API, after all.
+	if (evt) {
+		evt.preventDefault();
+		evt.stopPropagation();
+	}
 	// If pool reader's on, turn it off. If it's off, turn it on.
 	// Shocking that a function named `togglePoolReaderMode` would toggle pool reader mode, I know.
 	const readerPageContainer = document.querySelector(`div#${POOL_READER_CONTAINER_ID}`);
 	if (readerPageContainer && readerPageContainer.style.display) {
 		// Exists, hidden
-		enablePoolReaderMode();
+		return enablePoolReaderMode();
 	}
 	else if (readerPageContainer) {
 		// Exists, visible
-		disablePoolReaderMode();
+		return disablePoolReaderMode();
 	}
 	else {
 		// Doesn't exist
-		enablePoolReaderMode();
-	}
-	// You can just slap this in as an event handler, or call it directly. It's on the API, after all.
-	if (evt) {
-		evt.preventDefault();
-		evt.stopPropagation();
+		return enablePoolReaderMode();
 	}
 };
 
