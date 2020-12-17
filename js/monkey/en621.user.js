@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.1.0
+// @version      4.1.1
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v4.1.1 - the `putMessage` timeout now supports floats instead of forcing to integers
 v4.1.0 - add a label to the navbar to show the loaded version, clicking does an inter-tab version check
 v4.0.0 - rewrote notice tabs to be less dumb using the same implementation as controls, shortened CSS class names
 
@@ -336,7 +337,7 @@ const addControlTab = (...parts) => {
 // autoclosing. Keep in mind that `setTimeout()` uses the delay as a MINIMUM, so poorly-made scripts on the page
 // may delay it longer - but they'll also trash the UX in other ways, and there's nothing I can do anyway.
 const putMessage = (content, type, icon, timeout) => {
-	timeout = parseInt(String(timeout), 10);
+	timeout = parseFloat(String(timeout));
 	if (isNaN(timeout) || timeout < 0) {
 		timeout = 0;
 	}
