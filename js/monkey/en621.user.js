@@ -70,7 +70,9 @@ v1.0.0 - initial script, minimal functionality, mostly ripped apart from three o
 
 /* PLANS
 - Set up an inter-tab queue for pool reader mode?
-- Saved tags feature from the old (pre-site-update) version
+- Saved tags feature from the old (pre-site-update) version? (might not be worth it, given bookmarks... see next)
+- Overhaul the tag box/lists to allow building a search in the box from the lists without loading new pages?
+- "Default" tags? (Vague idea of having tag sidebar links automatically add user-defined defaults, like ratings)
 */
 /* eslint-enable max-len */
 
@@ -832,10 +834,8 @@ const togglePoolReaderMode = evt => {
 		// Exists, visible
 		return disablePoolReaderMode();
 	}
-	else {
-		// Doesn't exist
-		return enablePoolReaderMode();
-	}
+	// Doesn't exist
+	return enablePoolReaderMode();
 };
 
 const elevateSearchTerms = () => {
@@ -1360,8 +1360,8 @@ Object.defineProperties(unsafeWindow, {
 		enumerable: true,
 	},
 	EN621_API: {
-		// This will be documented Eventually(tm) but it's intended to allow addon scripts to easily make use
-		// of callable functionality from en621 without needing some kind of ugly hacks.
+		// Documentation is up! ../../en621-api.md (or online at https://gh.princessrtfm.com/en621-api.html too)
+		// for details on all of these things. Now I just have to keep it up-to-date.
 		value: Object.freeze({
 			VERSION: CONSOLE_TOOLS.SCRIPT_VERSION,
 			hasFlag,
