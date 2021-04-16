@@ -12,6 +12,7 @@
  *
  * Returns an iterator object that progressively converts from the initial string to the desired string
  */
+/* exported corrupt */
 function* corrupt(from, to, extraChars = '', ignoreExtraCharCase = true) {
 	// Make sure that we have STRINGS, and then explode them arrays of each character
 	from = String(from).split('');
