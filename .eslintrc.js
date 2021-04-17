@@ -473,6 +473,14 @@ config.overrides = [
 		},
 	},
 	{
+		files: ["*.lib.js"],
+		env: {
+			commonjs: false,
+			browser: false,
+			node: false,
+		},
+	},
+	{
 		files: ["*.browser.js"],
 		env: {
 			browser: true,
