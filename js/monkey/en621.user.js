@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.1.2
+// @version      4.1.3
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v4.1.3 - bugfix the EN621_CONSOLE_TOOLS.getVisiblePostURLs() function - use the right .dataset key
 v4.1.2 - the various pool reader control functions are now properly marked as async and resolve/throw correctly
 v4.1.1 - the `putMessage` timeout now supports floats instead of forcing to integers
 v4.1.0 - add a label to the navbar to show the loaded version, clicking does an inter-tab version check
@@ -49,7 +50,7 @@ v2.5.0 - restore the +/- (include/exclude) links on post pages without an existi
 v2.4.2 - fixed element ID being set instead of element class
 v2.4.1 - fixed direct link toggle on post index pages not properly restoring post page URL when turned off
 v2.4.0 - direct link box is more out of the way, slides in smoothly when hovered
-v2.3.0 - made search box responsibly expand when hovered or focused
+v2.3.0 - made search box responsively expand when hovered or focused
 v2.2.0 - extended tag elevation and direct image link toggling to post index pages, added alt-q keybind to focus search bar
 v2.1.1 - fixed a bug where the post rating wouldn't be listed in the sidebar when there was no existing search
 v2.1.0 - added direct image link toggle on pool pages (reader and normal)
@@ -228,7 +229,7 @@ const makeElem = (tag, id, clazz) => {
 };
 
 // These two are practically the same thing (at least generally and structurally) so set them up together here.
-// Control tabs are on the BOTTOM right, message tags on the TOP right. Message tabs have an icon and can be
+// Control tabs are on the BOTTOM right, message tabs on the TOP right. Message tabs have an icon and can be
 // closed, control tabs can't. That's about it.
 
 const controlTabsContainer = makeElem("div", "control-tabs-container", "en621-side-tab-container");
@@ -330,8 +331,8 @@ const addControlTab = (...parts) => {
 	return tab;
 };
 
-// This places a side-tab-style message as an overlay on the upper right of the page, using the warning box
-// container from the above method. The content is your user-defined stuff to put in it - a string of HTML,
+// This places a side-tab-style message as an overlay on the upper right of the page, like the alerts for when
+// a post has one or more related posts. The content is your user-defined stuff to put in it - a string of HTML,
 // an array of content, or just a single thing - but the type is used in the CSS class. If you don't use one
 // of the predefined helpers (see below this function) then you'll need to add your own CSS for it. The icon
 // is treated as plaintext and positioned between the close button and the `content` in the tab. If you don't
@@ -395,6 +396,8 @@ const putHelp = (content, timeout) => putMessage(content, 'help', '🛈', timeou
 // and then it handles the actual checks. The `keys` string is kinda taken from AutoHotkey - modifiers like
 // control, shift, and alt are all indicated with special characters. Yes, that currently means you can't bind
 // those characters. I'll fix that.
+//
+// I wonder how long ago I said "I'll fix that" and then forgot about it immediately. TODO fix binding modifiers.
 const KEY_HANDLERS = new Map();
 const registerKeybind = (keys, handler) => {
 	let modifiers = KB_NONE;
@@ -951,7 +954,7 @@ if (PATH.startsWith(POOL_PATH_PREFIX) && PATH.slice(POOL_PATH_PREFIX.length).mat
 	subnavbar.append(readerItem);
 	CONSOLE_TOOLS.getVisiblePostURLs = () => {
 		const set = Array.from(document.querySelectorAll('#posts-container > article[id^="post_"]'));
-		return set.map(e => e.dataset.largeFileUrl);
+		return set.map(e => e.dataset.fileUrl);
 	};
 	// There are not many pool-specific run-once features.
 	// YET?
