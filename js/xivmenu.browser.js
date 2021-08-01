@@ -54,7 +54,9 @@ const inputs = q('#jobs');
 
 const generate = () => {
 	const chosen = q(':checked', inputs);
-	if (!chosen) return;
+	if (!chosen) {
+		return;
+	}
 	const target = q('#target').value;
 	const job = chosen.value;
 	debug.log(`Generating macros for ${job} (${JOBS[job]})`);
@@ -80,7 +82,7 @@ const generate = () => {
 };
 const selectGroup = () => {
 	debug.log("Attempting to select text block");
-	if (typeof(output.selectionStart) == "undefined") {
+	if (typeof output.selectionStart == "undefined") {
 		debug.error("Cannot find .selectionStart");
 		return;
 	}
@@ -91,11 +93,19 @@ const selectGroup = () => {
 	const text = output.textContent;
 	// Need to find the nearest EMPTY lines (two or more breaks in a row) both BEFORE and AFTER the click
 	let firstBlankIdx = text.slice(0, output.selectionStart).lastIndexOf("\n\n");
-	if (firstBlankIdx > 0) firstBlankIdx += 2;
-	else firstBlankIdx = 0;
+	if (firstBlankIdx > 0) {
+		firstBlankIdx += 2;
+	}
+	else {
+		firstBlankIdx = 0;
+	}
 	let lastBlankIdx = text.slice(output.selectionStart).indexOf("\n\n");
-	if (lastBlankIdx < 0) lastBlankIdx = text.length;
-	else lastBlankIdx += output.selectionStart;
+	if (lastBlankIdx < 0) {
+		lastBlankIdx = text.length;
+	}
+	else {
+		lastBlankIdx += output.selectionStart;
+	}
 	debug.log(`Start index = ${firstBlankIdx}, end index = ${lastBlankIdx}`);
 	output.selectionStart = firstBlankIdx;
 	output.selectionEnd = lastBlankIdx;
@@ -106,26 +116,36 @@ const getHelpButton = e('label');
 getHelpButton.textContent = "❔ Help";
 getHelpButton.id = "display-help";
 getHelpButton.addEventListener('click', () => {
+	for (const radio of qa('input', inputs)) {
+		radio.checked = false;
+	}
 	output.textContent = [
-		"Select a class on the side to generate ten paired open/close hotbar macros, using the chosen class's hotbars as storage.",
+		"Select a class on the side to generate ten paired open/close hotbar macros,"
+			+ " using the chosen class's hotbars as storage.",
 		"",
-		"Please note that you MUST choose a class you DO NOT USE! All of the chosen class's hotbars will be REPLACED with the menu bars you create.",
+		"Please note that you MUST choose a class you DO NOT USE!"
+			+ " All of the chosen class's hotbars will be REPLACED with the menu bars you create.",
 		"",
-		"At the bottom of the class selection list, you can choose which of your UI hotbars will be used to display the menu bars.",
-		"This UI hotbar should be marked as SHARED, because its contents will be REPLACED with each menu bar you open from the generated macros.",
+		"At the bottom of the class selection list,"
+			+ " you can choose which of your UI hotbars will be used to display the menu bars.",
+		"This UI hotbar should be marked as SHARED,"
+			+ " because its contents will be REPLACED with each menu bar you open from the generated macros.",
 	].join("\n");
 });
 inputs.append(getHelpButton, e('br'), e('br'));
 
-for (const [job, name] of Object.entries(JOBS)) {
+for (const [
+	job,
+	name,
+] of Object.entries(JOBS)) {
 	debug.log(`Building job selector for ${name} (${job})`);
 	const radio = e('input');
 	const label = e('label');
 	radio.type = "radio";
 	radio.name = "job";
 	radio.value = job;
-	label.textContent = name.replace(/\s+/u, "\xA0");
-	label.htmlFor = radio.id = `job-${job.toLowerCase()}`;
+	label.textContent = name.replace(/\s+/u, "\u00A0");
+	label.htmlFor = radio.id = `job-${job.toLowerCase()}`; // eslint-disable-line no-multi-assign
 	radio.addEventListener('input', generate);
 	inputs.append(
 		radio,
@@ -136,7 +156,7 @@ for (const [job, name] of Object.entries(JOBS)) {
 
 const targetBarLabel = e('label');
 const targetBarSelector = e('select');
-targetBarLabel.htmlFor = targetBarSelector.id = "target";
+targetBarLabel.htmlFor = targetBarSelector.id = "target"; // eslint-disable-line no-multi-assign
 for (let bar = 1; bar <= 10; ++bar) {
 	const option = e('option');
 	option.value = bar;
