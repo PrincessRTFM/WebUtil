@@ -1,0 +1,60 @@
+#jobs label,
+#macros {
+	font-size: 1.3em;
+}
+#target {
+	font-size: 0.8em;
+}
+
+body {
+	background-color: #131313;
+	color: #aaaaaa;
+}
+
+#container {
+	visibility: hidden;
+	top: 5vh;
+	bottom: 5vh;
+	left: 10vw;
+	right: 10vw;
+	position: absolute;
+	display: flex;
+	justify-content: center;
+}
+#jobs {
+	width: 300px;
+	margin-left: 15px;
+	flex: 0 1 auto;
+	height: 100%;
+	overflow-y: auto;
+	overflow-x: visible;
+}
+#macros {
+	flex: 1 0 auto;
+	min-width: 700px;
+	max-width: 900px;
+}
+textarea, input {
+	border-radius: 5px;
+	border: thin groove;
+	color: inherit;
+	background-color: inherit;
+}
+input[type="radio"] {
+	display: none;
+}
+input[type="radio"] + label::before {
+	content: "➤\00A0";
+	font-weight: 900;
+	color: red;
+}
+input[type="radio"]:checked + label::before {
+	content: "➤\00A0";
+	font-weight: 900;
+	color: green;
+}
+
+#target {
+	margin-top: 15px;
+}
+
