@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.1.3
+// @version      4.1.5
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,8 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v4.1.5 - bugfix the CSS transition delays for control tabs that use the `right` property to partially hide
+v4.1.4 - bugfix the CSS for control tabs so that checkboxes with labels are handled like the builtin direct-linker
 v4.1.3 - bugfix the EN621_CONSOLE_TOOLS.getVisiblePostURLs() function - use the right .dataset key
 v4.1.2 - the various pool reader control functions are now properly marked as async and resolve/throw correctly
 v4.1.1 - the `putMessage` timeout now supports floats instead of forcing to integers
@@ -70,6 +72,7 @@ v1.0.0 - initial script, minimal functionality, mostly ripped apart from three o
 */
 
 /* PLANS
+- Advanced utilities via "commandline" entry like RES?
 - Set up an inter-tab queue for pool reader mode?
 - Saved tags feature from the old (pre-site-update) version? (might not be worth it, given bookmarks... see next)
 - Overhaul the tag box/lists to allow building a search in the box from the lists without loading new pages?
@@ -297,7 +300,7 @@ GM_addStyle([
 	"transition-delay: 0.15;",
 	"}",
 	".en621-control-tab:hover {",
-	"right: 0;",
+	"right: 0 !important;",
 	"transition-delay: 0.5s;",
 	"}",
 ].join(''));
@@ -543,15 +546,15 @@ GM_addStyle([
 	`#${LINK_MODE_ID}-container {`,
 	"right: -97px;",
 	"}",
-	`#${LINK_MODE_ID} {`,
+	'div#control-tabs-container > div.en621-control-tab input[type="checkbox"] {',
 	"display: none;",
 	"}",
-	`#${LINK_MODE_ID} + label::before {`,
+	`div#control-tabs-container > div.en621-control-tab input[type="checkbox"] + label::before {`,
 	"content: \"☒ \";",
 	"font-weight: 900;",
 	"color: red;",
 	"}",
-	`#${LINK_MODE_ID}:checked + label::before {`,
+	`div#control-tabs-container > div.en621-control-tab input[type="checkbox"]:checked + label::before {`,
 	"content: \"☑ \";",
 	"color: green;",
 	"}",
