@@ -1,4 +1,19 @@
-/* exported isPrime */
+/* eslint-disable max-len */
+/**
+ * Test if the given number is a prime number or not. Takes two parameters: the value to test, and a verbose-return flag.
+ * The return value depends on the verbose-return flag:
+ * If verbose is false(y), the return will be a boolean indicating whether the given number is prime. Invalid values (eg, non-numbers) also return explicitly false. This return value is GUARANTEED to be a DEFINED boolean.
+ * Otherwise, the return is a five-element array with the following values:
+ * - boolean isNumberPrime: the same value that would be returned if verbose return was off
+ * - int iterationsForCalculation: the number of loop iterations executed, NOT including the initial checks (always an int >= 0)
+ * - int/NaN/undefined lastFactorTested: NaN for non-number inputs, undefined when the absolute value of the input is < 2, otherwise int
+ * - int/NaN/undefined otherFactor: NaN for non-number inputs, undefined when the absolute value of the input is < 2 OR the input is prime, otherwise int
+ * - int/NaN absoluteIntValueOfInput: NaN for non-number inputs, otherwise int
+ * The lastFactorTested is always returned for inputs that are numbers >= 2, but is only an actual factor of the (absolute) input when the input is not prime. It is guaranteed to be positive when it is a defined number.
+ * The otherFactor is only a defined number when the input is NOT prime, and can be multiplied by the lastFactorTested to produce the absolute value of the non-prime input. It is guaranteed to be positive when it is a defined number.
+ * The absoluteIntValueOfInput is a defined number (guaranteed positive OR zero) when the input value is a valid number. It is the absolute value of the whole-number part of the input, in the event of non-integer numeric input. If present, this is the number that was tested for primeness. If not present (NaN), the input was not considered valid.
+ */
+/* eslint-enable max-len */
 function isPrime(test, verbose) {
 	// Convert the given value to a string, then [back] to an integer - force any passed value to become an int
 	const number = parseInt(String(test), 10);
@@ -107,3 +122,9 @@ function isPrime(test, verbose) {
 		]
 		: true;
 }
+
+/* global module:false */
+if (typeof module == "object" && module !== null) { // assume nodejs
+	module.exports = isPrime;
+}
+
