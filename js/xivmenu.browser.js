@@ -26,6 +26,8 @@ const JOBS = {
 	SMN: "Summoner",
 	RDM: "Red Mage",
 	BLU: "Blue Mage",
+	RPR: "Reaper",
+	SGE: "Sage",
 };
 
 Object.defineProperty(window, 'DEBUG_MODE', {
