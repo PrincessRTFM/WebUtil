@@ -62,7 +62,10 @@ $(() => {
 			'upset2',
 			'really',
 		],
-		Other: ['rqst_other_sonicastle'],
+		Other: [
+			'rqst_other_sonicastle',
+			'rqst_other_fnfxtf2',
+		],
 	};
 	const preloadTimers = [];
 	const initialHelpText = $('#helpText').html();
