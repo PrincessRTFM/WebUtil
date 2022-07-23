@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.2.0
+// @version      4.3.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -20,6 +20,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v4.3.0 - added functionality to toggle image tooltips for post links, to hide the big description
 v4.2.0 - control and message tabs can be a little wider now
 v4.1.6 - add the downloadURL metadata tag
 v4.1.5 - bugfix the CSS transition delays for control tabs that use the `right` property to partially hide
@@ -152,6 +153,7 @@ const EV_POOL_READER_STATE = "pool-reader-state";
 const EV_MESSAGE_BOX = "user-message";
 const EV_MESSAGE_CLOSE = "close-message";
 const EV_DIRECT_LINKS = "direct-link-mode";
+const EV_IMAGE_TOOLTIPS = "image-tooltips";
 const EV_POST_DELETED = "missing-post";
 const EV_POST_LOADED = "post-loaded";
 const EV_SCRIPT_LOADED = "loaded";
@@ -493,10 +495,12 @@ const POOL_READER_CONTAINER_ID = "pool-reader";
 const POOL_READER_STATUSLINE_ID = "en621-pool-reader-status";
 const LINK_MODE_ID = "en621-link-mode-toggle";
 const POOL_READER_LINK_CLASS = "en621-post-link";
+const DISABLED_TOOLTIPS_FLAG = "no-image-tooltips";
+const TOOLTIP_TOGGLE_ID = "en621-image-tooltips-toggle";
 
 // This is the toggle for direct image links, now updated to use the above control tabs mechanism. It's an
 // example of doing a tab with custom content that you don't need to remove later.
-const modeBox = makeElem('div', `${LINK_MODE_ID}-container`, "site-notice");
+const modeBox = makeElem('div', `${LINK_MODE_ID}-container`);
 const modeToggle = makeElem('input', LINK_MODE_ID);
 const modeLabel = makeElem('label');
 modeToggle.type = "checkbox";
@@ -544,11 +548,8 @@ modeToggle.addEventListener('input', () => {
 		active: modeToggle.checked,
 	});
 });
-// This just styles the control tab's content
+// This is for ALL control tabs with checkboxes
 GM_addStyle([
-	`#${LINK_MODE_ID}-container {`,
-	"right: -97px;",
-	"}",
 	'div#control-tabs-container > div.en621-control-tab input[type="checkbox"] {',
 	"display: none;",
 	"}",
@@ -560,6 +561,12 @@ GM_addStyle([
 	`div#control-tabs-container > div.en621-control-tab input[type="checkbox"]:checked + label::before {`,
 	"content: \"☑ \";",
 	"color: green;",
+	"}",
+].join("\n"));
+// This just styles this one control tab's content
+GM_addStyle([
+	`#${LINK_MODE_ID}-container {`,
+	"right: -97px;",
 	"}",
 ].join("\n"));
 addControlTab(modeBox);
@@ -931,6 +938,73 @@ const elevateSearchTerms = () => {
 	}
 };
 
+// Using hoverzoom means that image description tooltips popping up is REALLY annoying, so I finally
+// decided to add a feature to turn them off. Of course, it needs to be able to turn them back ON
+// again too in case the user wants them back.
+const disableImageTooltips = () => {
+	const tipped = document.querySelectorAll('article.post-preview > a[href] > picture > img[title]');
+	for (const img of tipped) {
+		if (img.title) {
+			img.dataset.title = img.title;
+			img.title = '';
+		}
+	}
+	setFlag(DISABLED_TOOLTIPS_FLAG);
+	sendEvent(EV_IMAGE_TOOLTIPS, {
+		enabled: false,
+	});
+};
+const enableImageTooltips = () => {
+	const untipped = document.querySelectorAll('article.post-preview > a[href] > picture > img[data-title]');
+	for (const img of untipped) {
+		if (img.dataset.title) {
+			img.title = img.dataset.title;
+			img.dataset.title = '';
+		}
+	}
+	unsetFlag(DISABLED_TOOLTIPS_FLAG);
+	sendEvent(EV_IMAGE_TOOLTIPS, {
+		enabled: true,
+	});
+};
+const toggleImageTooltips = () => {
+	if (hasFlag(DISABLED_TOOLTIPS_FLAG)) {
+		enableImageTooltips();
+	}
+	else {
+		disableImageTooltips();
+	}
+};
+const tooltipBox = makeElem('div', `${TOOLTIP_TOGGLE_ID}-container`);
+const tooltipToggle = makeElem('input', TOOLTIP_TOGGLE_ID);
+const tooltipLabel = makeElem('label');
+tooltipToggle.type = "checkbox";
+tooltipToggle.checked = true;
+tooltipLabel.htmlFor = TOOLTIP_TOGGLE_ID;
+tooltipLabel.textContent = "Tooltips on hover";
+tooltipBox.append(tooltipToggle, tooltipLabel);
+tooltipToggle.addEventListener('input', () => {
+	if (tooltipToggle.checked) {
+		enableImageTooltips();
+	}
+	else {
+		disableImageTooltips();
+	}
+});
+// This just styles the control tab's content
+GM_addStyle([
+	`#${TOOLTIP_TOGGLE_ID}-container {`,
+	"right: -77px;",
+	"}",
+].join("\n"));
+addControlTab(tooltipBox);
+document.addEventListener('en621', evt => {
+	if (evt.detail.name != EV_IMAGE_TOOLTIPS) {
+		return;
+	}
+	tooltipToggle.checked = evt.detail.data.enabled;
+});
+
 // Register a few keybinds of our own...
 registerKeybind('!r', () => {
 	document.location = 'https://e621.net/posts/random';
@@ -941,6 +1015,10 @@ registerKeybind('!q', () => {
 registerKeybind('+d', () => {
 	modeToggle.checked = !modeToggle.checked;
 	modeToggle.dispatchEvent(new Event('input')); // For some reason, the above doesn't fire the input event.
+});
+registerKeybind('+t', () => {
+	tooltipToggle.checked = !tooltipToggle.checked;
+	tooltipToggle.dispatchEvent(new Event('input')); // Same as above
 });
 
 if (PATH.startsWith(POOL_PATH_PREFIX) && PATH.slice(POOL_PATH_PREFIX.length).match(/^\d+/u)) {
@@ -1361,6 +1439,13 @@ navbarVersionLabel.addEventListener("click", () => {
 navbarVersionContainer.append(navbarVersionLabel);
 navbar.append(navbarVersionContainer);
 
+// Final init checks...
+if (document.querySelector("img.hoverZoomLink")) {
+	// Hover zoom is installed
+	disableImageTooltips();
+	tooltipToggle.checked = false;
+}
+
 // Last but not least...
 Object.defineProperties(unsafeWindow, {
 	EN621_CONSOLE_TOOLS: {
@@ -1383,6 +1468,9 @@ Object.defineProperties(unsafeWindow, {
 			enablePoolReaderMode,
 			disablePoolReaderMode,
 			togglePoolReaderMode,
+			disableImageTooltips,
+			enableImageTooltips,
+			toggleImageTooltips,
 			addControlTab,
 		}),
 		enumerable: true,
