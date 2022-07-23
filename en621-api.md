@@ -72,6 +72,12 @@ The argument(s) are treated differently than notice tabs as well. If a single `d
 
 If the tab should later be removed, save the return value and call `.remove()` when you want it gone.
 
+### `disableImageTooltips()` + `enableImageTooltips()` + `toggleImageTooltips()`
+
+- Introduced: `v4.3.0`
+
+These functions control whether post previews have tooltips (`title` attributes) or not. When disabled, the original tooltip text is moved into the `data-title` (`element.dataset.title` property) attribute instead, to preserve it for later restoration.
+
 ## Events
 
 All events are of the type `CustomEvent` with the event name `en621`. The event object's `detail.name` contains the specific occurance that triggered the event. Some events also have additional details available under `detail.data` as well.
@@ -124,6 +130,13 @@ Sent when pool reader mode _finishes_ loading an image into the page. The `id` i
 - Details: `loadTimeMs`
 
 Sent once en621 finishes its run-once initialisation. At this point, the API object is available and all features not designed to run on-demand are either set up or failed. Individual features have flags (see `hasFlag()` above) to indicate their success/error state, see _CSS Classes_ for details.
+
+### `image-tooltips`
+
+- Cancelable: **no**
+- Details: `enabled`
+
+Emitted every time image tooltips are enabled or disabled, regardless of previous state. The `enabled` detail indicates whether post preview tooltips are active, or if they have been stored into the `data-title` attribute.
 
 # CSS Classes
 
@@ -192,3 +205,8 @@ Set on all en621-affected pages when the script finishes its run-once initialisa
 ### `has-error`
 
 en621 encountered _an_ error, _somewhere_. This only means that _something_ went wrong (and that particular feature could not recover) and is only present in conjunction with one of the more specific error flags above. Check those to determine the specific error in question.
+
+### `no-image-tooltips`
+
+If present, post preview images do not have tooltips; the previous tooltip content is in the `data-title` attribute accessible through the `element.dataset.title` property.
+
