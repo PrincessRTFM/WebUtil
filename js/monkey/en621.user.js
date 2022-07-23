@@ -2,11 +2,12 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.1.5
+// @version      4.1.6
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
 // @updateURL    https://gh.princessrtfm.com/js/monkey/en621.user.js
+// @downloadURL  https://gh.princessrtfm.com/js/monkey/en621.user.js
 // @grant        GM_info
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -19,6 +20,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v4.1.6 - add the downloadURL metadata tag
 v4.1.5 - bugfix the CSS transition delays for control tabs that use the `right` property to partially hide
 v4.1.4 - bugfix the CSS for control tabs so that checkboxes with labels are handled like the builtin direct-linker
 v4.1.3 - bugfix the EN621_CONSOLE_TOOLS.getVisiblePostURLs() function - use the right .dataset key
