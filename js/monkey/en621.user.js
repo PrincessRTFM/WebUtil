@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.1.6
+// @version      4.2.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -20,6 +20,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v4.2.0 - control and message tabs can be a little wider now
 v4.1.6 - add the downloadURL metadata tag
 v4.1.5 - bugfix the CSS transition delays for control tabs that use the `right` property to partially hide
 v4.1.4 - bugfix the CSS for control tabs so that checkboxes with labels are handled like the builtin direct-linker
@@ -263,7 +264,7 @@ GM_addStyle([
 	"padding: 3px 0;",
 	"border-radius: 7px 0 0 7px;",
 	"z-index: 9999;",
-	"max-width: 300px;",
+	"max-width: 400px;",
 	"width: -moz-fit-content;",
 	"width: fit-content;",
 	"text-align: left !important;",
