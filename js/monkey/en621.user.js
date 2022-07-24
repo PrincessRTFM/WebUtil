@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.3.0
+// @version      4.3.1
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -20,6 +20,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v4.3.1 - moved HoverZoom check to final init event, hopefully fix timing issues
 v4.3.0 - added functionality to toggle image tooltips for post links, to hide the big description
 v4.2.0 - control and message tabs can be a little wider now
 v4.1.6 - add the downloadURL metadata tag
@@ -1439,13 +1440,6 @@ navbarVersionLabel.addEventListener("click", () => {
 navbarVersionContainer.append(navbarVersionLabel);
 navbar.append(navbarVersionContainer);
 
-// Final init checks...
-if (document.querySelector("img.hoverZoomLink")) {
-	// Hover zoom is installed
-	disableImageTooltips();
-	tooltipToggle.checked = false;
-}
-
 // Last but not least...
 Object.defineProperties(unsafeWindow, {
 	EN621_CONSOLE_TOOLS: {
@@ -1481,7 +1475,16 @@ setFlag("loaded");
 // This uses the default timeout of 0, which means basically "as soon as nothing else is busy"
 // Addons can look for `document.body.classList.contains("en621-loaded")` and if it's not found,
 // add a listener for the `en621` event to wait for en621 to finish loading.
-setTimeout(() => sendEvent(EV_SCRIPT_LOADED, {
-	loadTimeMs: new Date().valueOf() - START_TIME_MS,
-}));
+
+setTimeout(() => {
+	// Final init checks...
+	if (document.querySelector("img.hoverZoomLink")) {
+		// Hover zoom is installed
+		disableImageTooltips();
+		tooltipToggle.checked = false;
+	}
+	sendEvent(EV_SCRIPT_LOADED, {
+		loadTimeMs: new Date().valueOf() - START_TIME_MS,
+	});
+});
 
