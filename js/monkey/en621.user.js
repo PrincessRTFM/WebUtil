@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.3.3
+// @version      4.3.4
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -20,6 +20,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v4.3.4 - HoverZoom checking now happens ten times in 100ms intervals because just 100ms isn't always enough
 v4.3.3 - increased the artificial delay because there were still occasional timing issues
 v4.3.2 - added an extra artificial delay to the HoverZoom check because race conditions suck ass
 v4.3.1 - moved HoverZoom check to final init event, hopefully fix timing issues
@@ -1480,11 +1481,16 @@ setFlag("loaded");
 
 setTimeout(() => {
 	// Timing is a pain
-	setTimeout(() => {
+	let counter = 0;
+	const timer = setInterval(() => {
 		if (document.querySelector("img.hoverZoomLink")) {
 			// Hover zoom is installed
 			disableImageTooltips();
 			tooltipToggle.checked = false;
+			clearInterval(timer);
+		}
+		else if (++counter >= 10) {
+			clearInterval(timer);
 		}
 	}, 100);
 	sendEvent(EV_SCRIPT_LOADED, {
