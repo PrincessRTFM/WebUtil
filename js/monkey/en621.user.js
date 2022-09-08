@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.3.4
+// @version      4.4.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -11,15 +11,14 @@
 // @grant        GM_info
 // @grant        GM_getValue
 // @grant        GM_setValue
-// @grant        GM_addValueChangeListener
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
-// @grant        GM_download
 // @grant        GM_setClipboard
 // @grant        unsafeWindow
 // ==/UserScript==
 
 /* CHANGELOG
+v4.4.0 - implemented last-seen post tracking on a per-search basis
 v4.3.4 - HoverZoom checking now happens ten times in 100ms intervals because just 100ms isn't always enough
 v4.3.3 - increased the artificial delay because there were still occasional timing issues
 v4.3.2 - added an extra artificial delay to the HoverZoom check because race conditions suck ass
@@ -161,6 +160,8 @@ const EV_IMAGE_TOOLTIPS = "image-tooltips";
 const EV_POST_DELETED = "missing-post";
 const EV_POST_LOADED = "post-loaded";
 const EV_SCRIPT_LOADED = "loaded";
+const EV_FLAG_SET = "flag-set";
+const EV_FLAG_UNSET = "flag-unset";
 // Register a debugging listener for all events
 document.addEventListener('en621', evt => {
 	const type = `${evt.cancelable ? '' : 'non-'}cancelable`;
@@ -187,6 +188,10 @@ const setFlag = flagstr => {
 			.replace(/^en621-?/ui, '')
 			.toLowerCase();
 		document.body.classList.add(`en621-${clean}`);
+		sendEvent(EV_FLAG_SET, {
+			id: clean,
+			full: `en621-${clean}`,
+		});
 	});
 };
 const unsetFlag = flagstr => {
@@ -196,15 +201,10 @@ const unsetFlag = flagstr => {
 			.replace(/^en621-?/ui, '')
 			.toLowerCase();
 		document.body.classList.remove(`en621-${clean}`);
-	});
-};
-const toggleFlag = flagstr => {
-	const flags = flagstr.replace(/\s+/gu, ' ').split(" ");
-	flags.forEach(flag => {
-		const clean = flag
-			.replace(/^en621-?/ui, '')
-			.toLowerCase();
-		document.body.classList.toggle(`en621-${clean}`);
+		sendEvent(EV_FLAG_UNSET, {
+			id: clean,
+			full: `en621-${clean}`,
+		});
 	});
 };
 // Note that the `flagstr` passed to this is SPLIT ON WHITESPACE!
@@ -227,6 +227,17 @@ const hasFlag = flags => {
 		}
 	}
 	return true;
+};
+const toggleFlag = flagstr => {
+	const flags = flagstr.replace(/\s+/gu, ' ').split(" ");
+	flags.forEach(flag => {
+		if (hasFlag(flag)) {
+			unsetFlag(flag);
+		}
+		else {
+			setFlag(flag);
+		}
+	});
 };
 
 const makeElem = (tag, id, clazz) => {
@@ -484,6 +495,18 @@ const CURRENT_SEARCH = (() => {
 		|| p.get('tags')
 		|| p.get('name')
 		|| '';
+})();
+const NORMALISED_SEARCH = (() => {
+	if (!CURRENT_SEARCH) {
+		return '';
+	}
+	return Array.from(
+		new Set(CURRENT_SEARCH
+			.trim()
+			.split(/\s+/u)
+			.map(tag => tag.toLowerCase().replace(/^(rating:[sqe])/u, '$1'))
+		)
+	).sort().join(" ");
 })();
 
 const navbar = document.querySelector("#nav").children[0];
@@ -1248,6 +1271,30 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 }
 else if (PATH == POST_INDEX_PATH) {
 	// If you're on a post SEARCH page, rather than a POST page...
+	const postSelector = "div#posts > div#posts-container > article.post-preview";
+	const storageKey = `lastSeenPostId/${NORMALISED_SEARCH}`;
+	const lastSeenPostId = GM_getValue(storageKey, "");
+	const latestPost = document.querySelector(postSelector);
+	// Apply the styling to highlight the last post the user saw on this search
+	GM_addStyle([
+		`${postSelector}.en621-last-seen > a img {`,
+		"border: 3px dashed yellow;",
+		"}",
+	].join("\n"));
+	// If there are posts on this search (there might not be!) then remember the most recent one
+	if (latestPost) {
+		GM_setValue(storageKey, latestPost.dataset.id);
+	}
+	// If this is a new search, we won't have a last-seen ID
+	if (lastSeenPostId) {
+		// But if we do, look for that post on this page...
+		const lastSeenPost = document.querySelector(`${postSelector}#post_${lastSeenPostId}`);
+		// ...and if it's here (it might not be, if it's been long enough on a popular tag) then flag it
+		if (lastSeenPost) {
+			lastSeenPost.classList.add('en621-last-seen');
+			setFlag('has-last-seen-post');
+		}
+	}
 	elevateSearchTerms();
 	try {
 		// This just annoyed me :v
@@ -1462,6 +1509,7 @@ Object.defineProperties(unsafeWindow, {
 			putHelp,
 			registerKeybind,
 			searchString: () => CURRENT_SEARCH,
+			cleanSearchString: () => NORMALISED_SEARCH,
 			enablePoolReaderMode,
 			disablePoolReaderMode,
 			togglePoolReaderMode,

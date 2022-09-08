@@ -56,6 +56,14 @@ At this time, there is no way to unregister a keybind. That may come in a future
 
 This is only a function to match the others. It returns a static, constant string and ignores all arguments. The returned string is the current search for this page _if_ one was found, or an empty string if not. It exists because I have found three different query parameters so far that must be checked.
 
+### `cleanSearchString()`
+
+- Introduced: `v4.4.0`
+
+This function is like `searchString()` except that the return value (also a constant string) is the "normalised" version of the current search string, if any. In this case, normalisation is done by trimming all excess whitespace, splitting the search string on remaining whitespace, forcing all tags to lowercase, replacing any `rating:(safe|questionable|explicit)` tags with the short form (`rating:(s|q|e)`), removing all duplicates, and sorting the tags in lexical order. The resulting list is then joined with a single space character (`0x20`).
+
+This string may be more useful to examine for the effective search, whereas `searchString()` will give you the exact literal search performed by the user.
+
 ### `enablePoolReaderMode()` + `disablePoolReaderMode()` + `togglePoolReaderMode(optionalEvent)`
 
 - Introduced: `v3.0.0`
@@ -138,6 +146,13 @@ Sent once en621 finishes its run-once initialisation. At this point, the API obj
 
 Emitted every time image tooltips are enabled or disabled, regardless of previous state. The `enabled` detail indicates whether post preview tooltips are active, or if they have been stored into the `data-title` attribute.
 
+### `flag-set` and `flag-unset`
+
+- Cancelable: **no**
+- Details: `id`, `full`
+
+Emitted every time a flag is set or unset. Flags are implemented as CSS classes on `document.body` and are listed below. This event allows scripts to be informed automatically when the set of active flags changes. The `id` detail is the flag's short name as listed below, while the `full` detail is the CSS class name that can be checked for.
+
 # CSS Classes
 
 CSS classes are all set on `document.body` (the `body` element) for convenience. You can check their existence programmatically via the `hasFlag()` function, or use them in CSS selectors for conditional styling.
@@ -209,4 +224,8 @@ en621 encountered _an_ error, _somewhere_. This only means that _something_ went
 ### `no-image-tooltips`
 
 If present, post preview images do not have tooltips; the previous tooltip content is in the `data-title` attribute accessible through the `element.dataset.title` property.
+
+### `has-last-seen-post`
+
+Version 4.4.0 introduced last-seen tracking for post index pages, implemented as a yellow dashed border around the last post that was seen for the current search. Each time a post search page is loaded, the most recent post on that page is remembered for next time. If the current search has a known last-seen post, it will be highlighted and this flag will be set. At all other times, including on other pages than post searches, this flag will be unset.
 
