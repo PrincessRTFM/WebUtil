@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.4.0
+// @version      4.4.1
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -18,6 +18,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v4.4.1 - last-seen post tracking now excludes blacklisted posts
 v4.4.0 - implemented last-seen post tracking on a per-search basis
 v4.3.4 - HoverZoom checking now happens ten times in 100ms intervals because just 100ms isn't always enough
 v4.3.3 - increased the artificial delay because there were still occasional timing issues
@@ -1274,7 +1275,7 @@ else if (PATH == POST_INDEX_PATH) {
 	const postSelector = "div#posts > div#posts-container > article.post-preview";
 	const storageKey = `lastSeenPostId/${NORMALISED_SEARCH}`;
 	const lastSeenPostId = GM_getValue(storageKey, "");
-	const latestPost = document.querySelector(postSelector);
+	const latestPost = document.querySelector(`${postSelector}:not(.blacklisted)`);
 	// Apply the styling to highlight the last post the user saw on this search
 	GM_addStyle([
 		`${postSelector}.en621-last-seen > a img {`,
