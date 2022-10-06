@@ -1,7 +1,7 @@
 ---
 title: en621 API documentation
 ---
-If you appreciate my work and want to thank me, you can donate to me on [paypal](https://paypal.me/LilithSong) or [cashapp](https://paypal.me/LilithSong).
+If you appreciate my work and want to thank me, you can donate to me on [paypal](https://paypal.me/LilithSong) or [cashapp](https://cash.app/$LilithSong).
 
 # Script API
 
