@@ -109,10 +109,10 @@ const KB_CTRL = 2;
 const KB_SHIFT = 4;
 
 const CONSOLE_TOOLS = Object.create(null);
-CONSOLE_TOOLS.SCRIPT_VERSION = Object.freeze(GM_info.script.version.split(".").map(i => parseInt(i, 10)));
+CONSOLE_TOOLS.SCRIPT_VERSION = Object.freeze(GM_info.script.version.split(".").map((i) => parseInt(i, 10)));
 
 
-const pause = delay => new Promise(resolve => setTimeout(resolve.bind(resolve, delay), delay));
+const pause = (delay) => new Promise((resolve) => setTimeout(resolve.bind(resolve, delay), delay));
 const request = (uri, ctx) => {
 	const url = new URL(String(uri));
 	url.searchParams.append('_client', encodeURIComponent(`${SCRIPT_TITLE} by lsong@princessrtfm.com`));
@@ -164,7 +164,7 @@ const EV_SCRIPT_LOADED = "loaded";
 const EV_FLAG_SET = "flag-set";
 const EV_FLAG_UNSET = "flag-unset";
 // Register a debugging listener for all events
-document.addEventListener('en621', evt => {
+document.addEventListener('en621', (evt) => {
 	const type = `${evt.cancelable ? '' : 'non-'}cancelable`;
 	const {
 		name,
@@ -179,12 +179,12 @@ document.addEventListener('en621', evt => {
 	}
 });
 
-const setFlag = flagstr => {
+const setFlag = (flagstr) => {
 	// Flags are set as classes on the body tag, prefixed with `en621-` and forced to lowercase
 	// This allows checking for flags easily enough (see `hasFlag()` for that) and also applying
 	// conditional CSS based on the presence (or, with `:not()`, absence) of various flags.
 	const flags = flagstr.replace(/\s+/gu, ' ').split(" ");
-	flags.forEach(flag => {
+	flags.forEach((flag) => {
 		const clean = flag
 			.replace(/^en621-?/ui, '')
 			.toLowerCase();
@@ -195,9 +195,9 @@ const setFlag = flagstr => {
 		});
 	});
 };
-const unsetFlag = flagstr => {
+const unsetFlag = (flagstr) => {
 	const flags = flagstr.replace(/\s+/gu, ' ').split(" ");
-	flags.forEach(flag => {
+	flags.forEach((flag) => {
 		const clean = flag
 			.replace(/^en621-?/ui, '')
 			.toLowerCase();
@@ -217,7 +217,7 @@ const unsetFlag = flagstr => {
 // The return value is true if and ONLY if ALL flags are found.
 // NON-whitespace is left entirely unchanged. Also note that `en621-` is prefixed to each flag,
 // but will NOT be duplicated if your passed flag already has it.
-const hasFlag = flags => {
+const hasFlag = (flags) => {
 	const flagList = flags.replace(/\s+/gu, ' ').split(" ");
 	for (const flag of flagList) {
 		const clean = flag
@@ -229,9 +229,9 @@ const hasFlag = flags => {
 	}
 	return true;
 };
-const toggleFlag = flagstr => {
+const toggleFlag = (flagstr) => {
 	const flags = flagstr.replace(/\s+/gu, ' ').split(" ");
-	flags.forEach(flag => {
+	flags.forEach((flag) => {
 		if (hasFlag(flag)) {
 			unsetFlag(flag);
 		}
@@ -258,7 +258,6 @@ const makeElem = (tag, id, clazz) => {
 
 const controlTabsContainer = makeElem("div", "control-tabs-container", "en621-side-tab-container");
 const messageTabsContainer = makeElem("div", "message-tabs-container", "en621-side-tab-container");
-/* eslint-disable sonarjs/no-duplicate-string */
 GM_addStyle([
 	".en621-side-tab-container {",
 	"position: fixed;",
@@ -325,7 +324,6 @@ GM_addStyle([
 	"transition-delay: 0.5s;",
 	"}",
 ].join(''));
-/* eslint-enable sonarjs/no-duplicate-string */
 document.querySelector("#page").append(controlTabsContainer);
 document.querySelector("#page").append(messageTabsContainer);
 
@@ -385,7 +383,7 @@ const putMessage = (content, type, icon, timeout) => {
 	messageClose.textContent = '✖';
 	messageIcon.textContent = icon;
 	messageContainer.append(messageClose, messageIcon, messageText);
-	const removeMsg = cause => {
+	const removeMsg = (cause) => {
 		messageContainer.remove();
 		sendEvent(EV_MESSAGE_CLOSE, {
 			content,
@@ -458,8 +456,7 @@ const registerKeybind = (keys, handler) => {
 	}
 };
 // This is en621's keybind handler - a single event checks the map to find your handler.
-document.addEventListener('keydown', evt => {
-	// eslint-disable-next-line array-bracket-newline, array-element-newline
+document.addEventListener('keydown', (evt) => {
 	if (evt.target.isContentEditable || [ 'input', 'textarea' ].includes(evt.target.tagName.toLowerCase())) {
 		// The user is typing into some kind of input area - don't interfere
 		return;
@@ -502,12 +499,13 @@ const NORMALISED_SEARCH = (() => {
 		return '';
 	}
 	return Array.from(
-		new Set(CURRENT_SEARCH
-			.trim()
-			.split(/\s+/u)
-			.map(tag => tag.toLowerCase().replace(/^(rating:[sqe])/u, '$1'))
+		new Set(
+			CURRENT_SEARCH
+				.trim()
+				.split(/\s+/u)
+				.map((tag) => tag.toLowerCase().replace(/^(rating:[sqe])/u, '$1'))
 		)
-	).sort().join(" ");
+	).sort().join(" "); // eslint-disable-line newline-per-chained-call
 })();
 
 const navbar = document.querySelector("#nav").children[0];
@@ -616,7 +614,7 @@ const enablePoolReaderMode = async () => {
 		vanillaPageList.style.display = 'none';
 		readerPageContainer.style.display = '';
 		document.querySelector(`#${POOL_READER_STATUSLINE_ID}`).style.display = '';
-		setFlag("pool-reader-mode"); // eslint-disable-line sonarjs/no-duplicate-string
+		setFlag("pool-reader-mode");
 		sendEvent(EV_POOL_READER_STATE, {
 			active: true,
 		});
@@ -659,14 +657,14 @@ const enablePoolReaderMode = async () => {
 	// This here is an example of a "control" tab with simple text content that DOES get changed later
 	const statusTab = addControlTab("Working...");
 	subnavbar.parentElement.append(statusLine);
-	const status = statusText => {
+	const status = (statusText) => {
 		statusLine.textContent = statusText;
 	};
-	const title = subtitle => {
+	const title = (subtitle) => {
 		document.title = `Reader: ${subtitle} - e621`;
 	};
 	// We have a bunch of handlers here, so let's break it down a little...
-	const checkResponseValidity = async poolData => {
+	const checkResponseValidity = async (poolData) => {
 		// Step one - this handler - is making sure the data we get back from the site is what we expect
 		const pools = poolData.response;
 		if (pools.length > 1) {
@@ -698,7 +696,7 @@ const enablePoolReaderMode = async () => {
 		state.postIDs = pool.post_ids;
 		return state;
 	};
-	const insertImages = async state => {
+	const insertImages = async (state) => {
 		// This one runs long (but async) because it sequentially inserts each image, waiting for it to finish
 		// loading before continuing to the next one. Also it has to pause between hits in order to comply with
 		// e621's API rules (and to avoid rudely hammering the server) too.
@@ -737,7 +735,7 @@ const enablePoolReaderMode = async () => {
 				url: sourceURL,
 				id: postID,
 			});
-			return new Promise(resolve => {
+			return new Promise((resolve) => {
 				// Each image is wrapped in a link to the post it's from, though the direct-mode toggle can
 				// switch that to link to the image itself. Each link also has a unique ID containing the
 				// post it's from. Technically, you could CSS-style specific posts if you wanted to.
@@ -790,7 +788,7 @@ const enablePoolReaderMode = async () => {
 	};
 	// Now, something might go wrong. If it does, there's not much we can actually DO, but we can at least tell
 	// the user so they don't sit there wondering.
-	const onPoolLoadingError = err => {
+	const onPoolLoadingError = (err) => {
 		const msg = [
 			"Something went wrong. ",
 			makeElem('a'),
@@ -825,13 +823,13 @@ const enablePoolReaderMode = async () => {
 	// WHEE, PROMISES
 	return request(`${location.origin}/pools.json?search[id]=${poolID}`, context) // Get the pool details!
 		.then(checkResponseValidity) // Validate the response!
-		.then(state => {
+		.then((state) => {
 			// Hide the normal list because we're switching to reader mode now!
 			vanillaPageList.style.display = 'none';
 			return state;
 		})
 		.then(insertImages) // Put the images on the page! (This'll take a while)
-		.then(state => {
+		.then((state) => {
 			// Tell the user we're done loading!
 			title(`${state.poolName} (#${state.poolID})`);
 			status(`Finished loading images for pool ${state.poolID} (${state.postCount} total)`);
@@ -861,7 +859,7 @@ const disablePoolReaderMode = async () => {
 		active: false,
 	});
 };
-const togglePoolReaderMode = evt => {
+const togglePoolReaderMode = (evt) => {
 	// You can just slap this in as an event handler, or call it directly. It's on the API, after all.
 	if (evt) {
 		evt.preventDefault();
@@ -892,9 +890,9 @@ const elevateSearchTerms = () => {
 		const tagList = document.querySelector("#tag-box") || document.querySelector("#tag-list");
 		const terms = CURRENT_SEARCH
 			.split(/\s+/u)
-			.filter(t => !t.includes(':')) // We don't look at metadata searches here
-			.filter(t => !t.includes('*')) // TODO find a way to handle wildcard tags in searches?
-			.map(t => t
+			.filter((t) => !t.includes(':')) // We don't look at metadata searches here
+			.filter((t) => !t.includes('*')) // TODO find a way to handle wildcard tags in searches?
+			.map((t) => t
 				.replace(/^~/u, '')
 				.replace(/_/gu, ' ')
 				.toLowerCase());
@@ -1026,7 +1024,7 @@ GM_addStyle([
 	"}",
 ].join("\n"));
 addControlTab(tooltipBox);
-document.addEventListener('en621', evt => {
+document.addEventListener('en621', (evt) => {
 	if (evt.detail.name != EV_IMAGE_TOOLTIPS) {
 		return;
 	}
@@ -1066,7 +1064,7 @@ if (PATH.startsWith(POOL_PATH_PREFIX) && PATH.slice(POOL_PATH_PREFIX.length).mat
 	subnavbar.append(readerItem);
 	CONSOLE_TOOLS.getVisiblePostURLs = () => {
 		const set = Array.from(document.querySelectorAll('#posts-container > article[id^="post_"]'));
-		return set.map(e => e.dataset.fileUrl);
+		return set.map((e) => e.dataset.fileUrl);
 	};
 	// There are not many pool-specific run-once features.
 	// YET?
@@ -1088,7 +1086,7 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 			id: `${poolLinkIdLead}0`,
 		}
 	).id.slice(poolLinkIdLead.length), 10);
-	const scrollToRelated = evt => {
+	const scrollToRelated = (evt) => {
 		try {
 			parentChildNotices.scrollIntoView(false);
 			log("Scrolled to parent/child notices");
@@ -1107,7 +1105,7 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 		// But if it IS an image...
 		if (image.tagName.toLowerCase() == 'img') {
 			// Doubleclicking the image goes right to the direct link
-			image.addEventListener('dblclick', evt => {
+			image.addEventListener('dblclick', (evt) => {
 				if (sourceLink && sourceLink.href) {
 					location.assign(sourceLink.href);
 				}
@@ -1154,7 +1152,7 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 		scrollToNoticeLink.textContent = [
 			hasFlag("has-parent-post") ? 'Parent' : '',
 			hasFlag("has-child-post") ? 'Children' : '',
-		].filter(e => e).join('/');
+		].filter((e) => e).join('/');
 		scrollToNoticeLink.href = '#';
 		scrollToNoticeLink.addEventListener('click', scrollToRelated);
 		scrollToNoticeItem.append(scrollToNoticeLink);
@@ -1167,7 +1165,7 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 		// If we found the post rating, then add a metatag for it to the VERY top of the tag list
 		try {
 			const postRating = Array.from(postRatingElem.classList)
-				.filter(cl => cl.startsWith(postRatingClassPrefix))
+				.filter((cl) => cl.startsWith(postRatingClassPrefix))
 				.shift()
 				.slice(postRatingClassPrefix.length)
 				.toLowerCase();
@@ -1189,7 +1187,7 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 					include,
 					exclude,
 					search,
-				].forEach(a => {
+				].forEach((a) => {
 					a.rel = 'nofollow';
 					a.classList.add('rating-tag');
 				});
@@ -1258,7 +1256,7 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 			msg[1].href = '#';
 			msg[1].textContent = "a pool";
 			// This one goes up to show you the pool(s) since there may be more than one
-			msg[1].addEventListener('click', evt => {
+			msg[1].addEventListener('click', (evt) => {
 				document.querySelector("#nav-links-top").scrollIntoView();
 				evt.preventDefault();
 				evt.stopPropagation();
@@ -1306,7 +1304,7 @@ else if (PATH == POST_INDEX_PATH) {
 	}
 	CONSOLE_TOOLS.getVisiblePostURLs = () => {
 		const set = Array.from(document.querySelectorAll('#posts-container > article[id^="post_"]'));
-		return set.map(e => e.dataset.largeFileUrl);
+		return set.map((e) => e.dataset.largeFileUrl);
 	};
 }
 
@@ -1371,7 +1369,7 @@ if (document.querySelector('#search-box')) {
 // Stick a little thing on the navbar to show that we're loaded and our version
 // The clever bit is that is does an inter-tab version check!
 const versionChannel = new BroadcastChannel('en621-versioncheck');
-versionChannel.addEventListener("message", evt => {
+versionChannel.addEventListener("message", (evt) => {
 	try {
 		const my = GM_info.script.version;
 		const version = evt.data;
@@ -1546,4 +1544,3 @@ setTimeout(() => {
 		loadTimeMs: new Date().valueOf() - START_TIME_MS,
 	});
 });
-
