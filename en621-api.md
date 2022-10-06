@@ -88,6 +88,12 @@ If the tab should later be removed, save the return value and call `.remove()` w
 
 These functions control whether post previews have tooltips (`title` attributes) or not. When disabled, the original tooltip text is moved into the `data-title` (`element.dataset.title` property) attribute instead, to preserve it for later restoration.
 
+### `hasNewPosts()`
+
+- Introduced: `v4.5.0`
+
+This function returns one of three values: if it is not executed on a post search page or there are no posts listed, it returns `undefined`. If it is called on a post search page and there _are_ posts listed, it returns `true` if the first post (the most recently uploaded) is _not_ flagged as the last post seen for this search; otherwise, it returns `false`.
+
 ## Events
 
 All events are of the type `CustomEvent` with the event name `en621`. The event object's `detail.name` contains the specific occurance that triggered the event. Some events also have additional details available under `detail.data` as well.
@@ -230,4 +236,3 @@ If present, post preview images do not have tooltips; the previous tooltip conte
 ### `has-last-seen-post`
 
 Version 4.4.0 introduced last-seen tracking for post index pages, implemented as a yellow dashed border around the last post that was seen for the current search. Each time a post search page is loaded, the most recent post on that page is remembered for next time. If the current search has a known last-seen post, it will be highlighted and this flag will be set. At all other times, including on other pages than post searches, this flag will be unset.
-

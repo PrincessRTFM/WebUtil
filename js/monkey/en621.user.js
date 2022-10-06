@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.4.1
+// @version      4.5.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -18,6 +18,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v4.5.0 - added `hasNewPosts()` to API
 v4.4.1 - last-seen post tracking now excludes blacklisted posts
 v4.4.0 - implemented last-seen post tracking on a per-search basis
 v4.3.4 - HoverZoom checking now happens ten times in 100ms intervals because just 100ms isn't always enough
@@ -111,6 +112,17 @@ const KB_SHIFT = 4;
 const CONSOLE_TOOLS = Object.create(null);
 CONSOLE_TOOLS.SCRIPT_VERSION = Object.freeze(GM_info.script.version.split(".").map((i) => parseInt(i, 10)));
 
+
+const isolateAndFreeze = (values, enumerable = true) => {
+	const base = Object.create(null);
+	for (const key of Object.keys(values)) {
+		Reflect.defineProperty(base, key, {
+			value: values[key],
+			enumerable,
+		});
+	}
+	return Object.freeze(base);
+};
 
 const pause = (delay) => new Promise((resolve) => setTimeout(resolve.bind(resolve, delay), delay));
 const request = (uri, ctx) => {
@@ -1031,6 +1043,20 @@ document.addEventListener('en621', (evt) => {
 	tooltipToggle.checked = evt.detail.data.enabled;
 });
 
+// It may be useful to easily check if the most recent post on a search page is the last seen one for this search or not
+const hasNewPosts = () => {
+	if (PATH != POST_INDEX_PATH) {
+		return void 0;
+	}
+	const latestPost = document.querySelector(`div#posts > div#posts-container > article.post-preview:not(.blacklisted)`);
+	if (!latestPost) {
+		return void 0;
+	}
+	return latestPost.classList.contains("en621-last-seen"); // eslint-disable-line consistent-return
+	// The above eslint-disable directive SHOULDN'T be needed, since consistent-return.treatUndefinedAsUnspecified is true in the config.
+	// However, eslint won't stop complaining about it, despite the docs saying that it shouldn't do that with that option enabled.
+};
+
 // Register a few keybinds of our own...
 registerKeybind('!r', () => {
 	document.location = 'https://e621.net/posts/random';
@@ -1489,6 +1515,41 @@ navbarVersionLabel.addEventListener("click", () => {
 navbarVersionContainer.append(navbarVersionLabel);
 navbar.append(navbarVersionContainer);
 
+// This allows each tab to issue a command across all of en621, for every loaded tab to execute.
+// At the time of writing this, it's not USED anywhere yet, since the feature I had been planning it for is nonviable, but I'm leaving it
+// implemented here for the future.
+//
+// The functionality is such that any received message is treated as `<command>[ <argument>]`, where `command` is looked up by name in the
+// `COMMANDS` table here, and `argument` (the remainder of the string) is passed as the argument to the function. If there is no argument,
+// the function gets an empty string instead.
+//
+// The idea was that a message could be sent telling all tabs to check if they're on an index page that doesn't have unseen posts (see the
+// last-seen-posts feature) and if so then close themselves, but scripts can't close tabs that they didn't open, so that's a bust.
+//
+// The NEW idea is that this can be used for an advanced command-line-style instruction input (which the original probably would have been
+// implemented as anyway) for... I dunno yet, that's why I didn't write it.
+const COMMANDS = isolateAndFreeze({});
+const commandChannel = new BroadcastChannel('en621-commands');
+commandChannel.addEventListener("message", (evt) => {
+	let cmd;
+	let arg;
+	if (evt.data.includes(" ")) {
+		[ cmd ] = evt.data.split(" ");
+		arg = evt.data.slice(evt.data.indexOf(" ") + 1).trim();
+	}
+	else {
+		cmd = evt.data;
+		arg = "";
+	}
+	if (COMMANDS[cmd]) {
+		info(`Executing received command: ${cmd}`);
+		COMMANDS[cmd](arg);
+	}
+	else {
+		error(`Received unknown command: ${cmd}`);
+	}
+});
+
 // Last but not least...
 Object.defineProperties(unsafeWindow, {
 	EN621_CONSOLE_TOOLS: {
@@ -1499,7 +1560,7 @@ Object.defineProperties(unsafeWindow, {
 	EN621_API: {
 		// Documentation is up! ../../en621-api.md (or online at https://gh.princessrtfm.com/en621-api.html too)
 		// for details on all of these things. Now I just have to keep it up-to-date.
-		value: Object.freeze({
+		value: isolateAndFreeze({
 			VERSION: CONSOLE_TOOLS.SCRIPT_VERSION,
 			hasFlag,
 			putMessage,
@@ -1516,6 +1577,7 @@ Object.defineProperties(unsafeWindow, {
 			enableImageTooltips,
 			toggleImageTooltips,
 			addControlTab,
+			hasNewPosts,
 		}),
 		enumerable: true,
 	},
