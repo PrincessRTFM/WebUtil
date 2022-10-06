@@ -265,6 +265,7 @@
 		console.info(`You can pass script URLs in the page URI hash as \`${autoloadScriptPrefix}<url>\` and they will automatically call \`loadScript(<url>)\`. Each url must be passed as its own parameter, separated with commas.`);
 		console.groupEnd();
 		console.groupEnd();
+		console.log("If you like this utility and want to support you, you can send a small donation to https://paypal.me/LilithSong or https://cash.app/$LilithSong to help me out.");
 		/* eslint-enable max-len */
 		if (unknownParameters.length) {
 			console.info(

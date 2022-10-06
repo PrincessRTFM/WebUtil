@@ -1,6 +1,8 @@
 ---
 title: en621 API documentation
 ---
+If you appreciate my work and want to thank me, you can donate to me on [paypal](https://paypal.me/LilithSong) or [cashapp](https://paypal.me/LilithSong).
+
 # Script API
 
 The javascript API is exposed through the non-configurable, non-writable, frozen object `window.EN621_API`. This object (and by extension, the entire JS API) was first introduced in script version `3.0.0`. There are additionally events dispatched on `document` to indicate changes.
