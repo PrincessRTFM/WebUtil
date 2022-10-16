@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.5.0
+// @version      4.6.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -18,6 +18,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v4.6.0 - added a control tab to scroll to the last seen post when possible
 v4.5.0 - added `hasNewPosts()` to API
 v4.4.1 - last-seen post tracking now excludes blacklisted posts
 v4.4.0 - implemented last-seen post tracking on a per-search basis
@@ -96,7 +97,7 @@ const SCRIPT_NAME = GM_info.script.name;
 const SCRIPT_VERSION = `V${GM_info.script.version || '???'}`;
 const SCRIPT_TITLE = `${SCRIPT_NAME} ${SCRIPT_VERSION}`;
 
-const NOP = () => {}; // eslint-disable-line no-empty-function
+const NOP = () => { }; // eslint-disable-line no-empty-function
 
 const debug = console.debug.bind(console, `[${SCRIPT_TITLE}]`);
 const log = console.log.bind(console, `[${SCRIPT_TITLE}]`);
@@ -469,7 +470,7 @@ const registerKeybind = (keys, handler) => {
 };
 // This is en621's keybind handler - a single event checks the map to find your handler.
 document.addEventListener('keydown', (evt) => {
-	if (evt.target.isContentEditable || [ 'input', 'textarea' ].includes(evt.target.tagName.toLowerCase())) {
+	if (evt.target.isContentEditable || ['input', 'textarea'].includes(evt.target.tagName.toLowerCase())) {
 		// The user is typing into some kind of input area - don't interfere
 		return;
 	}
@@ -1299,23 +1300,45 @@ else if (PATH == POST_INDEX_PATH) {
 	const postSelector = "div#posts > div#posts-container > article.post-preview";
 	const storageKey = `lastSeenPostId/${NORMALISED_SEARCH}`;
 	const lastSeenPostId = GM_getValue(storageKey, "");
-	const latestPost = document.querySelector(`${postSelector}:not(.blacklisted)`);
+	// This has to be delayed because the site doesn't actually flag posts on the page as blacklisted on the server.
+	// That's done by a script on the client, so if we check too fast, then it won't have time to work and we'll get a hidden post.
+	const deferredPostScan = function deferredPostScan() {
+		const latestPost = document.querySelector(`${postSelector}:not(.blacklisted)`);
+		// If there are posts on this search (there might not be!) then remember the most recent one
+		if (latestPost) {
+			GM_setValue(storageKey, latestPost.dataset.id);
+		}
+	};
+	setTimeout(deferredPostScan, 1000);
 	// Apply the styling to highlight the last post the user saw on this search
 	GM_addStyle([
 		`${postSelector}.en621-last-seen > a img {`,
-		"border: 3px dashed yellow;",
+		"border: 3px dashed yellow !important;",
 		"}",
 	].join("\n"));
-	// If there are posts on this search (there might not be!) then remember the most recent one
-	if (latestPost) {
-		GM_setValue(storageKey, latestPost.dataset.id);
-	}
 	// If this is a new search, we won't have a last-seen ID
 	if (lastSeenPostId) {
 		// But if we do, look for that post on this page...
 		const lastSeenPost = document.querySelector(`${postSelector}#post_${lastSeenPostId}`);
-		// ...and if it's here (it might not be, if it's been long enough on a popular tag) then flag it
+		// ...and if it's here (it might not be, if it's been long enough on a popular tag) then flag it and make the scroll tab
 		if (lastSeenPost) {
+			const scrollLink = document.createElement('a');
+			scrollLink.href = "javascript:void 0";
+			scrollLink.textContent = "Last seen";
+			scrollLink.addEventListener('click', (evt) => {
+				try {
+					lastSeenPost.scrollIntoView({
+						behavior: "smooth",
+						block: "end",
+					});
+				}
+				catch (err) {
+					error("Can't scroll to last seen post:", err);
+				}
+				evt.preventDefault();
+				evt.stopPropagation();
+			});
+			addControlTab(scrollLink);
 			lastSeenPost.classList.add('en621-last-seen');
 			setFlag('has-last-seen-post');
 		}
@@ -1534,7 +1557,7 @@ commandChannel.addEventListener("message", (evt) => {
 	let cmd;
 	let arg;
 	if (evt.data.includes(" ")) {
-		[ cmd ] = evt.data.split(" ");
+		[cmd] = evt.data.split(" ");
 		arg = evt.data.slice(evt.data.indexOf(" ") + 1).trim();
 	}
 	else {
