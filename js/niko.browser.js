@@ -61,6 +61,7 @@ $(() => {
 			'upset_meow',
 			'upset2',
 			'really',
+			'rage',
 		],
 		Other: [
 			'rqst_other_sonicastle',
