@@ -487,7 +487,7 @@ const loud = e('boldtalic');
 const gothic = e('gothic');
 const fancy = e('fancy');
 const cursive = e('cursive');
-const smallcaps = e('smallcaps');
+const sarcasm = e('sarcasm');
 const munge = () => {
 	const original = input.value.trim();
 	bold.value = boldMap.apply(original);
@@ -496,7 +496,13 @@ const munge = () => {
 	gothic.value = gothicMap.apply(original);
 	fancy.value = fancyMap.apply(original);
 	cursive.value = cursiveMap.apply(original);
-	smallcaps.value = smallMap.apply(original);
+	
+	let up = false;
+	sarcasm.value = original.replace(/[a-z]/gui, chr => {
+		const cased = chr["to" + (up ? "Upper" : "Lower") + "Case"]();
+		up = !up;
+		return cased;
+	});
 };
 const copyText = evt => {
 	try {
