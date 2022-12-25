@@ -470,7 +470,7 @@ const registerKeybind = (keys, handler) => {
 };
 // This is en621's keybind handler - a single event checks the map to find your handler.
 document.addEventListener('keydown', (evt) => {
-	if (evt.target.isContentEditable || ['input', 'textarea'].includes(evt.target.tagName.toLowerCase())) {
+	if (evt.target.isContentEditable || [ 'input', 'textarea' ].includes(evt.target.tagName.toLowerCase())) {
 		// The user is typing into some kind of input area - don't interfere
 		return;
 	}
@@ -1323,7 +1323,7 @@ else if (PATH == POST_INDEX_PATH) {
 		// ...and if it's here (it might not be, if it's been long enough on a popular tag) then flag it and make the scroll tab
 		if (lastSeenPost) {
 			const scrollLink = document.createElement('a');
-			scrollLink.href = "javascript:void 0";
+			scrollLink.href = "javascript:void 0"; // eslint-disable-line no-script-url
 			scrollLink.textContent = "Last seen";
 			scrollLink.addEventListener('click', (evt) => {
 				try {
@@ -1557,7 +1557,7 @@ commandChannel.addEventListener("message", (evt) => {
 	let cmd;
 	let arg;
 	if (evt.data.includes(" ")) {
-		[cmd] = evt.data.split(" ");
+		[ cmd ] = evt.data.split(" ");
 		arg = evt.data.slice(evt.data.indexOf(" ") + 1).trim();
 	}
 	else {
