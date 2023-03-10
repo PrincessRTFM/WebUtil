@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.6.0
+// @version      4.6.1
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -18,6 +18,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v4.6.1 - e621 changed some CSS which broke the menu / top bar displays, now fixed
 v4.6.0 - added a control tab to scroll to the last seen post when possible
 v4.5.0 - added `hasNewPosts()` to API
 v4.4.1 - last-seen post tracking now excludes blacklisted posts
@@ -521,8 +522,8 @@ const NORMALISED_SEARCH = (() => {
 	).sort().join(" "); // eslint-disable-line newline-per-chained-call
 })();
 
-const navbar = document.querySelector("#nav").children[0];
-const subnavbar = document.querySelector("#nav").children[1];
+const navbar = document.querySelector("#nav > .main");
+const subnavbar = document.querySelector("#nav > .secondary");
 
 const PATH = location.pathname;
 
@@ -667,6 +668,8 @@ const enablePoolReaderMode = async () => {
 	].join(''));
 	const poolID = parseInt(PATH.slice(POOL_PATH_PREFIX.length), 10);
 	const statusLine = makeElem('menu', POOL_READER_STATUSLINE_ID);
+	statusLine.style.gridColumn = "span 2";
+	statusLine.style.marginTop = "10px";
 	// This here is an example of a "control" tab with simple text content that DOES get changed later
 	const statusTab = addControlTab("Working...");
 	subnavbar.parentElement.append(statusLine);
