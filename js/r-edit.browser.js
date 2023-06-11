@@ -25,6 +25,7 @@ const blockEvent = evt => {
 	const output = document.querySelector("#collapsed");
 	const link = document.querySelector('#multireddit');
 	const marklet = document.querySelector('#quickeditlink');
+	const count = document.querySelector('#subcount');
 	const getSortedEntries = () => {
 		const seen = Object.create({});
 		return input
@@ -46,6 +47,7 @@ const blockEvent = evt => {
 	};
 	const munge = () => {
 		const entries = getSortedEntries();
+		count.textContent = entries.length + " subreddit" + (entries.length == 1 ? '' : 's');
 		input.value = entries.join("\n");
 		output.value = entries.join("+");
 		location.hash = output.value;
@@ -118,22 +120,8 @@ const blockEvent = evt => {
 		return true;
 	});
 	document.addEventListener('paste', evt => {
-		try {
-			const text = (evt.clipboardData || window.clipboardData)
-				.getData('text/plain')
-				.trim()
-				.replace(/^https?:\/+(?:[a-z]+\.)?(?:reddit|imgur)\.com/ui, '')
-				.replace(/^\/+r\/+/ui, '');
-			if (text) {
-				input.value += `\n${text}`;
-				input.focus();
-				input.blur();
-			}
-		}
-		catch (err) {
-			console.error("Couldn't handle paste event:", err);
-		}
-		return blockEvent(evt);
+		setTimeout(munge, 5);
+		return true;
 	}, {
 		capture: true,
 	});
@@ -153,9 +141,7 @@ const blockEvent = evt => {
 		.replace(/^[#/]+/u, '')
 		.replace(/^r\//ui, '')
 		.replace(/\/*(?:#.*)?$/u, '');
-	if (initialInput) {
-		location.hash = initialInput;
-		input.value = initialInput;
-		munge();
-	}
+	location.hash = initialInput;
+	input.value = initialInput;
+	munge();
 })();

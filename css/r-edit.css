@@ -8,12 +8,17 @@ textarea {
 	border-color: silver;
 	color: silver;
 }
-#quickeditlink, #multireddit {
+div.box > .corner {
 	font-size: 1.2em;
 	position: absolute;
-	bottom: 5px;
 	right: 23px;
 	color: white;
+}
+div.box > .corner.bottom {
+	bottom: 5px;
+}
+div.box > .corner.top {
+	bottom: 1.35em;
 }
 #multireddit {
 	display: none;
