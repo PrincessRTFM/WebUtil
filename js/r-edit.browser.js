@@ -120,8 +120,20 @@ const blockEvent = evt => {
 		return true;
 	});
 	document.addEventListener('paste', evt => {
+		try {
+			const text = (evt.clipboardData || window.clipboardData)
+				.getData('text/plain')
+				.trim()
+				.replace(/^https?:\/+(?:[a-z]+\.)?(?:reddit|imgur)\.com/ui, '')
+				.replace(/^\/+r\/+/ui, '');
+			if (text)
+				insertTextAtCursor(input, text);
+		}
+		catch (err) {
+			console.error("Couldn't handle paste event:", err);
+		}
 		setTimeout(munge, 5);
-		return true;
+		return blockEvent(evt);
 	}, {
 		capture: true,
 	});
