@@ -66,6 +66,9 @@ $(() => {
 			'creepypasta',
 			'xwx',
 		],
+		"World Machine": [
+			'wm-normal',
+		],
 		Other: [
 			'rqst_other_sonicastle',
 			'rqst_other_fnfxtf2',
