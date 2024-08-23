@@ -243,8 +243,8 @@
 		console.groupCollapsed("Help");
 		console.groupCollapsed("Basic Usage");
 		console.info("Call `initialise(<numberOfTextBoxes>)` (or `initialize` - both spellings do the same thing!) to reset the page and produce the given number of textareas, or just set `window.boxes` to a number. Calling `reset()` is the same as initialising to a single box.");
-		console.info("When changing the number of boxes on the page, the page is entirely cleared and brand new boxes are created, so all custom properties event handlers are lost!");
-		console.info("All textarea are tagged in the lower right corner with their ID - which is also defined as a global variable pair: `window.<id>` is the box with that ID.");
+		console.info("When changing the number of boxes on the page, the page is entirely cleared and brand new boxes are created, so all custom properties and event handlers are lost!");
+		console.info("All textareas are tagged in the lower right corner with their ID - which is also defined as a global variable: `window.<id>` is the box with that ID.");
 		console.info("Pressing CONTROL-S in a box will select all contents and copy them to the clipboard, and pressing CONTROL-D will clear it.");
 		console.groupEnd();
 		console.groupCollapsed("Automatic Input Handling");
