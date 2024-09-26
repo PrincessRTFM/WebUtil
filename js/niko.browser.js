@@ -72,6 +72,7 @@ $(() => {
 		Other: [
 			'rqst_other_sonicastle',
 			'rqst_other_fnfxtf2',
+			'rqst_other_baseball',
 		],
 	};
 	const preloadTimers = [];
