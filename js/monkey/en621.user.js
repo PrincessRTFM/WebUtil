@@ -550,7 +550,7 @@ modeBox.append(modeToggle, modeLabel);
 modeToggle.addEventListener('input', () => {
 	// This bit was a little complicated to wrangle together, but it should be easy enough to follow:
 	const links = document.querySelectorAll(`a.${POOL_READER_LINK_CLASS}`); // for pool reader pages...
-	const previews = document.querySelectorAll("div#posts-container > article"); // for pools and post searches...
+	const previews = document.querySelectorAll("div#posts > section.posts-container > article"); // for pools and post searches...
 	// If you're looking at a pool, we need to save the ID for restoring the proper post URL.
 	// Might be able to do that a better way, actually... TODO that.
 	const poolID = PATH.startsWith(POOL_PATH_PREFIX)
@@ -984,7 +984,7 @@ const elevateSearchTerms = () => {
 // decided to add a feature to turn them off. Of course, it needs to be able to turn them back ON
 // again too in case the user wants them back.
 const disableImageTooltips = () => {
-	const tipped = document.querySelectorAll('article.post-preview > a[href] > picture > img[title]');
+	const tipped = document.querySelectorAll('div#posts > section.posts-container > article > a[href] > picture > img[title]');
 	for (const img of tipped) {
 		if (img.title) {
 			img.dataset.title = img.title;
@@ -997,7 +997,7 @@ const disableImageTooltips = () => {
 	});
 };
 const enableImageTooltips = () => {
-	const untipped = document.querySelectorAll('article.post-preview > a[href] > picture > img[data-title]');
+	const untipped = document.querySelectorAll('div#posts > section.posts-container > article > a[href] > picture > img[data-title]');
 	for (const img of untipped) {
 		if (img.dataset.title) {
 			img.title = img.dataset.title;
@@ -1052,7 +1052,7 @@ const hasNewPosts = () => {
 	if (PATH != POST_INDEX_PATH) {
 		return void 0;
 	}
-	const latestPost = document.querySelector(`div#posts > div#posts-container > article.post-preview:not(.blacklisted)`);
+	const latestPost = document.querySelector(`div#posts > section.posts-container > article:not(.blacklisted)`);
 	if (!latestPost) {
 		return void 0;
 	}
@@ -1093,7 +1093,7 @@ if (PATH.startsWith(POOL_PATH_PREFIX) && PATH.slice(POOL_PATH_PREFIX.length).mat
 	readerItem.append(readerLink);
 	subnavbar.append(readerItem);
 	CONSOLE_TOOLS.getVisiblePostURLs = () => {
-		const set = Array.from(document.querySelectorAll('#posts-container > article[id^="post_"]'));
+		const set = Array.from(document.querySelectorAll('div#posts > section.posts-container > article[id^="post_"]'));
 		return set.map((e) => e.dataset.fileUrl);
 	};
 	// There are not many pool-specific run-once features.
@@ -1300,7 +1300,7 @@ else if (PATH.startsWith(POST_PATH_PREFIX)) {
 }
 else if (PATH == POST_INDEX_PATH) {
 	// If you're on a post SEARCH page, rather than a POST page...
-	const postSelector = "div#posts > div#posts-container > article.post-preview";
+	const postSelector = "div#posts > section.posts-container > article";
 	const storageKey = `lastSeenPostId/${NORMALISED_SEARCH}`;
 	const lastSeenPostId = GM_getValue(storageKey, "");
 	// This has to be delayed because the site doesn't actually flag posts on the page as blacklisted on the server.
@@ -1355,7 +1355,7 @@ else if (PATH == POST_INDEX_PATH) {
 		error("Can't find `div.blacklist-help` to shorten text label:", err);
 	}
 	CONSOLE_TOOLS.getVisiblePostURLs = () => {
-		const set = Array.from(document.querySelectorAll('#posts-container > article[id^="post_"]'));
+		const set = Array.from(document.querySelectorAll('div#posts > section.posts-container > article[id^="post_"]'));
 		return set.map((e) => e.dataset.largeFileUrl);
 	};
 }
