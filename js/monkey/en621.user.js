@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      4.6.1
+// @version      5.1.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -14,10 +14,16 @@
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setClipboard
+// @grant        window.close
 // @grant        unsafeWindow
 // ==/UserScript==
 
 /* CHANGELOG
+v5.1.0 - console tools to run commands (plus a (failed) experimental command to close windows with a last-seen post and nothing new)
+v5.0.1 - fixed `hasNewPosts()` API function returning an inverted value
+v5.0.0 - Mozilla broke the API export's security measures AND syntax (see comment at end of script)
+
+v4.6.2 - fixed keybinds not working thanks to a typo in the core event handler
 v4.6.1 - e621 changed some CSS which broke the menu / top bar displays, now fixed
 v4.6.0 - added a control tab to scroll to the last seen post when possible
 v4.5.0 - added `hasNewPosts()` to API
@@ -114,17 +120,6 @@ const KB_SHIFT = 4;
 const CONSOLE_TOOLS = Object.create(null);
 CONSOLE_TOOLS.SCRIPT_VERSION = Object.freeze(GM_info.script.version.split(".").map((i) => parseInt(i, 10)));
 
-
-const isolateAndFreeze = (values, enumerable = true) => {
-	const base = Object.create(null);
-	for (const key of Object.keys(values)) {
-		Reflect.defineProperty(base, key, {
-			value: values[key],
-			enumerable,
-		});
-	}
-	return Object.freeze(base);
-};
 
 const pause = (delay) => new Promise((resolve) => setTimeout(resolve.bind(resolve, delay), delay));
 const request = (uri, ctx) => {
@@ -261,7 +256,7 @@ const makeElem = (tag, id, clazz) => {
 		elem.id = id;
 	}
 	if (clazz) {
-		elem.className = clazz; // eslint-disable-line unicorn/no-keyword-prefix
+		elem.className = clazz;
 	}
 	return elem;
 };
@@ -475,7 +470,7 @@ document.addEventListener('keydown', (evt) => {
 		// The user is typing into some kind of input area - don't interfere
 		return;
 	}
-	if (event.isComposing || event.keyCode === 229) {
+	if (evt.isComposing || evt.keyCode === 229) {
 		// This is part of an IME composition - don't interfere
 		return;
 	}
@@ -1056,9 +1051,7 @@ const hasNewPosts = () => {
 	if (!latestPost) {
 		return void 0;
 	}
-	return latestPost.classList.contains("en621-last-seen"); // eslint-disable-line consistent-return
-	// The above eslint-disable directive SHOULDN'T be needed, since consistent-return.treatUndefinedAsUnspecified is true in the config.
-	// However, eslint won't stop complaining about it, despite the docs saying that it shouldn't do that with that option enabled.
+	return !latestPost.classList.contains("en621-last-seen"); // eslint-disable-line consistent-return
 };
 
 // Register a few keybinds of our own...
@@ -1554,61 +1547,114 @@ navbar.append(navbarVersionContainer);
 //
 // The NEW idea is that this can be used for an advanced command-line-style instruction input (which the original probably would have been
 // implemented as anyway) for... I dunno yet, that's why I didn't write it.
-const COMMANDS = isolateAndFreeze({});
-const commandChannel = new BroadcastChannel('en621-commands');
-commandChannel.addEventListener("message", (evt) => {
-	let cmd;
-	let arg;
-	if (evt.data.includes(" ")) {
-		[ cmd ] = evt.data.split(" ");
-		arg = evt.data.slice(evt.data.indexOf(" ") + 1).trim();
+const COMMANDS = Object.assign(Object.create(null), {
+	CloseIfNoNewPosts() {
+		if (hasNewPosts() === false) (unsafeWindow.close || window.close)();
+	},
+});
+const parseCommand = (commandString) => {
+	if (commandString.includes(" ")) {
+		[ cmd ] = commandString.split(" ");
+		arg = commandString.slice(commandString.indexOf(" ") + 1).trim();
 	}
 	else {
-		cmd = evt.data;
+		cmd = commandString;
 		arg = "";
 	}
-	if (COMMANDS[cmd]) {
-		info(`Executing received command: ${cmd}`);
-		COMMANDS[cmd](arg);
+	return [ cmd, arg ];
+};
+const commandChannel = new BroadcastChannel('en621-commands');
+CONSOLE_TOOLS.executeLocalCommand = (command) => {
+	let [ commandName, commandArg ] = parseCommand(command);
+	if (COMMANDS[commandName]) {
+		info(`Executing command: ${commandName}`);
+		COMMANDS[commandName](commandArg);
 	}
 	else {
-		error(`Received unknown command: ${cmd}`);
+		error(`Unknown command: ${commandName}`);
 	}
+};
+commandChannel.addEventListener("message", (evt) => {
+	CONSOLE_TOOLS.executeLocalCommand(evt.data);
 });
+CONSOLE_TOOLS.broadcastCommand = (command) => {
+	commandChannel.postMessage(assembled);
+};
 
 // Last but not least...
-Object.defineProperties(unsafeWindow, {
-	EN621_CONSOLE_TOOLS: {
-		// These aren't really advertised, it's for dev/debug work mostly
-		value: Object.freeze(CONSOLE_TOOLS),
-		enumerable: true,
-	},
-	EN621_API: {
-		// Documentation is up! ../../en621-api.md (or online at https://gh.princessrtfm.com/en621-api.html too)
-		// for details on all of these things. Now I just have to keep it up-to-date.
-		value: isolateAndFreeze({
-			VERSION: CONSOLE_TOOLS.SCRIPT_VERSION,
-			hasFlag,
-			putMessage,
-			putError,
-			putWarning,
-			putHelp,
-			registerKeybind,
-			searchString: () => CURRENT_SEARCH,
-			cleanSearchString: () => NORMALISED_SEARCH,
-			enablePoolReaderMode,
-			disablePoolReaderMode,
-			togglePoolReaderMode,
-			disableImageTooltips,
-			enableImageTooltips,
-			toggleImageTooltips,
-			addControlTab,
-			hasNewPosts,
-		}),
-		enumerable: true,
-	},
+/* 2025-01-15 edit: fuck Mozilla.
+
+Previously, I could do
+-----
+const someApiObject = Object.create(null); // no prototype to fuck things up
+Object.assign(someApiObject, {
+	// ...simple values...
 });
+Object.defineProperties(someApiObject, {
+	propertyName: {
+		enumerable: true,
+		get() {
+			// ...
+		},
+		set(value) {
+			// ...
+		},
+	},
+	// ...
+});
+Object.defineProperty(window, 'propertyName', {
+	enumerable: true,
+	value: Object.freeze(someApiObject),
+});
+-----
+and the exported-to-window object would be frozen so that nothing accessing it could modify values.
+No changing anything, no adding new values.
+There was no prototype, so it had ONLY the values and descriptors that I had EXPLICITLY assigned it.
+The object itself couldn't be replaced on the page because it was defined as non-writable.
+The whole thing was actually very secure, as long as the API didn't expose functions that did insecure things.
+
+But now, content scripts - including greasemonkey and forks - can't do that. You have to export a CLONE into the window, and guess what?
+Clones cannot be frozen, descriptors are lost (so no more getters and setters either), and any custom prototypes are dropped, including `null`.
+
+So now, the publicly-exposed API object can be written to by any other script running on the page, it has the default `Object` prototype polluting it,
+and anything using getters or setters has to be replaced with function calls, so that's a breaking syntax change.
+
+And now, if I export an API object into the page, intended for other scripts (or even the page itself) to hook into,
+any script can just replace the API methods with its own code. So in an attempt to make content scripts (like extensions)
+more secure by controlling and filtering access between them and the page itself, they've opened up a brand new security
+hole - and also it doesn't actually stop a malicious actor elsewhere on the page because they can just export their own
+malicious functions into the page and then overwrite my API's methods.
+
+The ONLY improvement is that scripts on a PAGE cannot introduce untrusted code into the more-privileged content script's scope...
+unless the content script NEEDS values from the page (any values at all), in which case it HAS to access the insecure unwrapped
+page values, and then you're back where you started accessing untrusted data, except now you've ALSO broken existing security AND syntax.
+
+Final result: there's no real improvement in anything but the simplest of cases, and also there's degradation in all the other cases.
+
+Brilliant work, Mozilla. Surely NOBODY could have conceived of this at ANY point during the planning, design, or implementation phases.
+*/
+unsafeWindow.EN621_CONSOLE_TOOLS = cloneInto(CONSOLE_TOOLS, unsafeWindow, { cloneFunctions: true });
+unsafeWindow.EN621_API = cloneInto({
+	VERSION: CONSOLE_TOOLS.SCRIPT_VERSION,
+	hasFlag,
+	putMessage,
+	putError,
+	putWarning,
+	putHelp,
+	registerKeybind,
+	searchString: () => CURRENT_SEARCH,
+	cleanSearchString: () => NORMALISED_SEARCH,
+	enablePoolReaderMode,
+	disablePoolReaderMode,
+	togglePoolReaderMode,
+	disableImageTooltips,
+	enableImageTooltips,
+	toggleImageTooltips,
+	addControlTab,
+	hasNewPosts,
+}, unsafeWindow, { cloneFunctions: true });
 info("Initialisation complete");
+warn("BE CAREFUL USING EN621'S API OR CONSOLE TOOLS - MOZILLA BROKE THE SECURITY MEASURES ON THEM AND THEY CAN NOW BE OVERWRITTEN BY A HOSTILE SCRIPT!");
 setFlag("loaded");
 // This uses the default timeout of 0, which means basically "as soon as nothing else is busy"
 // Addons can look for `document.body.classList.contains("en621-loaded")` and if it's not found,
