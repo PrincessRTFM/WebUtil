@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      5.1.3
+// @version      6.0.0
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,8 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v6.0.0 - creating and deleting message tabs now allows the events to be canceled
+
 v5.1.3 - fix console command-broadcast function being broken
 v5.1.2 - fix accidental global variable leakage
 v5.1.1 - fixed for new site structure
@@ -418,10 +420,19 @@ const addControlTab = (...parts) => {
 // it with the button. Otherwise, the timeout is how many SECONDS (not milliseconds!) it should stay up before
 // autoclosing. Keep in mind that `setTimeout()` uses the delay as a MINIMUM, so poorly-made scripts on the page
 // may delay it longer - but they'll also trash the UX in other ways, and there's nothing I can do anyway.
-const putMessage = (content, type, icon, timeout) => {
+const putMessage = (content, type, icon, timeout, cancelable) => {
 	timeout = parseFloat(String(timeout));
 	if (isNaN(timeout) || timeout < 0) {
 		timeout = 0;
+	}
+	const msgSpawnEvt = sendEvent(EV_MESSAGE_BOX, {
+		content,
+		type,
+		icon,
+		timeout,
+	}, cancelable);
+	if (msgSpawnEvt.defaultPrevented) {
+		return;
 	}
 	const messageContainer = makeElem('div', '', `en621-message-tab en621-message-${type} site-notice`);
 	const messageText = makeElem('span', '', `en621-message-content en621-message-${type}`);
@@ -440,14 +451,16 @@ const putMessage = (content, type, icon, timeout) => {
 	messageIcon.textContent = icon;
 	messageContainer.append(messageClose, messageIcon, messageText);
 	const removeMsg = (cause) => {
-		messageContainer.remove();
-		sendEvent(EV_MESSAGE_CLOSE, {
+		const msgRemoveEvt = sendEvent(EV_MESSAGE_CLOSE, {
 			content,
 			type,
 			icon,
 			timeout,
 			cause,
-		});
+		}, true);
+		if (!msgRemoveEvt.defaultPrevented) {
+			messageContainer.remove();
+		}
 	};
 	messageClose.addEventListener('click', () => {
 		removeMsg('click');
@@ -456,18 +469,12 @@ const putMessage = (content, type, icon, timeout) => {
 	if (timeout) {
 		setTimeout(() => removeMsg('timeout'), timeout * 1000);
 	}
-	sendEvent(EV_MESSAGE_BOX, {
-		content,
-		type,
-		icon,
-		timeout,
-	});
 	return messageContainer;
 };
 // These three are just convenience helpers for the above. You'll probably want to use these instead.
-const putError = (content, timeout) => putMessage(content, 'error', '⚠', timeout);
-const putWarning = (content, timeout) => putMessage(content, 'warning', '⚠', timeout);
-const putHelp = (content, timeout) => putMessage(content, 'help', '🛈', timeout);
+const putError = (content, timeout) => putMessage(content, 'error', '⚠', timeout, false);
+const putWarning = (content, timeout, allowCancelDisplay) => putMessage(content, 'warning', '⚠', timeout, allowCancelDisplay);
+const putHelp = (content, timeout) => putMessage(content, 'help', '🛈', timeout, true);
 
 // Rather than defining a whole arseload of keydown handlers and duplicating the checks against editable content
 // and the like, en621 offers its own keybind manager: you register a keybind with `registerKeybind` (shocking!)
