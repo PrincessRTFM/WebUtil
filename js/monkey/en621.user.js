@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      5.1.1
+// @version      5.1.2
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v5.1.2 - fix accidental global variable leakage
 v5.1.1 - fixed for new site structure
 v5.1.0 - console tools to run commands (plus a (failed) experimental command to close windows with a last-seen post and nothing new)
 v5.0.1 - fixed `hasNewPosts()` API function returning an inverted value
@@ -118,6 +119,60 @@ const KB_ALT = 1;
 const KB_CTRL = 2;
 const KB_SHIFT = 4;
 
+// Somewhat irritatingly, e621 uses different query parameters for the tag search depending on where you are.
+// This is an anonymous function that's immediately run, which just tries the (known) parameters it uses and
+// returns the (decoded) search, or an empty string if one wasn't found.
+const CURRENT_SEARCH = (() => {
+	const p = new URLSearchParams(location.search);
+	return void 0
+		|| p.get('q')
+		|| p.get('tags')
+		|| p.get('name')
+		|| '';
+})();
+const NORMALISED_SEARCH = (() => {
+	if (!CURRENT_SEARCH) {
+		return '';
+	}
+	return Array.from(
+		new Set(
+			CURRENT_SEARCH
+				.trim()
+				.split(/\s+/u)
+				.map((tag) => tag.toLowerCase().replace(/^(rating:[sqe])/u, '$1'))
+		)
+	).sort().join(" "); // eslint-disable-line newline-per-chained-call
+})();
+
+const navbar = document.querySelector("nav.navigation > .nav-primary");
+const navright = document.querySelector("nav.navigation > .nav-tools");
+const navsecond = document.querySelector("nav.navigation > .nav-help");
+const subnavbar = document.querySelector("nav.navigation > .nav-secondary");
+
+const PATH = location.pathname;
+
+const POOL_PATH_PREFIX = '/pools/';
+const POST_PATH_PREFIX = '/posts/';
+const POST_INDEX_PATH = '/posts';
+
+const POOL_READER_CONTAINER_ID = "pool-reader";
+const POOL_READER_STATUSLINE_ID = "en621-pool-reader-status";
+const LINK_MODE_ID = "en621-link-mode-toggle";
+const POOL_READER_LINK_CLASS = "en621-post-link";
+const DISABLED_TOOLTIPS_FLAG = "no-image-tooltips";
+const TOOLTIP_TOGGLE_ID = "en621-image-tooltips-toggle";
+
+const EV_POOL_READER_STATE = "pool-reader-state";
+const EV_MESSAGE_BOX = "user-message";
+const EV_MESSAGE_CLOSE = "close-message";
+const EV_DIRECT_LINKS = "direct-link-mode";
+const EV_IMAGE_TOOLTIPS = "image-tooltips";
+const EV_POST_DELETED = "missing-post";
+const EV_POST_LOADED = "post-loaded";
+const EV_SCRIPT_LOADED = "loaded";
+const EV_FLAG_SET = "flag-set";
+const EV_FLAG_UNSET = "flag-unset";
+
 const CONSOLE_TOOLS = Object.create(null);
 CONSOLE_TOOLS.SCRIPT_VERSION = Object.freeze(GM_info.script.version.split(".").map((i) => parseInt(i, 10)));
 
@@ -163,16 +218,6 @@ const sendEvent = async (name, extra, cancelable) => {
 	document.dispatchEvent(evt);
 	return evt;
 };
-const EV_POOL_READER_STATE = "pool-reader-state";
-const EV_MESSAGE_BOX = "user-message";
-const EV_MESSAGE_CLOSE = "close-message";
-const EV_DIRECT_LINKS = "direct-link-mode";
-const EV_IMAGE_TOOLTIPS = "image-tooltips";
-const EV_POST_DELETED = "missing-post";
-const EV_POST_LOADED = "post-loaded";
-const EV_SCRIPT_LOADED = "loaded";
-const EV_FLAG_SET = "flag-set";
-const EV_FLAG_UNSET = "flag-unset";
 // Register a debugging listener for all events
 document.addEventListener('en621', (evt) => {
 	const type = `${evt.cancelable ? '' : 'non-'}cancelable`;
@@ -492,49 +537,6 @@ document.addEventListener('keydown', (evt) => {
 		}
 	}
 });
-
-// Somewhat irritatingly, e621 uses different query parameters for the tag search depending on where you are.
-// This is an anonymous function that's immediately run, which just tries the (known) parameters it uses and
-// returns the (decoded) search, or an empty string if one wasn't found.
-const CURRENT_SEARCH = (() => {
-	const p = new URLSearchParams(location.search);
-	return void 0
-		|| p.get('q')
-		|| p.get('tags')
-		|| p.get('name')
-		|| '';
-})();
-const NORMALISED_SEARCH = (() => {
-	if (!CURRENT_SEARCH) {
-		return '';
-	}
-	return Array.from(
-		new Set(
-			CURRENT_SEARCH
-				.trim()
-				.split(/\s+/u)
-				.map((tag) => tag.toLowerCase().replace(/^(rating:[sqe])/u, '$1'))
-		)
-	).sort().join(" "); // eslint-disable-line newline-per-chained-call
-})();
-
-const navbar = document.querySelector("nav.navigation > .nav-primary");
-const navright = document.querySelector("nav.navigation > .nav-tools");
-const navsecond = document.querySelector("nav.navigation > .nav-help");
-const subnavbar = document.querySelector("nav.navigation > .nav-secondary");
-
-const PATH = location.pathname;
-
-const POOL_PATH_PREFIX = '/pools/';
-const POST_PATH_PREFIX = '/posts/';
-const POST_INDEX_PATH = '/posts';
-
-const POOL_READER_CONTAINER_ID = "pool-reader";
-const POOL_READER_STATUSLINE_ID = "en621-pool-reader-status";
-const LINK_MODE_ID = "en621-link-mode-toggle";
-const POOL_READER_LINK_CLASS = "en621-post-link";
-const DISABLED_TOOLTIPS_FLAG = "no-image-tooltips";
-const TOOLTIP_TOGGLE_ID = "en621-image-tooltips-toggle";
 
 // This is the toggle for direct image links, now updated to use the above control tabs mechanism. It's an
 // example of doing a tab with custom content that you don't need to remove later.
@@ -1556,6 +1558,7 @@ const COMMANDS = Object.assign(Object.create(null), {
 	},
 });
 const parseCommand = (commandString) => {
+	let cmd, arg;
 	if (commandString.includes(" ")) {
 		[ cmd ] = commandString.split(" ");
 		arg = commandString.slice(commandString.indexOf(" ") + 1).trim();
