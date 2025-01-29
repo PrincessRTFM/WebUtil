@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      5.1.0
+// @version      5.1.1
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v5.1.1 - fixed for new site structure
 v5.1.0 - console tools to run commands (plus a (failed) experimental command to close windows with a last-seen post and nothing new)
 v5.0.1 - fixed `hasNewPosts()` API function returning an inverted value
 v5.0.0 - Mozilla broke the API export's security measures AND syntax (see comment at end of script)
@@ -517,8 +518,10 @@ const NORMALISED_SEARCH = (() => {
 	).sort().join(" "); // eslint-disable-line newline-per-chained-call
 })();
 
-const navbar = document.querySelector("#nav > .main");
-const subnavbar = document.querySelector("#nav > .secondary");
+const navbar = document.querySelector("nav.navigation > .nav-primary");
+const navright = document.querySelector("nav.navigation > .nav-tools");
+const navsecond = document.querySelector("nav.navigation > .nav-help");
+const subnavbar = document.querySelector("nav.navigation > .nav-secondary");
 
 const PATH = location.pathname;
 
@@ -1532,7 +1535,7 @@ navbarVersionLabel.addEventListener("click", () => {
 });
 // And put it on the page
 navbarVersionContainer.append(navbarVersionLabel);
-navbar.append(navbarVersionContainer);
+navright.append(navbarVersionContainer);
 
 // This allows each tab to issue a command across all of en621, for every loaded tab to execute.
 // At the time of writing this, it's not USED anywhere yet, since the feature I had been planning it for is nonviable, but I'm leaving it
