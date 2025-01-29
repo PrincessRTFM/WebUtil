@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      5.1.2
+// @version      5.1.3
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v5.1.3 - fix console command-broadcast function being broken
 v5.1.2 - fix accidental global variable leakage
 v5.1.1 - fixed for new site structure
 v5.1.0 - console tools to run commands (plus a (failed) experimental command to close windows with a last-seen post and nothing new)
@@ -1584,7 +1585,7 @@ commandChannel.addEventListener("message", (evt) => {
 	CONSOLE_TOOLS.executeLocalCommand(evt.data);
 });
 CONSOLE_TOOLS.broadcastCommand = (command) => {
-	commandChannel.postMessage(assembled);
+	commandChannel.postMessage(command);
 };
 
 // Last but not least...
