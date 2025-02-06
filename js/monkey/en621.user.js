@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      6.0.0
+// @version      6.0.1
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v6.0.1 - fixed autocleaning of search input
 v6.0.0 - creating and deleting message tabs now allows the events to be canceled
 
 v5.1.3 - fix console command-broadcast function being broken
@@ -1366,17 +1367,15 @@ else if (PATH == POST_INDEX_PATH) {
 	};
 }
 
-if (document.querySelector('#search-box')) {
+if (document.querySelector('#tags')) {
 	// Now, WHEREVER you are, make the search box less shitty
-	const searchBox = document.querySelector("#search-box");
-	const form = searchBox.querySelector("form");
-	const searchLine = makeElem('div', "search-line");
+	const searchBox = document.querySelector("#tags");
+	const form = searchBox.parentElement;
 	try {
-		// It automatically cleans up the contents a little
+		// automatically clean up the contents a little
 		const cleanSearchBox = () => {
 			info("Cleaning search input string");
-			const input = form.querySelector('#tags');
-			input.value = input.value.replace(/\s+/gu, ' ').trim();
+			searchBox.value = searchBox.value.replace(/\s+/gu, ' ').trim();
 		};
 		form.addEventListener('submit', cleanSearchBox);
 		form.addEventListener('blur', cleanSearchBox);
@@ -1385,41 +1384,6 @@ if (document.querySelector('#search-box')) {
 	catch (err) {
 		error("Can't auto-format search string:", err);
 		setFlag("no-autocleaning-searchbox");
-		setFlag("has-error");
-	}
-	try {
-		// And also make the box bigger when you're using it
-		searchLine.append(...form.children);
-		form.append(searchLine);
-		GM_addStyle([
-			"#search-line input {",
-			"flex: 1;",
-			"}",
-			"#search-line button {",
-			"flex: 0;",
-			"}",
-			"#search-line * {",
-			"z-index: 999999 !important;",
-			"}",
-			"#search-line {",
-			"display: flex;",
-			"min-width: fit-content;",
-			"min-width: -moz-fit-content;",
-			"max-width: 50vw;",
-			"width: 0;",
-			"transition: width 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);",
-			'transition-delay: 0.15s;',
-			"}",
-			"#search-line:hover, #search-line:focus, #search-line:focus-within {",
-			"width: 100vw;",
-			'transition-delay: 0.5s;',
-			"}",
-		].join("\n"));
-		setFlag("has-flexible-search-box");
-	}
-	catch (err) {
-		error("Can't make search box responsively expand:", err);
-		setFlag("no-flexible-search-box");
 		setFlag("has-error");
 	}
 }
