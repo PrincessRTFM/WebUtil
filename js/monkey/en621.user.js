@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         en621
 // @namespace    Lilith
-// @version      6.0.1
+// @version      6.0.2
 // @description  en(hanced)621 - minor-but-useful enhancements to e621
 // @author       PrincessRTFM
 // @match        *://e621.net/*
@@ -19,6 +19,7 @@
 // ==/UserScript==
 
 /* CHANGELOG
+v6.0.2 - fix pool reader toggle being misaligned
 v6.0.1 - fixed autocleaning of search input
 v6.0.0 - creating and deleting message tabs now allows the events to be canceled
 
@@ -1090,8 +1091,7 @@ if (PATH.startsWith(POOL_PATH_PREFIX) && PATH.slice(POOL_PATH_PREFIX.length).mat
 	const readerLink = makeElem('a');
 	GM_addStyle([
 		'#en621-pool-reader-toggle {',
-		'position: absolute;',
-		'right: 20px;',
+		'margin-left: auto;',
 		'cursor: pointer;',
 		'}',
 	].join("\n"));
